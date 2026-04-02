@@ -3,7 +3,17 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { Plane, Menu, X, LogIn, User, LogOut, Sun, Moon, ChevronDown } from "lucide-react";
+import {
+  Plane,
+  Menu,
+  X,
+  LogIn,
+  User,
+  LogOut,
+  Sun,
+  Moon,
+  ChevronDown,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/store";
 import { useSettingsStore } from "@/lib/store/settings";
@@ -11,8 +21,8 @@ import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
 const NAV_LINKS = [
-  { href: "/b2c/flights",   label: "Flights",   icon: "✈" },
-  { href: "/b2c/hotels",    label: "Hotels",    icon: "🏨" },
+  { href: "/b2c/flights", label: "Flights", icon: "✈" },
+  { href: "/b2c/hotels", label: "Hotels", icon: "🏨" },
   { href: "/b2c/insurance", label: "Insurance", icon: "🛡" },
 ];
 
@@ -40,13 +50,19 @@ export function B2CNavbar() {
         <Link href="/" className="flex items-center gap-2.5 shrink-0 mr-2">
           {settings.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={settings.logoUrl} alt={settings.appName} className="h-8 w-auto object-contain" />
+            <img
+              src={settings.logoUrl}
+              alt={settings.appName}
+              className="h-8 w-auto object-contain"
+            />
           ) : (
             <>
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shrink-0">
                 <Plane className="h-4 w-4 text-white" />
               </div>
-              <span className="font-extrabold text-white tracking-tight hidden sm:block">{settings.appName || "TravelPro"}</span>
+              <span className="font-extrabold text-white tracking-tight hidden sm:block">
+                {settings.appName || "Tramps Aviation"}
+              </span>
             </>
           )}
         </Link>
@@ -56,13 +72,16 @@ export function B2CNavbar() {
           {NAV_LINKS.map(({ href, label, icon }) => {
             const active = pathname.startsWith(href);
             return (
-              <Link key={href} href={href}
+              <Link
+                key={href}
+                href={href}
                 className={cn(
                   "flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all",
                   active
                     ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                )}>
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                )}
+              >
                 <span className="text-sm">{icon}</span> {label}
               </Link>
             );
@@ -75,47 +94,72 @@ export function B2CNavbar() {
         {/* Right side */}
         <div className="flex items-center gap-1">
           {/* Theme toggle */}
-          <button onClick={() => {
-            if (theme === "dark") setTheme("light");
-            else if (theme === "light") setTheme("system");
-            else setTheme("dark");
-          }}
+          <button
+            onClick={() => {
+              if (theme === "dark") setTheme("light");
+              else if (theme === "light") setTheme("system");
+              else setTheme("dark");
+            }}
             className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            title="Toggle theme">
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            title="Toggle theme"
+          >
+            {theme === "dark" ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
           </button>
 
           {/* User menu if logged in as customer */}
           {isAuthenticated && user?.role === "customer" ? (
             <div className="relative">
-              <button onClick={() => setUserDropdown(!userDropdown)}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors border border-white/10">
+              <button
+                onClick={() => setUserDropdown(!userDropdown)}
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors border border-white/10"
+              >
                 <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
                   {user.name?.charAt(0)?.toUpperCase() || "U"}
                 </div>
-                <span className="text-sm font-medium text-white max-w-[80px] truncate hidden sm:block">{user.name}</span>
+                <span className="text-sm font-medium text-white max-w-[80px] truncate hidden sm:block">
+                  {user.name}
+                </span>
                 <ChevronDown className="h-3 w-3 text-slate-400 hidden sm:block" />
               </button>
 
               {userDropdown && (
                 <>
-                  <div className="fixed inset-0 z-40" onClick={() => setUserDropdown(false)} />
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setUserDropdown(false)}
+                  />
                   <div className="absolute right-0 top-full mt-2 z-50 w-52 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
                     <div className="px-4 py-3 border-b border-border">
-                      <p className="text-sm font-semibold text-white truncate">{user.name}</p>
-                      <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                      <p className="text-sm font-semibold text-white truncate">
+                        {user.name}
+                      </p>
+                      <p className="text-xs text-slate-500 truncate">
+                        {user.email}
+                      </p>
                     </div>
-                    <Link href="/b2c/my-trips" onClick={() => setUserDropdown(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                    <Link
+                      href="/b2c/my-trips"
+                      onClick={() => setUserDropdown(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                    >
                       <Plane className="h-3.5 w-3.5" /> My Trips
                     </Link>
-                    <Link href="/b2c/profile" onClick={() => setUserDropdown(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                    <Link
+                      href="/b2c/profile"
+                      onClick={() => setUserDropdown(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                    >
                       <User className="h-3.5 w-3.5" /> Profile
                     </Link>
                     <div className="border-t border-border my-1" />
-                    <button onClick={handleLogout}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                    >
                       <LogOut className="h-3.5 w-3.5" /> Logout
                     </button>
                   </div>
@@ -124,27 +168,39 @@ export function B2CNavbar() {
             </div>
           ) : (
             <div className="hidden sm:flex items-center gap-1.5">
-              <Link href="/b2c/login"
-                className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-colors flex items-center gap-1.5">
+              <Link
+                href="/b2c/login"
+                className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-colors flex items-center gap-1.5"
+              >
                 <LogIn className="h-3.5 w-3.5" /> Login
               </Link>
-              <Link href="/b2c/register"
-                className="px-4 py-1.5 text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-colors">
+              <Link
+                href="/b2c/register"
+                className="px-4 py-1.5 text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-colors"
+              >
                 Sign Up
               </Link>
             </div>
           )}
 
           {/* Agent/Admin portal link */}
-          <Link href="/b2b/login"
-            className="hidden lg:block text-xs px-3 py-1.5 border border-border text-muted-foreground hover:text-foreground rounded-xl transition-colors ml-1">
+          <Link
+            href="/b2b/login"
+            className="hidden lg:block text-xs px-3 py-1.5 border border-border text-muted-foreground hover:text-foreground rounded-xl transition-colors ml-1"
+          >
             Agent Portal ↗
           </Link>
 
           {/* Mobile hamburger */}
-          <button className="md:hidden p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            onClick={() => setMobileOpen(!mobileOpen)}>
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          <button
+            className="md:hidden p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            onClick={() => setMobileOpen(!mobileOpen)}
+          >
+            {mobileOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
           </button>
         </div>
       </div>
@@ -155,11 +211,17 @@ export function B2CNavbar() {
           {NAV_LINKS.map(({ href, label, icon }) => {
             const active = pathname.startsWith(href);
             return (
-              <Link key={href} href={href} onClick={() => setMobileOpen(false)}
+              <Link
+                key={href}
+                href={href}
+                onClick={() => setMobileOpen(false)}
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors",
-                  active ? "bg-blue-600 text-white" : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                )}>
+                  active
+                    ? "bg-blue-600 text-white"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                )}
+              >
                 <span>{icon}</span> {label}
               </Link>
             );
@@ -167,29 +229,43 @@ export function B2CNavbar() {
           <div className="pt-2 border-t border-white/5 space-y-1">
             {isAuthenticated && user?.role === "customer" ? (
               <>
-                <Link href="/b2c/my-trips" onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-muted">
+                <Link
+                  href="/b2c/my-trips"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
+                >
                   <Plane className="h-4 w-4" /> My Trips
                 </Link>
-                <button onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-destructive hover:bg-destructive/10 text-left">
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-destructive hover:bg-destructive/10 text-left"
+                >
                   <LogOut className="h-4 w-4" /> Logout
                 </button>
               </>
             ) : (
               <>
-                <Link href="/b2c/login" onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-muted">
+                <Link
+                  href="/b2c/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
+                >
                   <LogIn className="h-4 w-4" /> Customer Login
                 </Link>
-                <Link href="/b2c/register" onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm bg-blue-600 text-white font-medium">
+                <Link
+                  href="/b2c/register"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm bg-blue-600 text-white font-medium"
+                >
                   Sign Up Free
                 </Link>
               </>
             )}
-            <Link href="/b2b/login" onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-muted">
+            <Link
+              href="/b2b/login"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
+            >
               Agent Portal (B2B)
             </Link>
           </div>

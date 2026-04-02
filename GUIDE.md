@@ -1,6 +1,7 @@
-# TravelPro — Complete Developer Guide
+# Tramps Aviation — Complete Developer Guide
 
 ## 📋 Table of Contents
+
 1. [Project Overview](#overview)
 2. [Quick Start](#quick-start)
 3. [Development Credentials](#dev-credentials)
@@ -16,7 +17,7 @@
 
 ## 1. Project Overview {#overview}
 
-**TravelPro** is a Next.js 14 frontend for a B2B + B2C travel platform.
+**Tramps Aviation** is a Next.js 14 frontend for a B2B + B2C travel platform.
 
 - **B2C**: Customers search and book flights, pay via Razorpay
 - **B2B**: Travel agents book flights with wallet deduction + earn commissions
@@ -42,6 +43,7 @@ npm run dev
 ```
 
 **With real backend:**
+
 ```bash
 # Make sure backend is running at localhost:8080
 # Edit .env.development:
@@ -59,22 +61,25 @@ npm run dev
 
 All these work instantly — no backend needed:
 
-| Role     | Login Field        | Value                  | Password      |
-|----------|--------------------|------------------------|---------------|
-| Agent    | Agent ID           | `AG12345678`           | any password  |
-| Customer | Email              | `user@demo.com`        | any password  |
-| Admin    | Email              | `admin@demo.com`       | any password  |
+| Role     | Login Field | Value            | Password     |
+| -------- | ----------- | ---------------- | ------------ |
+| Agent    | Agent ID    | `AG12345678`     | any password |
+| Customer | Email       | `user@demo.com`  | any password |
+| Admin    | Email       | `admin@demo.com` | any password |
 
 > **OTP (Forgot Password)**: In dev mode, OTP is always **`123456`**
 > The OTP also appears in the success toast message on screen
 
 ### KYC Test Data
+
 When submitting KYC in mock mode, use:
+
 - PAN: `AAPFU0939F` (10 chars)
 - Aadhaar: `123456789012` (12 digits)
 - IFSC: `SBIN0001234` (11 chars)
 
 ### Real Backend (NEXT_PUBLIC_USE_MOCK=false)
+
 - Default admin: `admin@travelplatform.com` / `Admin@123456`
 - (Created automatically on first backend startup)
 
@@ -83,39 +88,42 @@ When submitting KYC in mock mode, use:
 ## 4. All Pages Reference {#pages}
 
 ### Public Pages (No Login Required)
-| Page | URL | Description |
-|------|-----|-------------|
-| Home | `/` | Landing page with flight search, hero, features |
-| Login | `/auth/login` | Unified login — Traveler / Agent / Admin tabs |
-| Customer Register | `/auth/register` | New customer signup |
-| Agent Register | `/auth/agent-register` | 3-step agent registration wizard |
-| Forgot Password | `/auth/forgot-password` | OTP-based password reset |
+
+| Page              | URL                     | Description                                     |
+| ----------------- | ----------------------- | ----------------------------------------------- |
+| Home              | `/`                     | Landing page with flight search, hero, features |
+| Login             | `/auth/login`           | Unified login — Traveler / Agent / Admin tabs   |
+| Customer Register | `/auth/register`        | New customer signup                             |
+| Agent Register    | `/auth/agent-register`  | 3-step agent registration wizard                |
+| Forgot Password   | `/auth/forgot-password` | OTP-based password reset                        |
 
 ### B2B Agent Pages (Login Required — role: agent)
-| Page | URL | Description |
-|------|-----|-------------|
-| Dashboard | `/b2b/dashboard` | Stats, recent bookings, wallet overview |
-| Book Flights | `/b2b/flights` | Search & book flights (TBO API / mock) |
-| My Bookings | `/b2b/bookings` | All bookings list with filters |
-| Booking Detail | `/b2b/bookings/[id]` | Full booking info, PNR, passengers |
-| Wallet | `/b2b/wallet` | Balance, transactions, statement |
-| Commission | `/b2b/commission` | Commission report, earned amounts |
-| KYC | `/b2b/kyc` | Submit PAN, Aadhaar, bank details |
+
+| Page           | URL                  | Description                             |
+| -------------- | -------------------- | --------------------------------------- |
+| Dashboard      | `/b2b/dashboard`     | Stats, recent bookings, wallet overview |
+| Book Flights   | `/b2b/flights`       | Search & book flights (TBO API / mock)  |
+| My Bookings    | `/b2b/bookings`      | All bookings list with filters          |
+| Booking Detail | `/b2b/bookings/[id]` | Full booking info, PNR, passengers      |
+| Wallet         | `/b2b/wallet`        | Balance, transactions, statement        |
+| Commission     | `/b2b/commission`    | Commission report, earned amounts       |
+| KYC            | `/b2b/kyc`           | Submit PAN, Aadhaar, bank details       |
 
 ### Admin Pages (Login Required — role: admin)
-| Page | URL | Description |
-|------|-----|-------------|
-| Dashboard | `/admin/dashboard` | Platform stats, KPIs, recent activity |
-| Agents | `/admin/agents` | List, search, suspend/activate agents |
-| Customers | `/admin/customers` | Customer list and management |
-| Bookings | `/admin/bookings` | All bookings across platform |
-| KYC Review | `/admin/kyc` | Approve / reject agent KYC |
-| Wallet Ops | `/admin/wallet` | Top-up, deduct, freeze agent wallets |
-| Commissions | `/admin/commission` | Commission reports, settlements |
-| Reports | `/admin/reports` | Revenue, airline performance charts |
-| Flights | `/admin/flights` | Pricing rules management |
-| Hotels | `/admin/hotels` | Hotel inventory |
-| Settings | `/admin/settings` | Appearance, platform config, security |
+
+| Page        | URL                 | Description                           |
+| ----------- | ------------------- | ------------------------------------- |
+| Dashboard   | `/admin/dashboard`  | Platform stats, KPIs, recent activity |
+| Agents      | `/admin/agents`     | List, search, suspend/activate agents |
+| Customers   | `/admin/customers`  | Customer list and management          |
+| Bookings    | `/admin/bookings`   | All bookings across platform          |
+| KYC Review  | `/admin/kyc`        | Approve / reject agent KYC            |
+| Wallet Ops  | `/admin/wallet`     | Top-up, deduct, freeze agent wallets  |
+| Commissions | `/admin/commission` | Commission reports, settlements       |
+| Reports     | `/admin/reports`    | Revenue, airline performance charts   |
+| Flights     | `/admin/flights`    | Pricing rules management              |
+| Hotels      | `/admin/hotels`     | Hotel inventory                       |
+| Settings    | `/admin/settings`   | Appearance, platform config, security |
 
 ---
 
@@ -124,6 +132,7 @@ When submitting KYC in mock mode, use:
 Set `NEXT_PUBLIC_USE_MOCK=true` in `.env.development` (already default).
 
 **What works in mock mode:**
+
 - ✅ Login / Register (all 3 roles)
 - ✅ OTP forgot password (static code `123456`)
 - ✅ Agent dashboard with dummy stats
@@ -137,12 +146,14 @@ Set `NEXT_PUBLIC_USE_MOCK=true` in `.env.development` (already default).
 - ✅ All pages render correctly
 
 **Mock login flow:**
+
 1. Go to `/auth/login`
 2. Select "Agent" tab
 3. Enter Agent ID: `AG12345678`, any password
 4. → Redirected to `/b2b/dashboard`
 
 **Mock admin flow:**
+
 1. Go to `/auth/login`
 2. Select "Admin" tab
 3. Enter email: `admin@demo.com`, any password
@@ -157,6 +168,7 @@ Set `NEXT_PUBLIC_USE_MOCK=true` in `.env.development` (already default).
 Dark mode is applied **before page paint** (no white flash) via an inline script in `<head>`.
 
 **Changing theme:**
+
 - Click the ⚙️ **Settings FAB** (bottom-right corner)
 - Or go to `/admin/settings` → Appearance tab
 
@@ -177,6 +189,7 @@ Dark mode is applied **before page paint** (no white flash) via an inline script
 | `lime` | Lime | #65a30d |
 
 **Dark Mode Fixed Issues:**
+
 - ✅ No white flash on page load
 - ✅ Skeleton loaders use theme colors
 - ✅ Toggle switch knob is grey (not white) in dark mode
@@ -189,11 +202,11 @@ Dark mode is applied **before page paint** (no white flash) via an inline script
 
 The ⚙️ button (bottom-right) opens a panel with 4 sections:
 
-| Section | Options |
-|---------|---------|
-| **Appearance** | Light / Dark / System |
-| **Color Theme** | 12 colors to choose from |
-| **Typography** | 9 font families + 5 font sizes |
+| Section              | Options                                                         |
+| -------------------- | --------------------------------------------------------------- |
+| **Appearance**       | Light / Dark / System                                           |
+| **Color Theme**      | 12 colors to choose from                                        |
+| **Typography**       | 9 font families + 5 font sizes                                  |
 | **Layout & Effects** | 7 corner radius options, Compact Mode toggle, Animations toggle |
 
 All settings are saved to `localStorage` and persist across sessions.
@@ -251,21 +264,22 @@ POST /api/admin/wallet/topup
 ```
 
 ### Token Storage
+
 JWT token is stored in `localStorage` as `auth_token` and attached to every API request automatically via Axios interceptor.
 
 ---
 
 ## 9. Known Issues Fixed {#fixes}
 
-| Issue | Fix Applied |
-|-------|-------------|
+| Issue                                    | Fix Applied                                                        |
+| ---------------------------------------- | ------------------------------------------------------------------ |
 | Dark mode shows white background on load | Added inline `<script>` in `<head>` to set dark class before paint |
-| White gradient orbs visible in dark mode | Changed `bg-white` → `bg-primary-foreground/10` |
-| Toggle switch knob white in dark mode | Added CSS variable `--toggle-knob` that changes per theme |
-| Skeleton loader looks wrong in dark | Uses `hsl(var(--muted))` and `hsl(var(--accent))` |
-| Admin settings page crashes | Fixed wrong import from `@/lib/store/settings` → `@/lib/store` |
-| Zip had brace-named folders | Clean copy — no brace expansion in folder names |
-| Mock mode not working | `NEXT_PUBLIC_USE_MOCK=true` set by default in `.env.development` |
+| White gradient orbs visible in dark mode | Changed `bg-white` → `bg-primary-foreground/10`                    |
+| Toggle switch knob white in dark mode    | Added CSS variable `--toggle-knob` that changes per theme          |
+| Skeleton loader looks wrong in dark      | Uses `hsl(var(--muted))` and `hsl(var(--accent))`                  |
+| Admin settings page crashes              | Fixed wrong import from `@/lib/store/settings` → `@/lib/store`     |
+| Zip had brace-named folders              | Clean copy — no brace expansion in folder names                    |
+| Mock mode not working                    | `NEXT_PUBLIC_USE_MOCK=true` set by default in `.env.development`   |
 
 ---
 
@@ -280,6 +294,7 @@ npm run start
 ```
 
 **Vercel (recommended):**
+
 1. Push to GitHub
 2. Import in Vercel
 3. Set env vars:
@@ -287,6 +302,7 @@ npm run start
    - `NEXT_PUBLIC_USE_MOCK` = `false`
 
 **Docker:**
+
 ```dockerfile
 FROM node:20-alpine
 WORKDIR /app
@@ -355,4 +371,4 @@ travel-frontend/
 
 ---
 
-*Built with ❤️ for TravelPro India — Last updated: March 2026*
+_Built with ❤️ for Tramps Aviation India — Last updated: March 2026_

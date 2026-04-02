@@ -1,4 +1,4 @@
-# TravelPro — B2B & B2C Frontend
+# Tramps Aviation — B2B & B2C Frontend
 
 Next.js 14 frontend for the Travel Platform — B2B Agent Portal + B2C Customer Portal.
 
@@ -58,7 +58,7 @@ yarn start
 ```env
 # .env.development
 NEXT_PUBLIC_API_URL=http://localhost:8080/api
-NEXT_PUBLIC_APP_NAME=TravelPro
+NEXT_PUBLIC_APP_NAME=Tramps Aviation
 NEXT_PUBLIC_USE_MOCK=false
 ```
 
@@ -68,25 +68,25 @@ Set `NEXT_PUBLIC_USE_MOCK=true` to run with mock data (no backend needed).
 
 ## Auth Flow
 
-| User Type | Login URL | Dashboard |
-|-----------|-----------|-----------|
-| B2B Agent | `/b2b/login` | `/b2b/dashboard` |
-| B2C Customer | `/b2c/login` | `/b2c/flights` |
+| User Type    | Login URL    | Dashboard        |
+| ------------ | ------------ | ---------------- |
+| B2B Agent    | `/b2b/login` | `/b2b/dashboard` |
+| B2C Customer | `/b2c/login` | `/b2c/flights`   |
 
 ---
 
 ## Key Routes
 
-| Route | Description |
-|-------|-------------|
-| `/` | Public landing page |
-| `/b2b/login` | Agent login |
-| `/b2b/register` | Agency registration |
-| `/b2b/kyc` | KYC document upload |
+| Route            | Description                     |
+| ---------------- | ------------------------------- |
+| `/`              | Public landing page             |
+| `/b2b/login`     | Agent login                     |
+| `/b2b/register`  | Agency registration             |
+| `/b2b/kyc`       | KYC document upload             |
 | `/b2b/dashboard` | Agent dashboard (auth required) |
-| `/b2c/login` | Customer login |
-| `/b2c/flights` | Flight search (public) |
-| `/b2c/my-trips` | My trips (auth required) |
+| `/b2c/login`     | Customer login                  |
+| `/b2c/flights`   | Flight search (public)          |
+| `/b2c/my-trips`  | My trips (auth required)        |
 
 ---
 

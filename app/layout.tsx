@@ -1,10 +1,10 @@
-'use client'
+"use client";
 
-import './globals.css'
-import { useEffect } from 'react'
-import { Toaster } from 'sonner'
-import { useSettingsStore } from '@/lib/store'
-import { SettingsFab } from '@/components/settings/SettingsFab'
+import "./globals.css";
+import { useEffect } from "react";
+import { Toaster } from "sonner";
+import { useSettingsStore } from "@/lib/store";
+import { SettingsFab } from "@/components/settings/SettingsFab";
 
 // Anti-flash script injected as raw HTML before page renders
 const ANTI_FLASH_SCRIPT = `
@@ -30,42 +30,55 @@ const ANTI_FLASH_SCRIPT = `
     root.setAttribute('data-animations', anim);
   } catch(e){}
 })();
-`
+`;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const {
-    theme, colorTheme, fontSize, fontFamily,
-    borderRadius, compactMode, animations
-  } = useSettingsStore()
+    theme,
+    colorTheme,
+    fontSize,
+    fontFamily,
+    borderRadius,
+    compactMode,
+    animations,
+  } = useSettingsStore();
 
   useEffect(() => {
-    const root = document.documentElement
-    if (theme === 'system') {
-      const mq = window.matchMedia('(prefers-color-scheme: dark)')
-      root.classList.toggle('dark', mq.matches)
-      const handler = (e: MediaQueryListEvent) => root.classList.toggle('dark', e.matches)
-      mq.addEventListener('change', handler)
-      return () => mq.removeEventListener('change', handler)
+    const root = document.documentElement;
+    if (theme === "system") {
+      const mq = window.matchMedia("(prefers-color-scheme: dark)");
+      root.classList.toggle("dark", mq.matches);
+      const handler = (e: MediaQueryListEvent) =>
+        root.classList.toggle("dark", e.matches);
+      mq.addEventListener("change", handler);
+      return () => mq.removeEventListener("change", handler);
     } else {
-      root.classList.toggle('dark', theme === 'dark')
+      root.classList.toggle("dark", theme === "dark");
     }
-  }, [theme])
+  }, [theme]);
 
   useEffect(() => {
-    const root = document.documentElement
-    root.setAttribute('data-color',      colorTheme)
-    root.setAttribute('data-font',       fontFamily)
-    root.setAttribute('data-fontsize',   fontSize)
-    root.setAttribute('data-radius',     borderRadius)
-    root.setAttribute('data-compact',    compactMode ? 'true' : 'false')
-    root.setAttribute('data-animations', animations  ? 'true' : 'false')
-  }, [colorTheme, fontFamily, fontSize, borderRadius, compactMode, animations])
+    const root = document.documentElement;
+    root.setAttribute("data-color", colorTheme);
+    root.setAttribute("data-font", fontFamily);
+    root.setAttribute("data-fontsize", fontSize);
+    root.setAttribute("data-radius", borderRadius);
+    root.setAttribute("data-compact", compactMode ? "true" : "false");
+    root.setAttribute("data-animations", animations ? "true" : "false");
+  }, [colorTheme, fontFamily, fontSize, borderRadius, compactMode, animations]);
 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <title>TravelPro — B2B & B2C Travel Platform</title>
-        <meta name="description" content="India's premier travel booking platform for agents and travelers." />
+        <title>Tramps Aviation — B2B & B2C Travel Platform</title>
+        <meta
+          name="description"
+          content="India's premier travel booking platform for agents and travelers."
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {/* Inject before paint to prevent white flash */}
         <script dangerouslySetInnerHTML={{ __html: ANTI_FLASH_SCRIPT }} />
@@ -79,17 +92,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           closeButton
           toastOptions={{
             style: {
-              borderRadius: 'var(--radius)',
-              fontFamily: 'var(--font-body, inherit)',
-              fontSize: '13px',
-              background: 'hsl(var(--card))',
-              color: 'hsl(var(--card-foreground))',
-              border: '1px solid hsl(var(--border))',
+              borderRadius: "var(--radius)",
+              fontFamily: "var(--font-body, inherit)",
+              fontSize: "13px",
+              background: "hsl(var(--card))",
+              color: "hsl(var(--card-foreground))",
+              border: "1px solid hsl(var(--border))",
             },
             duration: 4000,
           }}
         />
       </body>
     </html>
-  )
+  );
 }
