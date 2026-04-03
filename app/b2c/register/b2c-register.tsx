@@ -12,9 +12,9 @@ import {
   Loader2,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
+import { authApi, extractToken, extractUser, unwrap } from "@/lib/api/services";
 import { toast } from "sonner";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 const IS_DEV = process.env.NODE_ENV !== "production";
 
 export default function B2CRegisterPage() {
@@ -65,45 +65,26 @@ export default function B2CRegisterPage() {
 
     setLoading(true);
     try {
-      // Register — correct endpoint: /auth/customer/register
-      const res = await fetch(`${API}/auth/customer/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: `${form.firstName.trim()} ${form.lastName.trim()}`.trim(),
-          email: form.email.toLowerCase().trim(),
-          phone: form.phone,
-          password: form.password,
-        }),
+      const res = await authApi.registerCustomer({
+        name: `${form.firstName.trim()} ${form.lastName.trim()}`.trim(),
+        email: form.email.toLowerCase().trim(),
+        phone: form.phone,
+        password: form.password,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Registration failed");
+      const resData = unwrap(res) as any;
+      if (resData?.error) throw new Error(resData?.message || "Registration failed");
 
       // Send OTP
       try {
-        const otpRes = await fetch(`${API}/auth/otp/send`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            phoneNumber: `+91${form.phone}`,
-            provider: "sms",
-          }),
-        });
-        const otpData = await otpRes.json();
-        if (IS_DEV && otpData.otp) {
-          toast.success(`OTP: ${otpData.otp}`, {
-            description: "Dev mode — no SMS sent",
-            duration: 10000,
-          });
+        const otpRes = await authApi.sendOtp(`+91${form.phone}`);
+        const otpData = unwrap(otpRes) as any;
+        if (IS_DEV && otpData?.otp) {
+          toast.success(`OTP: ${otpData.otp}`, { description: "Dev mode", duration: 10000 });
         } else {
           toast.success(`OTP sent to +91 ${form.phone}`);
         }
       } catch {
-        toast.success(
-          IS_DEV
-            ? `Dev mode — use OTP: 123456`
-            : `OTP sent to +91 ${form.phone}`,
-        );
+        toast.success(IS_DEV ? "Dev mode — use OTP: 123456" : `OTP sent to +91 ${form.phone}`);
       }
 
       setStep("otp");
@@ -132,33 +113,15 @@ export default function B2CRegisterPage() {
     setLoading(true);
 
     try {
-      // Verify OTP
-      const otpRes = await fetch(`${API}/auth/otp/verify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phoneNumber: `+91${form.phone}`, otp }),
-      });
-      const otpData = await otpRes.json();
-      if (!otpRes.ok) throw new Error(otpData.message || "Invalid OTP");
-
-      let token = otpData.access_token || otpData.token;
-      let userData = otpData.user || otpData.data?.user;
+      const otpRes = await authApi.verifyOtp(`+91${form.phone}`, otp);
+      let token = extractToken(otpRes);
+      let userData = extractUser(otpRes);
 
       // If OTP response didn't return user, login with email+password
       if (!token) {
-        const loginRes = await fetch(`${API}/auth/customer/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: form.email, password: form.password }),
-        });
-        if (loginRes.ok) {
-          const loginData = await loginRes.json();
-          token =
-            loginData.access_token ||
-            loginData.token ||
-            loginData.data?.access_token;
-          userData = loginData.user || loginData.data?.user;
-        }
+        const loginRes = await authApi.loginCustomer({ email: form.email, password: form.password });
+        token = extractToken(loginRes);
+        userData = extractUser(loginRes);
       }
 
       if (token && userData) {
@@ -198,25 +161,16 @@ export default function B2CRegisterPage() {
   const handleResend = async () => {
     if (countdown > 0) return;
     try {
-      const res = await fetch(`${API}/auth/otp/resend`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phoneNumber: `+91${form.phone}`,
-          provider: "sms",
-        }),
-      });
-      const data = await res.json();
-      if (IS_DEV && data.otp) {
+      const res = await authApi.resendOtp(`+91${form.phone}`);
+      const data = unwrap(res) as any;
+      if (IS_DEV && data?.otp) {
         toast.success(`New OTP: ${data.otp}`, { duration: 10000 });
       } else {
         toast.success("OTP resent!");
       }
       setCountdown(60);
       setOtp("");
-    } catch {
-      toast.error("Failed to resend OTP");
-    }
+    } catch { toast.error("Failed to resend OTP"); }
   };
 
   const inp =

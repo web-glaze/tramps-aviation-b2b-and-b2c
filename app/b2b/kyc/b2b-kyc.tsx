@@ -8,9 +8,8 @@ import {
   Eye, RefreshCw, ArrowLeft, Loader2,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
+import { agentApi, unwrap } from "@/lib/api/services";
 import { toast } from "sonner";
-
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 
 const DOC_TYPES = [
   { type: "pan",            label: "PAN Card",          required: true,  desc: "Business or owner PAN card (JPG/PNG/PDF)" },
@@ -65,23 +64,12 @@ export default function B2BKycPage() {
 
   const fetchStatus = useCallback(async () => {
     setPageLoading(true);
-    // FIX: Fallback to localStorage token in case Zustand store hasn't hydrated yet
-    const authToken = token || (typeof window !== "undefined" ? localStorage.getItem("agent_token") : null);
     try {
-      const res = await fetch(`${API}/agents/kyc/status`, {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
-      // FIX: Handle 404 gracefully — means agent hasn't uploaded KYC yet (new agent)
-      if (res.status === 404) {
-        setKycStatus("pending");
-        setPageLoading(false);
-        return;
-      }
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setKycStatus(data.kycStatus || data.data?.kycStatus || "pending");
-      setRejectionReason(data.kycRejectionReason || data.data?.kycRejectionReason || "");
-      const docList: any[] = data.kycDocuments || data.data?.kycDocuments || [];
+      const res = await agentApi.getKycStatus();
+      const data = unwrap(res) as any;
+      setKycStatus(data?.kycStatus || data?.status || "pending");
+      setRejectionReason(data?.kycRejectionReason || data?.rejectionReason || "");
+      const docList: any[] = data?.kycDocuments || [];
       setDocs((prev) => {
         const updated = { ...prev };
         docList.forEach((d: any) => {
@@ -92,38 +80,26 @@ export default function B2BKycPage() {
         });
         return updated;
       });
-    } catch { /* keep UI responsive */ }
+    } catch { setKycStatus("pending"); }
     finally { setPageLoading(false); }
-  }, [token]);
+  }, []);
 
   const handleUpload = async (docType: DocType, file: File) => {
     if (file.size > 10 * 1024 * 1024) { toast.error("File too large (max 10MB)"); return; }
     const allowed = ["image/jpeg","image/png","image/webp","application/pdf"];
     if (!allowed.includes(file.type)) { toast.error("Only JPG, PNG, WEBP or PDF allowed"); return; }
 
-    // FIX: Fallback to localStorage token
-    const authToken = token || (typeof window !== "undefined" ? localStorage.getItem("agent_token") : null);
-
     setUploading(docType);
     setDocs((prev) => ({ ...prev, [docType]: { ...prev[docType], status: "uploading" } }));
-    const fd = new FormData();
-    fd.append("document", file);
-    fd.append("docType", docType);
-
     try {
-      const res = await fetch(`${API}/agents/kyc/upload`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${authToken}` },
-        body: fd,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Upload failed");
+      const res = await agentApi.uploadKycDocument(docType, file);
+      const data = unwrap(res) as any;
       const label = DOC_TYPES.find((d) => d.type === docType)?.label;
       toast.success(`${label} uploaded!`);
-      setDocs((prev) => ({ ...prev, [docType]: { type: docType, status: "pending", url: data.url || data.data?.url } }));
-      if (data.kycStatus || data.data?.kycStatus) setKycStatus(data.kycStatus || data.data.kycStatus);
+      setDocs((prev) => ({ ...prev, [docType]: { type: docType, status: "pending", url: data?.url || data?.s3Url } }));
+      if (data?.kycStatus) setKycStatus(data.kycStatus);
     } catch (err: any) {
-      toast.error(err.message || "Upload failed");
+      toast.error(err?.response?.data?.message || err.message || "Upload failed");
       setDocs((prev) => ({ ...prev, [docType]: { ...prev[docType], status: "not_uploaded" } }));
     } finally { setUploading(null); }
   };

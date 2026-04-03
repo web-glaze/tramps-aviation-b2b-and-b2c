@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Plane, Hotel, Shield, ArrowLeft, Calendar, Download, XCircle, Clock } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
-import { customerApi } from "@/lib/api/services";
+import { customerApi, unwrap } from "@/lib/api/services";
 
 const MOCK_TRIPS = [
   { id: "FL-001", type: "Flight", service: "DEL → BOM", pnr: "ABC123", amount: 8500, status: "confirmed", date: "2025-03-15", travelDate: "2025-04-01", airline: "Air India", flightNo: "AI-201" },
@@ -44,7 +44,7 @@ export default function MyTripsPage() {
   const loadTrips = async () => {
     try {
       const res = await customerApi.getBookings();
-      const data = res.data as any;
+      const data = unwrap(res) as any;
       const list = data?.bookings || data?.data || [];
       setTrips(Array.isArray(list) && list.length > 0 ? list : MOCK_TRIPS);
     } catch {

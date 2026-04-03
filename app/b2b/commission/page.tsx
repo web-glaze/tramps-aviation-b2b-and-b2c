@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { agentApi } from '@/lib/api/services'
+import { agentApi, unwrap } from '@/lib/api/services'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatCard } from '@/components/shared/StatCard'
 import { StatusBadge } from '@/components/shared/StatusBadge'
@@ -20,8 +20,8 @@ export default function CommissionPage() {
     setLoading(true)
     try {
       const res = await agentApi.getCommissions()
-      const d = res.data as any
-      setData(d.report || d.data || d)
+      const d = unwrap(res) as any
+      setData(d?.report || d?.commissions ? d : d)
     } catch { toast.error('Failed to load commissions') }
     finally { setLoading(false) }
   }

@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { toast } from "sonner";
-import { agentApi } from "@/lib/api/services";
+import { agentApi, unwrap } from "@/lib/api/services";
 
 const MOCK_BOOKING = {
   id: "TRV-20250315-ABC01",
@@ -60,7 +60,7 @@ export default function B2BBookingDetailPage() {
     const id = params?.bookingId as string;
     // Try real API first
     agentApi.getBookings().then(res => {
-      const data = res.data as any;
+      const data = unwrap(res) as any;
       const list = data?.bookings || data?.data || [];
       const found = list.find((b: any) => b.bookingRef === id || b.id === id);
       setBooking(found || MOCK_BOOKING);

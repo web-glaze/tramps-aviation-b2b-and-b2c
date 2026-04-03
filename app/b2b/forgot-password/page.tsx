@@ -13,8 +13,7 @@ import {
   Shield,
 } from "lucide-react";
 import { toast } from "sonner";
-
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+import { authApi, unwrap } from "@/lib/api/services";
 
 type Step = "email" | "otp" | "newpass" | "done";
 
@@ -80,14 +79,9 @@ export default function B2BForgotPasswordPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await fetch(`${API}/agents/forgot-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.toLowerCase().trim() }),
-      });
-    } catch {
-      /* silent */
-    } finally {
+      await authApi.forgotPassword({ email: email.toLowerCase().trim() });
+    } catch { /* silent */ }
+    finally {
       setLoading(false);
       setStep("otp");
       toast.success("OTP sent! Check your inbox (and spam folder).");
@@ -102,31 +96,18 @@ export default function B2BForgotPasswordPage() {
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPwd.length < 8)
-      return toast.error("Password must be at least 8 characters");
+    if (newPwd.length < 8) return toast.error("Password must be at least 8 characters");
     if (newPwd !== confirmPwd) return toast.error("Passwords don't match");
     setLoading(true);
     try {
-      const res = await fetch(`${API}/agents/reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: email.toLowerCase().trim(),
-          otp: otp.trim(),
-          newPassword: newPwd,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Reset failed");
+      const res = await authApi.resetPassword({ email: email.toLowerCase().trim(), otp: otp.trim(), newPassword: newPwd });
+      const data = unwrap(res) as any;
+      if (data?.error) throw new Error(data?.message || "Reset failed");
       setStep("done");
       toast.success("Password reset successfully!");
     } catch (err: any) {
-      toast.error(
-        err.message || "Reset failed. The OTP may be wrong or expired.",
-      );
-    } finally {
-      setLoading(false);
-    }
+      toast.error(err?.response?.data?.message || err.message || "Reset failed. The OTP may be wrong or expired.");
+    } finally { setLoading(false); }
   };
 
   const steps = [

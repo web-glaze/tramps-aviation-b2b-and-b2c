@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { searchApi, agentApi } from '@/lib/api/services'
+import { searchApi, agentApi, unwrap } from '@/lib/api/services'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -41,8 +41,8 @@ export default function AgentFlightsPage() {
         passengers: parseInt(searchForm.passengers),
         cabinClass: searchForm.cabinClass,
       })
-      const data = res.data as any
-      const list = data.flights || data.data?.flights || data.data || []
+      const data = unwrap(res) as any
+      const list = data?.flights || data?.data?.flights || []
       setFlights(Array.isArray(list) ? list : [])
       if (!list.length) toast.info('No flights found for this route')
     } catch (err: any) {
@@ -75,8 +75,8 @@ export default function AgentFlightsPage() {
         contactEmail, contactPhone,
         origin: searchForm.origin, destination: searchForm.destination, date: searchForm.date,
       })
-      const data = res.data as any
-      toast.success(`Booking confirmed! PNR: ${data.pnr || data.data?.pnr || 'N/A'}`)
+      const data = unwrap(res) as any
+      toast.success(`Booking confirmed! PNR: ${data?.pnr || data?.booking?.pnr || 'N/A'}`)
       setBookingDialog(false)
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Booking failed')

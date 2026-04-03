@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { agentApi } from '@/lib/api/services'
+import { agentApi, unwrap } from '@/lib/api/services'
 import { useAuthStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
@@ -63,22 +63,20 @@ export default function B2BDashboard() {
       ])
 
       if (dashRes.status === 'fulfilled') {
-        const d = dashRes.value.data as any
-        // Backend returns { walletBalance, totalBookings, totalRevenue, kycStatus, agencyName }
-        setStats(d?.data || d)
+        const d = unwrap(dashRes.value) as any
+        setStats(d)
       }
       if (walletRes.status === 'fulfilled') {
-        const d = walletRes.value.data as any
-        // Backend GET /agents/wallet/balance returns { balance, currency }
+        const d = unwrap(walletRes.value) as any
         setWallet(d)
       }
       if (txRes.status === 'fulfilled') {
-        const d = txRes.value.data as any
+        const d = unwrap(txRes.value) as any
         setTxns(d?.transactions || d?.data || [])
       }
       if (bookRes.status === 'fulfilled') {
-        const d = bookRes.value.data as any
-        setBookings(Array.isArray(d?.data) ? d.data : Array.isArray(d?.bookings) ? d.bookings : Array.isArray(d) ? d : [])
+        const d = unwrap(bookRes.value) as any
+        setBookings(Array.isArray(d?.bookings) ? d.bookings : Array.isArray(d?.data) ? d.data : Array.isArray(d) ? d : [])
       }
     } catch { /* individual errors handled above */ }
     finally { setLoading(false) }

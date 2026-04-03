@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Hotel, Search, Star, MapPin, Wifi, RefreshCcw, LogIn } from "lucide-react";
-import { hotelsApi } from "@/lib/api/services";
+import { hotelsApi, unwrap } from "@/lib/api/services";
 import { useAuthStore } from "@/lib/store";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -36,11 +36,11 @@ export default function B2CHotelsPage() {
     setSearched(true);
     try {
       const citiesRes = await hotelsApi.searchCities(city);
-      const data = citiesRes.data as any;
+      const data = unwrap(citiesRes) as any;
       const cities = data?.cities || data?.data || [];
       if (cities.length > 0) {
         const res = await hotelsApi.search({ cityCode: cities[0].code, checkIn, checkOut, rooms, adults: guests });
-        const d = res.data as any;
+        const d = unwrap(res) as any;
         const list = d?.hotels || d?.data?.hotels || [];
         setHotels(list.length > 0 ? list : MOCK_HOTELS.filter(h => h.city.toLowerCase().includes(city.toLowerCase())));
       } else {

@@ -12,7 +12,7 @@ import {
   ArrowLeft,
   Loader2,
 } from "lucide-react";
-import { authApi } from "@/lib/api/services";
+import { authApi, extractToken, extractUser } from "@/lib/api/services";
 import { useAuthStore } from "@/lib/store";
 import { toast } from "sonner";
 
@@ -50,14 +50,9 @@ function LoginContent() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await authApi.loginWithEmail(email, password);
-      const data = res.data as any;
-      const userData = data?.user || data?.data?.user;
-      const token =
-        data?.access_token ||
-        data?.accessToken ||
-        data?.token ||
-        data?.data?.token;
+      const res = await authApi.loginCustomer({ email, password });
+      const token = extractToken(res);
+      const userData = extractUser(res);
       if (token && userData) {
         setAuth({ ...userData, role: "customer" }, token);
         toast.success("Welcome back!");
@@ -102,14 +97,9 @@ function LoginContent() {
     if (!otp || otp.length !== 6) return toast.error("Enter 6-digit OTP");
     setLoading(true);
     try {
-      const res = await authApi.loginWithOtp(phone, otp);
-      const data = res.data as any;
-      const userData = data?.user || data?.data?.user;
-      const token =
-        data?.access_token ||
-        data?.accessToken ||
-        data?.token ||
-        data?.data?.token;
+      const res = await authApi.verifyOtp(phone, otp);
+      const token = extractToken(res);
+      const userData = extractUser(res);
       if (token && userData) {
         setAuth({ ...userData, role: "customer" }, token);
         toast.success("Welcome!");

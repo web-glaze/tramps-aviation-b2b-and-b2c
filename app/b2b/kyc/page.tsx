@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client'
 import { useState, useEffect } from 'react'
-import { agentApi } from '@/lib/api/services'
+import { agentApi, unwrap } from '@/lib/api/services'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import {
@@ -45,7 +45,7 @@ export default function KycPage() {
     setLoading(true)
     try {
       const res = await agentApi.getKycStatus()
-      const data = res.data as any
+      const data = unwrap(res) as any
       // Backend /agents/kyc/status returns: { kycStatus, kycDocuments, agencyName, contactPerson }
       // OR /kyc/my returns the kyc document directly
       const kyc = data.kyc || data.data || data

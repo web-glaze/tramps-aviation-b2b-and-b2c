@@ -19,8 +19,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/lib/store";
-
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+import { authApi, extractToken, extractAgent } from "@/lib/api/services";
 
 const STATES = [
   "Andhra Pradesh",
@@ -106,70 +105,44 @@ export default function B2BRegisterPage() {
 
     setLoading(true);
     try {
-      const res = await fetch(`${API}/agents/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          agencyName: form.agencyName.trim(),
-          contactPerson: form.contactPerson.trim(),
-          email: form.email.toLowerCase().trim(),
-          phone: form.phone.startsWith("+91")
-            ? form.phone
-            : `+91${form.phone.replace(/\D/g, "")}`,
-          alternatePhone: form.alternatePhone
-            ? `+91${form.alternatePhone.replace(/\D/g, "")}`
-            : undefined,
-          password: form.password,
-          city: form.city.trim(),
-          state: form.state,
-          pincode: form.pincode || undefined,
-          address: form.address || undefined,
-          // FIX: Only send GST/PAN if non-empty — avoids unique constraint on empty string ""
-          gstNumber: form.gstNumber.trim()
-            ? form.gstNumber.toUpperCase().trim()
-            : undefined,
-          panNumber: form.panNumber.trim()
-            ? form.panNumber.toUpperCase().trim()
-            : undefined,
-        }),
+      const res = await authApi.registerAgent({
+        agencyName: form.agencyName.trim(),
+        contactPerson: form.contactPerson.trim(),
+        email: form.email.toLowerCase().trim(),
+        phone: form.phone.startsWith("+91") ? form.phone : `+91${form.phone.replace(/\D/g, "")}`,
+        alternatePhone: form.alternatePhone ? `+91${form.alternatePhone.replace(/\D/g, "")}` : undefined,
+        password: form.password,
+        city: form.city.trim(),
+        state: form.state,
+        pincode: form.pincode || undefined,
+        address: form.address || undefined,
+        gstNumber: form.gstNumber.trim() ? form.gstNumber.toUpperCase().trim() : undefined,
+        panNumber: form.panNumber.trim() ? form.panNumber.toUpperCase().trim() : undefined,
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Registration failed");
+      const agentToken = extractToken(res);
+      const agentData = extractAgent(res);
 
-      // ── Token must be returned by backend on register ──────────────────
-      const agentToken = data.access_token;
-      const agentData = data.agent;
-      if (!agentToken)
-        throw new Error(
-          "Registration succeeded but no token returned. Please login manually.",
-        );
+      if (!agentToken) throw new Error("Registration succeeded but no token returned. Please login manually.");
 
-      // ── Save token under BOTH keys (auth_token = interceptor, agent_token = KYC fallback) ──
-      if (typeof window !== "undefined") {
-        localStorage.setItem("auth_token", agentToken);
-        localStorage.setItem("agent_token", agentToken);
-        document.cookie = `auth_token=${agentToken}; path=/; max-age=86400; SameSite=Lax`;
-      }
+      localStorage.setItem("auth_token", agentToken);
+      localStorage.setItem("agent_token", agentToken);
+      document.cookie = `auth_token=${agentToken}; path=/; max-age=86400; SameSite=Lax`;
 
-      // ── Populate Zustand store with complete agent data ──────────────────
-      setAuth(
-        {
-          id: agentData.id,
-          name: agentData.contactPerson || agentData.agencyName,
-          email: agentData.email,
-          role: "agent",
-          kycStatus: agentData.kycStatus || "pending",
-          status: agentData.status || "inactive",
-          agencyName: agentData.agencyName,
-          walletBalance: 0,
-        } as any,
-        agentToken,
-      );
+      setAuth({
+        id: agentData.id || agentData._id,
+        name: agentData.contactPerson || agentData.agencyName,
+        email: agentData.email,
+        role: "agent",
+        kycStatus: agentData.kycStatus || "pending",
+        status: agentData.status || "inactive",
+        agencyName: agentData.agencyName,
+        walletBalance: 0,
+      } as any, agentToken);
 
       setRegisteredEmail(form.email);
-      setStep("success");
-      toast.success("Account created! Please upload KYC documents.");
+      toast.success("Account created! Redirecting to KYC...");
+      setTimeout(() => { router.push("/b2b/kyc"); }, 1500);
     } catch (err: any) {
       // FIX: Parse specific duplicate field errors from backend prefix codes
       const msg = err.message || "";

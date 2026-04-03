@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Shield, CheckCircle, Star, ArrowRight, RefreshCcw } from "lucide-react";
-import { insuranceApi } from "@/lib/api/services";
+import { insuranceApi, unwrap } from "@/lib/api/services";
 import { useAuthStore } from "@/lib/store";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -40,7 +40,7 @@ export default function B2CInsurancePage() {
 
   useEffect(() => {
     insuranceApi.getPlans({}).then(res => {
-      const data = res.data as any;
+      const data = unwrap(res) as any;
       const list = data?.plans || data?.data || [];
       if (list.length > 0) setPlans(list);
     }).catch(() => {});

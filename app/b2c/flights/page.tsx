@@ -7,7 +7,7 @@ import {
   Plane, ArrowRight, Clock, Luggage, Filter, Search,
   ArrowUpDown, RefreshCcw, LogIn, X, SlidersHorizontal
 } from "lucide-react";
-import { flightsApi } from "@/lib/api/services";
+import { flightsApi, unwrap } from "@/lib/api/services";
 import { useAuthStore } from "@/lib/store";
 import { toast } from "sonner";
 
@@ -101,7 +101,7 @@ function FlightsContent() {
         origin: from.toUpperCase(), destination: to.toUpperCase(),
         departureDate: date, adults: parseInt(adults),
       });
-      const data = res.data as any;
+      const data = unwrap(res) as any;
       const list = data?.flights || data?.data?.flights || [];
       setFlights(list.length > 0 ? list : MOCK_FLIGHTS.map(f => ({ ...f, from: from.toUpperCase(), to: to.toUpperCase() })));
     } catch {

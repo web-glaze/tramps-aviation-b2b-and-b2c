@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { hotelsApi } from "@/lib/api/services";
+import { hotelsApi, unwrap } from "@/lib/api/services";
 import { Hotel, Search, RefreshCcw, Star, ArrowRight, Wifi, Coffee } from "lucide-react";
 
 const MOCK_HOTELS = [
@@ -42,7 +42,7 @@ export default function B2bHotelsPage() {
         rooms:     parseInt(form.rooms) || 1,
         ratings:   form.minStarRating ? [parseInt(form.minStarRating), parseInt(form.minStarRating)+1, parseInt(form.minStarRating)+2].filter(r => r <= 5) : [3,4,5],
       });
-      const data = res.data as any;
+      const data = unwrap(res) as any;
       const list = data.hotels || data.results || [];
       const filtered = form.minStarRating
         ? list.filter((h: any) => (h.stars || h.StarRating || 0) >= parseInt(form.minStarRating))

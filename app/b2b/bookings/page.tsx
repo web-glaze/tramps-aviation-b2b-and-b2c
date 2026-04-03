@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { agentApi } from "@/lib/api/services";
+import { agentApi, unwrap } from "@/lib/api/services";
 import { cn } from "@/lib/utils";
 import { Plane, Hotel, Shield, RefreshCw, Eye, XCircle, Loader2, Search, BookOpen } from "lucide-react";
 import { toast } from "sonner";
@@ -36,8 +36,8 @@ export default function B2bBookingsPage() {
       const params: any = { page, limit: 15 };
       if (statusFilter !== "all") params.status = statusFilter;
       const res = await agentApi.getBookings(params);
-      const d = res.data as any;
-      setBookings(Array.isArray(d?.data) ? d.data : Array.isArray(d?.bookings) ? d.bookings : Array.isArray(d) ? d : []);
+      const d = unwrap(res) as any;
+      setBookings(Array.isArray(d?.bookings) ? d.bookings : Array.isArray(d?.data) ? d.data : Array.isArray(d) ? d : []);
       setTotal(d?.pagination?.total ?? d?.total ?? 0);
     } catch { setBookings([]) }
     finally { setLoading(false) }

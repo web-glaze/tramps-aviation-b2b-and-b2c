@@ -1,12 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/lib/store";
-import { agentApi } from "@/lib/api/services";
+import { agentApi, authApi, unwrap } from "@/lib/api/services";
 import { User, Shield, Save, Loader2, KeyRound, Building2, Phone, Mail, MapPin, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 const STATES = ["Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal","Delhi","Chandigarh","Puducherry"];
 
 type Tab = "profile" | "security";
@@ -28,8 +27,8 @@ export default function B2BProfilePage() {
     setLoading(true);
     try {
       const res = await agentApi.getProfile();
-      const d = res.data as any;
-      const p = d.data || d.agent || d;
+      const d = unwrap(res) as any;
+      const p = d?.agent || d;
       setProfile(p);
       setForm({
         contactPerson: p.contactPerson || "",
@@ -47,8 +46,8 @@ export default function B2BProfilePage() {
     setSaving(true);
     try {
       const res = await agentApi.updateProfile(form);
-      const d = res.data as any;
-      const updated = d.data || d.agent || d;
+      const d = unwrap(res) as any;
+      const updated = d?.agent || d;
       setProfile(updated);
       if (user) setAuth({ ...user, ...form }, token!);
       toast.success("Profile updated successfully");
@@ -64,18 +63,11 @@ export default function B2BProfilePage() {
     if (pwd.current === pwd.newPwd) return toast.error("New password must be different from current password");
     setChangingPwd(true);
     try {
-      // FIX: Use /agents/change-password (agent-specific endpoint, not customer auth endpoint)
-      const res = await fetch(`${API}/agents/change-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ currentPassword: pwd.current, newPassword: pwd.newPwd }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to change password");
+      await authApi.changePassword({ currentPassword: pwd.current, newPassword: pwd.newPwd });
       toast.success("Password changed successfully");
       setPwd({ current: "", newPwd: "", confirm: "" });
     } catch (err: any) {
-      toast.error(err.message || "Failed to change password");
+      toast.error(err?.response?.data?.message || err.message || "Failed to change password");
     } finally { setChangingPwd(false) }
   };
 

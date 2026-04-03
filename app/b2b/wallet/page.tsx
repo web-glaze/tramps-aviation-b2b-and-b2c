@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { agentApi } from '@/lib/api/services'
+import { agentApi, unwrap } from '@/lib/api/services'
 import { cn } from '@/lib/utils'
 import { Wallet, ArrowUpRight, ArrowDownRight, DollarSign, RefreshCw, Loader2, Clock } from 'lucide-react'
 
@@ -19,8 +19,7 @@ export default function WalletPage() {
   const loadBalance = async () => {
     try {
       const res = await agentApi.getWallet()
-      const d = res.data as any
-      // Backend GET /agents/wallet/balance returns { balance: number, currency: 'INR' }
+      const d = unwrap(res) as any
       setBalance(typeof d === 'number' ? d : d?.balance ?? d?.walletBalance ?? 0)
     } catch { setBalance(0) }
   }
@@ -31,7 +30,7 @@ export default function WalletPage() {
       const params: any = { page, limit: 15 }
       if (filter !== 'all') params.category = filter
       const res = await agentApi.getWalletTransactions(params)
-      const d = res.data as any
+      const d = unwrap(res) as any
       setTxns(Array.isArray(d?.transactions) ? d.transactions : Array.isArray(d?.data) ? d.data : [])
       setTotal(d?.pagination?.total ?? d?.total ?? 0)
     } catch { setTxns([]) }
