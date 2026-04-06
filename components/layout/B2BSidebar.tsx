@@ -135,6 +135,9 @@ export function B2BSidebar() {
             <div className="mt-2 px-3 py-2 rounded-xl bg-muted/50">
               <p className="text-xs font-semibold truncate">{user.name || user.agencyName || "Agent"}</p>
               <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
+              {user.agentId && (
+                <p className="text-[10px] font-mono font-bold text-primary/80 tracking-wide">{user.agentId}</p>
+              )}
             </div>
           )}
         </div>

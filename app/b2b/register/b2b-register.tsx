@@ -64,6 +64,8 @@ export default function B2BRegisterPage() {
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
+  const [registeredAgentId, setRegisteredAgentId] = useState("");
+  const [copiedId, setCopiedId] = useState(false);
 
   const [form, setForm] = useState({
     agencyName: "",
@@ -110,12 +112,12 @@ export default function B2BRegisterPage() {
         contactPerson: form.contactPerson.trim(),
         email: form.email.toLowerCase().trim(),
         phone: form.phone.startsWith("+91") ? form.phone : `+91${form.phone.replace(/\D/g, "")}`,
-        alternatePhone: form.alternatePhone ? `+91${form.alternatePhone.replace(/\D/g, "")}` : undefined,
+        ...(form.alternatePhone ? { alternatePhone: `+91${form.alternatePhone.replace(/\D/g, "")}` } : {}),
         password: form.password,
         city: form.city.trim(),
         state: form.state,
-        pincode: form.pincode || undefined,
-        address: form.address || undefined,
+        ...(form.pincode ? { pincode: form.pincode } : {}),
+        ...(form.address?.trim() ? { address: form.address.trim() } : {}),
         gstNumber: form.gstNumber.trim() ? form.gstNumber.toUpperCase().trim() : undefined,
         panNumber: form.panNumber.trim() ? form.panNumber.toUpperCase().trim() : undefined,
       });
@@ -141,11 +143,12 @@ export default function B2BRegisterPage() {
       } as any, agentToken);
 
       setRegisteredEmail(form.email);
-      toast.success("Account created! Redirecting to KYC...");
-      setTimeout(() => { router.push("/b2b/kyc"); }, 1500);
+      setRegisteredAgentId(agentData?.agentId || "");
+      setStep("success");
+      toast.success("Account created successfully!");
     } catch (err: any) {
       // FIX: Parse specific duplicate field errors from backend prefix codes
-      const msg = err.message || "";
+      const msg = err?.response?.data?.message || err.message || "";
       if (msg.includes("gst_duplicate")) {
         toast.error(
           "This GST number is already registered with another account. Please check and try again.",
@@ -192,61 +195,52 @@ export default function B2BRegisterPage() {
 
   if (step === "success") {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "#060b14",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "1rem",
-        }}
-      >
-        <div style={{ width: "100%", maxWidth: "28rem", textAlign: "center" }}>
-          <div
-            style={{
-              width: 80,
-              height: 80,
-              background: "rgba(34,197,94,0.15)",
-              border: "1px solid rgba(34,197,94,0.3)",
-              borderRadius: "50%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              margin: "0 auto 1.5rem",
-            }}
-          >
+      <div style={{ minHeight: "100vh", background: "#060b14", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+        <div style={{ width: "100%", maxWidth: "32rem", textAlign: "center" }}>
+
+          {/* Success icon */}
+          <div style={{ width: 80, height: 80, background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.5rem" }}>
             <CheckCircle style={{ width: 40, height: 40, color: "#4ade80" }} />
           </div>
-          <h1
-            style={{
-              fontSize: "1.5rem",
-              fontWeight: 700,
-              color: "white",
-              marginBottom: "0.5rem",
-            }}
-          >
-            Registration Successful!
+
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "white", marginBottom: "0.5rem" }}>
+            Registration Successful! 🎉
           </h1>
-          <p
-            style={{
-              color: "#94a3b8",
-              fontSize: "0.875rem",
-              marginBottom: "0.25rem",
-            }}
-          >
-            {registeredEmail}
+          <p style={{ color: "#64748b", fontSize: "0.875rem", marginBottom: "1.5rem", lineHeight: 1.6 }}>
+            Your agency account has been created. Save your Agent ID below — you will need it to login.
           </p>
-          <p
-            style={{
-              color: "#64748b",
-              fontSize: "0.875rem",
-              marginBottom: "2rem",
-              lineHeight: 1.6,
-            }}
-          >
-            Your agency account has been created. Complete KYC to start booking.
-          </p>
+
+          {/* Agent ID Card — most important info */}
+          {registeredAgentId && (
+            <div style={{ background: "linear-gradient(135deg, #1e3a5f, #0f2744)", border: "1px solid #2563eb", borderRadius: "1rem", padding: "1.5rem", marginBottom: "1.5rem" }}>
+              <p style={{ fontSize: "0.75rem", color: "#94a3b8", fontWeight: 600, margin: "0 0 0.5rem", letterSpacing: "0.05em" }}>
+                YOUR AGENT ID
+              </p>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.75rem" }}>
+                <span style={{ fontSize: "2rem", fontWeight: 800, color: "#60a5fa", fontFamily: "monospace", letterSpacing: "0.1em" }}>
+                  {registeredAgentId}
+                </span>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(registeredAgentId); setCopiedId(true); setTimeout(() => setCopiedId(false), 2000); }}
+                  style={{ background: copiedId ? "#16a34a" : "#1d4ed8", border: "none", borderRadius: "0.5rem", padding: "0.375rem 0.75rem", color: "white", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer", transition: "background 0.2s" }}
+                >
+                  {copiedId ? "✓ Copied!" : "Copy"}
+                </button>
+              </div>
+              <p style={{ fontSize: "0.75rem", color: "#475569", margin: "0.75rem 0 0" }}>
+                Login with this ID + your password
+              </p>
+            </div>
+          )}
+
+          {/* Email info */}
+          <div style={{ background: "#0a1020", border: "1px solid #1a2840", borderRadius: "0.75rem", padding: "1rem", marginBottom: "1.5rem", textAlign: "left" }}>
+            <p style={{ fontSize: "0.75rem", color: "#64748b", margin: "0 0 0.25rem" }}>Registered Email</p>
+            <p style={{ fontSize: "0.875rem", color: "#94a3b8", fontWeight: 500, margin: 0 }}>{registeredEmail}</p>
+            <p style={{ fontSize: "0.7rem", color: "#334155", margin: "0.5rem 0 0" }}>
+              You can login with your email, Agent ID ({registeredAgentId || "TRV-XXXXX"}), or phone number
+            </p>
+          </div>
           <div
             style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}
           >

@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/lib/store";
 import { agentApi, authApi, unwrap } from "@/lib/api/services";
-import { User, Shield, Save, Loader2, KeyRound, Building2, Phone, Mail, MapPin, Eye, EyeOff } from "lucide-react";
+import { User, Shield, Save, Loader2, KeyRound, Building2, Phone, Mail, MapPin, Eye, EyeOff, Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -20,6 +20,7 @@ export default function B2BProfilePage() {
   const [pwd, setPwd] = useState({ current: "", newPwd: "", confirm: "" });
   const [showPwd, setShowPwd] = useState({ current: false, new: false, confirm: false });
   const [changingPwd, setChangingPwd] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
 
   useEffect(() => { loadProfile() }, []);
 
@@ -71,6 +72,15 @@ export default function B2BProfilePage() {
     } finally { setChangingPwd(false) }
   };
 
+  const copyAgentId = () => {
+    const id = data.agentId;
+    if (!id) return;
+    navigator.clipboard.writeText(id);
+    setCopiedId(true);
+    toast.success(`Agent ID ${id} copied!`);
+    setTimeout(() => setCopiedId(false), 2000);
+  };
+
   const data = profile || user || {};
 
   const inp = "w-full h-11 px-4 rounded-xl border border-border bg-background text-sm outline-none focus:border-primary transition-all placeholder:text-muted-foreground";
@@ -82,6 +92,39 @@ export default function B2BProfilePage() {
         <h1 className="text-2xl font-bold font-display">My Profile</h1>
         <p className="text-sm text-muted-foreground">Manage your account details</p>
       </div>
+
+      {/* Agent ID Card — shown prominently at top */}
+      {data.agentId && (
+        <div className="relative overflow-hidden bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/30 rounded-2xl p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-primary/70 uppercase tracking-widest mb-1">
+                Your Agent ID
+              </p>
+              <p className="text-3xl font-black font-mono text-primary tracking-wider">
+                {data.agentId}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Login with this ID · Share with admin · Use for B2B bookings
+              </p>
+            </div>
+            <button
+              onClick={copyAgentId}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all",
+                copiedId
+                  ? "bg-emerald-500 text-white"
+                  : "bg-primary text-primary-foreground hover:opacity-90"
+              )}
+            >
+              {copiedId ? <><Check className="h-4 w-4" /> Copied!</> : <><Copy className="h-4 w-4" /> Copy ID</>}
+            </button>
+          </div>
+          {/* decorative circles */}
+          <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-primary/5 pointer-events-none" />
+          <div className="absolute -right-2 -bottom-8 h-32 w-32 rounded-full bg-primary/5 pointer-events-none" />
+        </div>
+      )}
 
       {/* Agency Info Card */}
       <div className="bg-card border border-border rounded-2xl p-5 flex items-center gap-4">
@@ -133,6 +176,20 @@ export default function B2BProfilePage() {
                   </div>
                 </div>
                 <div>
+                  <label className={lbl}>Agent ID</label>
+                  <div
+                    onClick={copyAgentId}
+                    className="flex items-center justify-between h-11 px-4 rounded-xl border border-primary/30 bg-primary/5 text-sm font-mono font-bold text-primary cursor-pointer hover:bg-primary/10 transition-all"
+                  >
+                    <span>{data.agentId || 'Not assigned'}</span>
+                    {data.agentId && (
+                      copiedId
+                        ? <Check className="h-3.5 w-3.5 text-emerald-500" />
+                        : <Copy className="h-3.5 w-3.5 opacity-50" />
+                    )}
+                  </div>
+                </div>
+                <div>
                   <label className={lbl}>Business Email</label>
                   <div className="flex items-center gap-2 h-11 px-4 rounded-xl border border-border bg-muted/30 text-sm text-muted-foreground">
                     <Mail className="h-4 w-4 flex-shrink-0" />
@@ -150,6 +207,12 @@ export default function B2BProfilePage() {
                   <label className={lbl}>GST Number</label>
                   <div className="flex items-center gap-2 h-11 px-4 rounded-xl border border-border bg-muted/30 text-sm text-muted-foreground font-mono">
                     {data.gstNumber || 'Not provided'}
+                  </div>
+                </div>
+                <div>
+                  <label className={lbl}>PAN Number</label>
+                  <div className="flex items-center gap-2 h-11 px-4 rounded-xl border border-border bg-muted/30 text-sm text-muted-foreground font-mono">
+                    {data.panNumber || 'Not provided'}
                   </div>
                 </div>
               </div>
@@ -216,7 +279,7 @@ export default function B2BProfilePage() {
             </div>
           ))}
           {pwd.confirm && pwd.newPwd !== pwd.confirm && (
-            <p className="text-xs text-red-500">❌ Passwords don't match</p>
+            <p className="text-xs text-red-500">❌ Passwords don&apos;t match</p>
           )}
           <button onClick={handlePasswordChange} disabled={changingPwd || !pwd.current || !pwd.newPwd || pwd.newPwd !== pwd.confirm}
             className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-60 transition-all">

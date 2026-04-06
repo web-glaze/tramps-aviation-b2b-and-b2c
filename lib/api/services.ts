@@ -27,8 +27,8 @@ export const authApi = {
     ? mock({ data: { access_token: 'mock-jwt-agent', agent: { ...MOCK_AGENT, ...data } }, message: 'Registration successful.' }, 800)
     : apiClient.post('/agents/register', data),
 
-  loginAgent: (data: { email: string; password: string }) => USE_MOCK
-    ? mock({ data: { access_token: 'mock-jwt-agent', agent: { ...MOCK_AGENT, email: data.email } } }, 600)
+  loginAgent: (data: { identifier: string; password: string }) => USE_MOCK
+    ? mock({ data: { access_token: 'mock-jwt-agent', agent: { ...MOCK_AGENT, email: data.identifier } } }, 600)
     : apiClient.post('/agents/login', data),
 
   forgotPassword: (data: any) => USE_MOCK

@@ -72,7 +72,7 @@ export const useAuthStore = create<AuthState>()(
           user,
           token,
           role: user?.role || null,
-          agentId: user?.id || user?.agentId || null,
+          agentId: user?.agentId || null,  // TRV-00001 format
           isAuthenticated: true,
         })
       },

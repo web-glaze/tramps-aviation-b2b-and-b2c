@@ -15,13 +15,22 @@ const s = {
   btn: { width: "100%", background: "#2563eb", color: "white", border: "none", borderRadius: "0.75rem", padding: "0.75rem", fontSize: "0.875rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" } as React.CSSProperties,
 };
 
+// Detect what kind of identifier was entered
+function detectIdentifierType(value: string): string {
+  if (value.includes("@")) return "Email";
+  if (/^TRV-\d+$/i.test(value.trim())) return "Agent ID";
+  if (/^\d{10}$/.test(value.replace(/\D/g, ""))) return "Phone";
+  return "Email / Agent ID / Phone";
+}
+
 export default function B2BLoginPage() {
   const router = useRouter();
   const { setAuth, isAuthenticated, user, _hasHydrated } = useAuthStore();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [identifierType, setIdentifierType] = useState("Email / Agent ID / Phone");
 
   useEffect(() => {
     if (_hasHydrated && isAuthenticated && user?.role === "agent") {
@@ -30,17 +39,28 @@ export default function B2BLoginPage() {
     }
   }, [_hasHydrated, isAuthenticated, user]);
 
+  const handleIdentifierChange = (val: string) => {
+    setIdentifier(val);
+    setIdentifierType(detectIdentifierType(val));
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!identifier.trim()) {
+      toast.error("Please enter your Email, Agent ID, or Phone number");
+      return;
+    }
     setLoading(true);
     try {
-      const res = await authApi.loginAgent({ email: email.toLowerCase().trim(), password });
+      const res = await authApi.loginAgent({
+        identifier: identifier.trim(),
+        password,
+      });
       const token = extractToken(res);
       const agent = extractAgent(res);
 
       if (!token) throw new Error("Login failed — no token returned");
 
-      // Save token
       document.cookie = `auth_token=${token}; path=/; max-age=86400; SameSite=Lax`;
       localStorage.setItem("auth_token", token);
       localStorage.setItem("agent_token", token);
@@ -55,6 +75,7 @@ export default function B2BLoginPage() {
         kycStatus,
         status: agent.status,
         agencyName: agent.agencyName,
+        agentId: agent.agentId,
         walletBalance: agent.walletBalance,
         kycRejectionReason: agent.kycRejectionReason,
       } as any, token);
@@ -71,7 +92,6 @@ export default function B2BLoginPage() {
         return;
       }
 
-      // submitted / under_review
       toast.info("Your KYC documents are under review. Please wait for admin approval.");
       router.push("/b2b/kyc");
 
@@ -93,6 +113,8 @@ export default function B2BLoginPage() {
             <ArrowLeft style={{ width: 16, height: 16 }} /> Home
           </Link>
         </div>
+
+        {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "2rem" }}>
           <div style={{ width: 42, height: 42, background: "linear-gradient(135deg, #3b82f6, #4f46e5)", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Plane style={{ width: 20, height: 20, color: "white" }} />
@@ -102,30 +124,76 @@ export default function B2BLoginPage() {
             <p style={{ fontSize: "0.75rem", color: "#475569", margin: 0 }}>Agent Portal</p>
           </div>
         </div>
+
         <div style={s.card}>
-          <h2 style={{ fontSize: "1.5rem", fontWeight: 700, color: "white", margin: "0 0 0.25rem" }}>Sign in</h2>
-          <p style={{ color: "#64748b", fontSize: "0.875rem", margin: "0 0 1.5rem" }}>Access your agent dashboard</p>
+          <h2 style={{ fontSize: "1.5rem", fontWeight: 700, color: "white", margin: "0 0 0.25rem" }}>Agent Sign In</h2>
+          <p style={{ color: "#64748b", fontSize: "0.875rem", margin: "0 0 1.5rem" }}>
+            Use your Email, Agent ID (TRV-XXXXX), or Phone number
+          </p>
+
           <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+
+            {/* Identifier field */}
             <div>
-              <label style={s.label}>Business Email</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus placeholder="agent@agency.com" style={s.input} />
+              <label style={s.label}>
+                {identifierType}
+                {identifier && identifierType !== "Email / Agent ID / Phone" && (
+                  <span style={{ marginLeft: "0.5rem", color: "#22c55e", fontSize: "0.7rem" }}>✓ {identifierType} detected</span>
+                )}
+              </label>
+              <input
+                type="text"
+                value={identifier}
+                onChange={(e) => handleIdentifierChange(e.target.value)}
+                required
+                autoFocus
+                autoComplete="username"
+                placeholder="e.g. agent@agency.com / TRV-00001 / 9876543210"
+                style={s.input}
+              />
+              {/* Helper hint */}
+              <div style={{ marginTop: "0.375rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                {[
+                  { label: "Email", example: "agent@agency.com" },
+                  { label: "Agent ID", example: "TRV-00001" },
+                  { label: "Phone", example: "9876543210" },
+                ].map(({ label, example }) => (
+                  <span key={label} style={{ fontSize: "0.65rem", color: "#334155", background: "#0f172a", border: "1px solid #1e293b", borderRadius: "0.375rem", padding: "0.15rem 0.5rem" }}>
+                    {label}: <span style={{ color: "#475569" }}>{example}</span>
+                  </span>
+                ))}
+              </div>
             </div>
+
+            {/* Password */}
             <div>
               <label style={s.label}>Password</label>
               <div style={{ position: "relative" }}>
-                <input type={showPwd ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Your password" style={{ ...s.input, paddingRight: "2.5rem" }} />
-                <button type="button" onClick={() => setShowPwd((v) => !v)} style={{ position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#475569", cursor: "pointer", padding: 0 }}>
+                <input
+                  type={showPwd ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                  placeholder="Your password"
+                  style={{ ...s.input, paddingRight: "2.5rem" }}
+                />
+                <button type="button" onClick={() => setShowPwd((v) => !v)}
+                  style={{ position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#475569", cursor: "pointer", padding: 0 }}>
                   {showPwd ? <EyeOff style={{ width: 16, height: 16 }} /> : <Eye style={{ width: 16, height: 16 }} />}
                 </button>
               </div>
             </div>
-            <button type="submit" disabled={loading} style={{ ...s.btn, opacity: loading ? 0.6 : 1, cursor: loading ? "not-allowed" : "pointer" }}>
+
+            <button type="submit" disabled={loading}
+              style={{ ...s.btn, opacity: loading ? 0.6 : 1, cursor: loading ? "not-allowed" : "pointer" }}>
               {loading ? <><Loader2 style={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} /> Signing in...</> : "Sign In"}
             </button>
           </form>
+
           <div style={{ marginTop: "1.25rem", paddingTop: "1.25rem", borderTop: "1px solid #1a2840", display: "flex", flexDirection: "column", gap: "0.5rem", textAlign: "center" }}>
             <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link href="/b2b/register" style={{ color: "#60a5fa", textDecoration: "none", fontWeight: 500 }}>Register Agency</Link>
             </p>
             <p style={{ fontSize: "0.75rem" }}>
