@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore, useSettingsStore } from "@/lib/store";
+import { agentApi, unwrap } from "@/lib/api/services";
 import { B2BSidebar } from "@/components/layout/B2BSidebar";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { cn } from "@/lib/utils";
@@ -48,7 +49,25 @@ export default function B2BLayout({ children }: { children: React.ReactNode }) {
     const isOnKycPage = pathname.startsWith("/b2b/kyc");
 
     if (!kycApproved && !isOnKycPage) {
-      router.replace("/b2b/kyc");
+      // FIX: before redirecting, fetch fresh KYC status from API
+      // (store might have stale "submitted" status even after admin approved)
+      agentApi.getKycStatus()
+        .then((res: any) => {
+          const data = unwrap(res) as any;
+          const raw = data?.kycStatus || data?.kyc?.status || data?.agentStatus || "";
+          const freshApproved = raw === "approved" || raw === "active";
+          if (freshApproved) {
+            // Update store with fresh status
+            const { setAuth, token } = useAuthStore.getState();
+            if (user && token) setAuth({ ...user, kycStatus: "approved", status: "active" }, token);
+            setChecked(true);
+          } else {
+            router.replace("/b2b/kyc");
+          }
+        })
+        .catch(() => {
+          router.replace("/b2b/kyc");
+        });
       return;
     }
 

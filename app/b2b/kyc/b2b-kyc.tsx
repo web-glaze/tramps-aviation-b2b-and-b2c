@@ -50,7 +50,7 @@ const c = {
 
 export default function B2BKycPage() {
   const router = useRouter();
-  const { isAuthenticated, user, _hasHydrated } = useAuthStore();
+  const { isAuthenticated, user, token, _hasHydrated, setAuth } = useAuthStore();
   const fileRefs = useRef<Partial<Record<DocType, HTMLInputElement | null>>>({});
   const hasFetched = useRef(false);
 
@@ -98,6 +98,11 @@ export default function B2BKycPage() {
       setKycStatus(normalized);
       setRejectionReason(data?.kycRejectionReason || kyc?.rejectionReason || "");
       setAgencyName(data?.agencyName || user?.agencyName || "");
+
+      // FIX: sync kycStatus into auth store so layout.tsx allows dashboard access
+      if (normalized === "approved" && user && token) {
+        setAuth({ ...user, kycStatus: "approved", status: "active" }, token);
+      }
 
       // Pre-fill form if data exists
       if (kyc?.panNumber) {
@@ -246,9 +251,17 @@ export default function B2BKycPage() {
           <p style={{ color: "#64748b", fontSize: "0.875rem", margin: "0 0 2rem", lineHeight: 1.6 }}>
             Your KYC is verified. You can now book flights, hotels and earn commissions.
           </p>
-          <Link href="/b2b/dashboard" style={{ ...c.primaryBtn, background: "#16a34a", textDecoration: "none" }}>
+          <button
+            onClick={() => {
+              if (user && token) {
+                setAuth({ ...user, kycStatus: "approved", status: "active" }, token);
+              }
+              router.replace("/b2b/dashboard");
+            }}
+            style={{ ...c.primaryBtn, background: "#16a34a", border: "none", cursor: "pointer" }}
+          >
             <CheckCircle style={{ width: 18, height: 18 }} /> Go to Dashboard
-          </Link>
+          </button>
         </div>
       </div>
     );
