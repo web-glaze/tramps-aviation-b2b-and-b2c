@@ -21,7 +21,7 @@ export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
     }
     if (requiredRole && role !== requiredRole) {
       if (role === 'agent') router.push('/b2b/dashboard')
-      else router.push('/b2c/search')
+      else router.push('/b2c/flights')
     }
   }, [token, user, role, requiredRole])
 

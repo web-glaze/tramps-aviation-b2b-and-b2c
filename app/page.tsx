@@ -110,7 +110,9 @@ const TESTIMONIALS = [
 
 export default function HomePage() {
   const router = useRouter();
-  const { user, role } = useAuthStore();
+  const { user, role, isAuthenticated } = useAuthStore();
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [pendingSearch, setPendingSearch]  = useState<{from:string;to:string;date:string} | null>(null);
   const [activeTab, setActiveTab] = useState<"flights" | "hotels">("flights");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -135,16 +137,105 @@ export default function HomePage() {
 
   const handleSearch = () => {
     if (!from || !to || !date) {
-      alert("Please fill all search fields");
+      alert("Please select origin, destination and date");
       return;
     }
-    router.push(`/b2c/search?from=${from}&to=${to}&date=${date}`);
+    // Already logged in → go directly to their portal
+    if (isAuthenticated) {
+      if (role === "agent") {
+        router.push(`/b2b/flights?origin=${from}&destination=${to}&date=${date}`);
+      } else {
+        router.push(`/b2c/flights?from=${from}&to=${to}&date=${date}`);
+      }
+      return;
+    }
+    // Not logged in → ask who they are
+    setPendingSearch({ from, to, date });
+    setShowRoleModal(true);
   };
 
   const dashboardLink = role === "agent" ? "/b2b/dashboard" : "/b2c/my-trips";
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
+
+      {/* ── Who are you? Modal ── */}
+      {showRoleModal && pendingSearch && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => setShowRoleModal(false)}
+          />
+          <div className="relative bg-card border border-border rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            {/* Close */}
+            <button
+              onClick={() => setShowRoleModal(false)}
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ✕
+            </button>
+
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <Plane className="h-7 w-7 text-primary" />
+              </div>
+              <h3 className="font-bold text-xl mb-1">How would you like to book?</h3>
+              <p className="text-muted-foreground text-sm">
+                {pendingSearch.from} → {pendingSearch.to} · {pendingSearch.date}
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {/* Customer option */}
+              <button
+                onClick={() => {
+                  setShowRoleModal(false);
+                  router.push(`/b2c/flights?from=${pendingSearch.from}&to=${pendingSearch.to}&date=${pendingSearch.date}`);
+                }}
+                className="w-full flex items-center gap-4 p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-all text-left group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                  <Users className="h-5 w-5 text-blue-400" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">Book as Customer</p>
+                  <p className="text-xs text-muted-foreground">Personal travel · Pay online</p>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto group-hover:text-primary transition-colors" />
+              </button>
+
+              {/* Agent option */}
+              <button
+                onClick={() => {
+                  setShowRoleModal(false);
+                  router.push(`/b2b/login?redirect=${encodeURIComponent(`/b2b/flights?origin=${pendingSearch.from}&destination=${pendingSearch.to}&date=${pendingSearch.date}`)}`);
+                }}
+                className="w-full flex items-center gap-4 p-4 rounded-xl border border-border hover:border-amber-400/50 hover:bg-amber-400/5 transition-all text-left group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-amber-400/10 flex items-center justify-center flex-shrink-0">
+                  <Building2 className="h-5 w-5 text-amber-400" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">Book as Travel Agent</p>
+                  <p className="text-xs text-muted-foreground">B2B portal · Wallet payment · Better rates</p>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto group-hover:text-amber-400 transition-colors" />
+              </button>
+            </div>
+
+            <p className="text-xs text-center text-muted-foreground mt-4">
+              Already have an account?{" "}
+              <button
+                onClick={() => { setShowRoleModal(false); router.push("/b2c/login"); }}
+                className="text-primary hover:underline"
+              >
+                Sign in
+              </button>
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* NAV */}
       <header
         className={cn(
@@ -171,7 +262,7 @@ export default function HomePage() {
 
           <nav className="hidden md:flex items-center gap-1">
             {[
-              { href: "/b2c/search", label: "Flights" },
+              { href: "/b2c/flights", label: "Flights" },
               { href: "#features", label: "Features" },
               { href: "#agents", label: "For Agents" },
               { href: "#contact", label: "Contact" },
@@ -230,7 +321,7 @@ export default function HomePage() {
           <div className="md:hidden border-t border-border bg-background/98 backdrop-blur-xl animate-in">
             <div className="px-4 py-4 space-y-1">
               {[
-                { href: "/b2c/search", label: "✈  Search Flights" },
+                { href: "/b2c/flights", label: "✈  Search Flights" },
                 { href: "/b2c/login", label: "👤  Sign In" },
                 { href: "/b2c/register", label: "🚀  Register (B2C)" },
                 { href: "/b2b/login", label: "🏢  Agent Login" },
@@ -359,7 +450,7 @@ export default function HomePage() {
                 <button
                   key={r.from + r.to}
                   onClick={() =>
-                    router.push(`/b2c/search?from=${r.from}&to=${r.to}`)
+                    router.push(`/b2c/flights?from=${r.from}&to=${r.to}`)
                   }
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border hover:border-primary/50 hover:bg-primary/5 text-xs font-medium text-muted-foreground hover:text-primary transition-all"
                 >
@@ -771,7 +862,7 @@ export default function HomePage() {
                     Create Free Account <ArrowRight className="h-4 w-4" />
                   </button>
                 </Link>
-                <Link href="/b2c/search">
+                <Link href="/b2c/flights">
                   <button className="flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl border border-border hover:border-primary/50 font-semibold transition-all">
                     Search Flights <Search className="h-4 w-4" />
                   </button>
@@ -829,7 +920,7 @@ export default function HomePage() {
               {
                 title: "Platform",
                 links: [
-                  { href: "/b2c/search", label: "Search Flights" },
+                  { href: "/b2c/flights", label: "Search Flights" },
                   { href: "/b2b/register", label: "Agent Portal" },
                   { href: "/b2c/login", label: "Sign In" },
                   { href: "/b2c/register", label: "Register" },

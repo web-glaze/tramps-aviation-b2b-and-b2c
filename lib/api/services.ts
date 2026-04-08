@@ -118,8 +118,20 @@ export const customerApi = {
   requestRefund:   (data: any) => USE_MOCK ? mock({ message: 'Refund requested' }) : apiClient.post('/refunds/request', data),
   getRefunds:      ()        => USE_MOCK ? mock({ refunds: [] }) : apiClient.get('/refunds/my'),
   initiateBooking: async (data: any) => {
-    if (USE_MOCK) { await delay(800); const id = 'bk' + Date.now(); return { data: { bookingId: id, amount: data.totalAmount || 3850, paymentRequired: true } } }
-    return apiClient.post('/bookings/customer/flight/initiate', data)
+    if (USE_MOCK) {
+      await delay(1200);
+      const ref = 'TRV-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + Math.random().toString(36).substring(2,8).toUpperCase();
+      const pnr = Math.random().toString(36).substring(2,8).toUpperCase();
+      return { data: { bookingRef: ref, pnr, status: 'confirmed', message: 'Booking confirmed! E-ticket sent via email.' } };
+    }
+    // Real API: B2C init + auto-confirm (MOCK/CUSTOM tokens confirm instantly)
+    const initRes = await apiClient.post('/bookings/customer/flight/initiate', data);
+    const initData = (initRes.data as any)?.data || initRes.data;
+    const bookingRef = initData?.bookingRef;
+    // If payment not required (mock/custom fares), booking is already done
+    if (initData?.status === 'confirmed' || initData?.pnr) return initRes;
+    // For real TBO flights: return initData for Razorpay payment flow
+    return initRes;
   },
 }
 
@@ -159,20 +171,58 @@ export const searchApi = {
 // ═════════════════════════════════════════════════════════════════════
 // FLIGHTS (B2C normalized)
 // ═════════════════════════════════════════════════════════════════════
+// Helper: extract HH:MM from ISO string or plain "HH:MM"
+const toHHMM = (v?: string) => {
+  if (!v) return '';
+  if (v.includes('T')) return v.split('T')[1].slice(0,5);
+  if (v.includes(':')) return v.slice(0,5);
+  return v;
+};
+
 export const flightsApi = {
   search: async (data: any) => {
     const res = await searchApi.searchFlights(data)
     const raw = res.data as any
-    const flights = (raw.flights || []).map((f: any) => ({
-      ...f,
-      id: f.id || f.flightKey || f.resultToken,
-      flightNo: f.flightNo || f.flightNumber,
-      from: f.from || f.origin, to: f.to || f.destination,
-      departure: f.departureTime || (f.departure ? (f.departure.includes('T') ? f.departure.split('T')[1].slice(0,5) : f.departure) : ''),
-      arrival:   f.arrivalTime   || (f.arrival   ? (f.arrival.includes('T')   ? f.arrival.split('T')[1].slice(0,5)   : f.arrival)   : ''),
-      price: f.price || f.fare?.total || f.fare?.totalFare || 0,
-      refundable: f.refundable || f.isRefundable || false,
-    }))
+    const flights = (raw.flights || []).map((f: any) => {
+      const depRaw = f.departureTime || f.departure || '';
+      const arrRaw = f.arrivalTime   || f.arrival   || '';
+      // duration: convert minutes number → "2h 15m" string
+      let durationStr = f.duration || f.durationStr || '';
+      if (typeof f.duration === 'number') {
+        const h = Math.floor(f.duration / 60), m = f.duration % 60;
+        durationStr = `${h}h ${m > 0 ? m + 'm' : ''}`.trim();
+      }
+      // Extract baggage strings BEFORE spread to avoid object contamination
+      const checkinBag = (typeof f.checkinBaggage === 'string' ? f.checkinBaggage : '')
+        || (typeof f.baggage === 'string' ? f.baggage : '')
+        || (typeof f.baggageInfo?.checkIn === 'string' ? f.baggageInfo.checkIn : '')
+        || '15 kg';
+      const cabinBag = (typeof f.cabinBaggage === 'string' ? f.cabinBaggage : '')
+        || (typeof f.baggageInfo?.cabin === 'string' ? f.baggageInfo.cabin : '')
+        || '7 kg';
+
+      return {
+        ...f,
+        id:       f.id       || f.flightKey || f.resultToken,
+        flightNo: f.flightNo || f.flightNumber,
+        from: f.from || f.origin,
+        to:   f.to   || f.destination,
+        departure: toHHMM(depRaw),
+        arrival:   toHHMM(arrRaw),
+        duration: durationStr,
+        price: f.price || f.fare?.total || f.fare?.totalFare || f.fare?.TotalFare || 0,
+        // Always strings — never objects
+        checkinBaggage: checkinBag,
+        cabinBaggage:   cabinBag,
+        baggage:        checkinBag,
+        // Explicitly remove nested objects that could be accidentally rendered
+        baggageInfo:  undefined,
+        amenities:    undefined,
+        stopDetails:  undefined,
+        refundable: f.refundable ?? f.isRefundable ?? true,
+        seatsAvailable: f.seatsAvailable || f.availableSeats || null,
+      };
+    })
     return { data: { flights, totalCount: flights.length } }
   },
   revalidate: (data: any) => searchApi.revalidateFlight(data),
