@@ -1,107 +1,62 @@
 "use client";
 
 import "./globals.css";
-import { useEffect } from "react";
 import { Toaster } from "sonner";
-import { useSettingsStore } from "@/lib/store";
 import { SettingsFab } from "@/components/settings/SettingsFab";
+import { SettingsProvider } from "@/components/layout/SettingsProvider";
 
-// Anti-flash script injected as raw HTML before page renders
-const ANTI_FLASH_SCRIPT = `
+// Anti-flash: reads tp-settings BEFORE first paint → no theme flicker
+const ANTI_FLASH = `
 (function(){
-  try {
-    var s = JSON.parse(localStorage.getItem('tp-settings') || '{}');
-    var state = s.state || {};
-    var theme = state.theme || 'dark';
-    var isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    if(isDark) document.documentElement.classList.add('dark');
-    var color = state.colorTheme || 'blue';
-    var font  = state.fontFamily  || 'jakarta';
-    var fsize = state.fontSize    || 'md';
-    var rad   = state.borderRadius|| 'lg';
-    var cmpct = state.compactMode ? 'true' : 'false';
-    var anim  = state.animations === false ? 'false' : 'true';
-    var root  = document.documentElement;
-    root.setAttribute('data-color', color);
-    root.setAttribute('data-font',  font);
-    root.setAttribute('data-fontsize', fsize);
-    root.setAttribute('data-radius', rad);
-    root.setAttribute('data-compact', cmpct);
-    root.setAttribute('data-animations', anim);
-  } catch(e){}
+  try{
+    var s=JSON.parse(localStorage.getItem('tp-settings')||'{}');
+    var st=s.state||{};
+    var t=st.theme||'dark';
+    var dark=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if(dark)document.documentElement.classList.add('dark');
+    var r=document.documentElement;
+    r.setAttribute('data-color',    st.colorTheme  ||'blue');
+    r.setAttribute('data-font',     st.fontFamily  ||'jakarta');
+    r.setAttribute('data-fontsize', st.fontSize    ||'md');
+    r.setAttribute('data-radius',   st.borderRadius||'lg');
+    r.setAttribute('data-compact',  st.compactMode ?'true':'false');
+    r.setAttribute('data-animations',st.animations===false?'false':'true');
+  }catch(e){}
 })();
 `;
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const {
-    theme,
-    colorTheme,
-    fontSize,
-    fontFamily,
-    borderRadius,
-    compactMode,
-    animations,
-  } = useSettingsStore();
-
-  useEffect(() => {
-    const root = document.documentElement;
-    if (theme === "system") {
-      const mq = window.matchMedia("(prefers-color-scheme: dark)");
-      root.classList.toggle("dark", mq.matches);
-      const handler = (e: MediaQueryListEvent) =>
-        root.classList.toggle("dark", e.matches);
-      mq.addEventListener("change", handler);
-      return () => mq.removeEventListener("change", handler);
-    } else {
-      root.classList.toggle("dark", theme === "dark");
-    }
-  }, [theme]);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    root.setAttribute("data-color", colorTheme);
-    root.setAttribute("data-font", fontFamily);
-    root.setAttribute("data-fontsize", fontSize);
-    root.setAttribute("data-radius", borderRadius);
-    root.setAttribute("data-compact", compactMode ? "true" : "false");
-    root.setAttribute("data-animations", animations ? "true" : "false");
-  }, [colorTheme, fontFamily, fontSize, borderRadius, compactMode, animations]);
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <title>Tramps Aviation — B2B & B2C Travel Platform</title>
-        <meta
-          name="description"
-          content="India's premier travel booking platform for agents and travelers."
-        />
+        <meta name="description" content="India's premier travel booking platform for agents and travelers." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        {/* Inject before paint to prevent white flash */}
-        <script dangerouslySetInnerHTML={{ __html: ANTI_FLASH_SCRIPT }} />
+        {/* Runs before paint — prevents flash of wrong theme */}
+        <script dangerouslySetInnerHTML={{ __html: ANTI_FLASH }} />
       </head>
       <body>
-        {children}
-        <SettingsFab />
-        <Toaster
-          position="top-right"
-          richColors
-          closeButton
-          toastOptions={{
-            style: {
-              borderRadius: "var(--radius)",
-              fontFamily: "var(--font-body, inherit)",
-              fontSize: "13px",
-              background: "hsl(var(--card))",
-              color: "hsl(var(--card-foreground))",
-              border: "1px solid hsl(var(--border))",
-            },
-            duration: 4000,
-          }}
-        />
+        {/* SettingsProvider applies all theme/font/color attributes reactively */}
+        <SettingsProvider>
+          {children}
+          <SettingsFab />
+          <Toaster
+            position="top-right"
+            richColors
+            closeButton
+            toastOptions={{
+              style: {
+                borderRadius: "var(--radius)",
+                fontFamily:   "var(--font-body, inherit)",
+                fontSize:     "13px",
+                background:   "hsl(var(--card))",
+                color:        "hsl(var(--card-foreground))",
+                border:       "1px solid hsl(var(--border))",
+              },
+              duration: 4000,
+            }}
+          />
+        </SettingsProvider>
       </body>
     </html>
   );

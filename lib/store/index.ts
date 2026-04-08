@@ -2,19 +2,32 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-type ColorTheme  = 'blue'|'violet'|'emerald'|'rose'|'orange'|'teal'|'cyan'|'amber'|'pink'|'indigo'|'slate'|'lime'
-type FontSize    = 'xs'|'sm'|'md'|'lg'|'xl'
-type FontFamily  = 'inter'|'poppins'|'rajdhani'|'nunito'|'jakarta'|'dm-sans'|'outfit'|'sora'|'space'
-type BorderRadius= 'none'|'sm'|'md'|'lg'|'xl'|'2xl'|'full'
-type Theme       = 'light'|'dark'|'system'
+// ─── Types ────────────────────────────────────────────────────────────────────
+type ColorTheme   = 'blue'|'violet'|'emerald'|'rose'|'orange'|'teal'|'cyan'|'amber'|'pink'|'indigo'|'slate'|'lime'
+type FontSize     = 'xs'|'sm'|'md'|'lg'|'xl'
+type FontFamily   = 'inter'|'poppins'|'rajdhani'|'nunito'|'jakarta'|'dm-sans'|'outfit'|'sora'|'space'
+type BorderRadius = 'none'|'sm'|'md'|'lg'|'xl'|'2xl'|'full'
+type Theme        = 'light'|'dark'|'system'
 
+// ─── Settings Store (ONE store for everything) ───────────────────────────────
 interface SettingsState {
-  theme: Theme; colorTheme: ColorTheme; fontSize: FontSize; fontFamily: FontFamily
-  borderRadius: BorderRadius; sidebarOpen: boolean; compactMode: boolean; animations: boolean
-  setTheme:(t:Theme)=>void; setColorTheme:(c:ColorTheme)=>void; setFontSize:(s:FontSize)=>void
-  setFontFamily:(f:FontFamily)=>void; setBorderRadius:(r:BorderRadius)=>void
-  toggleSidebar:()=>void; setSidebarOpen:(open:boolean)=>void
-  setCompactMode:(c:boolean)=>void; setAnimations:(a:boolean)=>void
+  theme: Theme
+  colorTheme: ColorTheme
+  fontSize: FontSize
+  fontFamily: FontFamily
+  borderRadius: BorderRadius
+  sidebarOpen: boolean
+  compactMode: boolean
+  animations: boolean
+  setTheme:(t:Theme)=>void
+  setColorTheme:(c:ColorTheme)=>void
+  setFontSize:(s:FontSize)=>void
+  setFontFamily:(f:FontFamily)=>void
+  setBorderRadius:(r:BorderRadius)=>void
+  toggleSidebar:()=>void
+  setSidebarOpen:(open:boolean)=>void
+  setCompactMode:(c:boolean)=>void
+  setAnimations:(a:boolean)=>void
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -35,9 +48,11 @@ export const useSettingsStore = create<SettingsState>()(
     { name:'tp-settings' }
   )
 )
+
+// Alias kept for backward compat
 export const useUIStore = useSettingsStore
 
-// Role: only 'agent' (B2B) or 'customer' (B2C) — admin is a separate project
+// ─── Auth Store ───────────────────────────────────────────────────────────────
 type UserRole = 'agent' | 'customer' | null
 
 interface AuthState {
@@ -55,28 +70,16 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      user: null,
-      token: null,
-      role: null,
-      agentId: null,
-      isAuthenticated: false,
-      _hasHydrated: false,
-
+      user: null, token: null, role: null, agentId: null,
+      isAuthenticated: false, _hasHydrated: false,
       setAuth: (user, token) => {
         if (typeof window !== 'undefined') {
           localStorage.setItem('auth_token', token)
           localStorage.setItem('agent_token', token)
           document.cookie = `auth_token=${token}; path=/; max-age=86400; SameSite=Lax`
         }
-        set({
-          user,
-          token,
-          role: user?.role || null,
-          agentId: user?.agentId || null,  // TRV-00001 format
-          isAuthenticated: true,
-        })
+        set({ user, token, role: user?.role||null, agentId: user?.agentId||null, isAuthenticated: true })
       },
-
       clearAuth: () => {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('auth_token')
@@ -84,9 +87,8 @@ export const useAuthStore = create<AuthState>()(
           localStorage.removeItem('tp-auth')
           document.cookie = 'auth_token=; path=/; max-age=0'
         }
-        set({ user: null, token: null, role: null, agentId: null, isAuthenticated: false })
+        set({ user:null, token:null, role:null, agentId:null, isAuthenticated:false })
       },
-
       setHasHydrated: (v) => set({ _hasHydrated: v }),
     }),
     {

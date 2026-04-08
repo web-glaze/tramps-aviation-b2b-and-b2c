@@ -111,12 +111,17 @@ const TESTIMONIALS = [
 export default function HomePage() {
   const router = useRouter();
   const { user, role, isAuthenticated } = useAuthStore();
-  const [showRoleModal, setShowRoleModal] = useState(false);
-  const [pendingSearch, setPendingSearch]  = useState<{from:string;to:string;date:string} | null>(null);
-  const [activeTab, setActiveTab] = useState<"flights" | "hotels">("flights");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const [activeTab, setActiveTab] = useState<"flights" | "hotels" | "insurance">("flights");
+  // Flight search state
+  const [from, setFrom] = useState("DEL");
+  const [to, setTo] = useState("BOM");
   const [date, setDate] = useState("");
+  const [adults, setAdults] = useState("1");
+  // Hotel search state
+  const [hotelCity, setHotelCity] = useState("");
+  const [checkIn, setCheckIn] = useState("");
+  const [checkOut, setCheckOut] = useState("");
+  const [rooms, setRooms] = useState("1");
   const [mobileMenu, setMobileMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
@@ -136,22 +141,20 @@ export default function HomePage() {
   }, []);
 
   const handleSearch = () => {
-    if (!from || !to || !date) {
-      alert("Please select origin, destination and date");
+    if (activeTab === "hotels") {
+      if (!hotelCity) { alert("Please enter a city"); return; }
+      if (!checkIn)   { alert("Please select check-in date"); return; }
+      router.push(`/b2c/hotels?city=${encodeURIComponent(hotelCity)}&checkIn=${checkIn}&checkOut=${checkOut}&rooms=${rooms}`);
       return;
     }
-    // Already logged in → go directly to their portal
-    if (isAuthenticated) {
-      if (role === "agent") {
-        router.push(`/b2b/flights?origin=${from}&destination=${to}&date=${date}`);
-      } else {
-        router.push(`/b2c/flights?from=${from}&to=${to}&date=${date}`);
-      }
+    if (activeTab === "insurance") {
+      router.push("/b2c/insurance");
       return;
     }
-    // Not logged in → ask who they are
-    setPendingSearch({ from, to, date });
-    setShowRoleModal(true);
+    // Flights — no auth check, just search
+    if (!from || !to) { alert("Please enter origin and destination"); return; }
+    if (!date)         { alert("Please select a travel date"); return; }
+    router.push(`/b2c/flights?from=${from.toUpperCase()}&to=${to.toUpperCase()}&date=${date}&adults=${adults}`);
   };
 
   const dashboardLink = role === "agent" ? "/b2b/dashboard" : "/b2c/my-trips";
@@ -159,82 +162,6 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
 
-      {/* ── Who are you? Modal ── */}
-      {showRoleModal && pendingSearch && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={() => setShowRoleModal(false)}
-          />
-          <div className="relative bg-card border border-border rounded-2xl p-6 w-full max-w-sm shadow-2xl">
-            {/* Close */}
-            <button
-              onClick={() => setShowRoleModal(false)}
-              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              ✕
-            </button>
-
-            <div className="text-center mb-6">
-              <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                <Plane className="h-7 w-7 text-primary" />
-              </div>
-              <h3 className="font-bold text-xl mb-1">How would you like to book?</h3>
-              <p className="text-muted-foreground text-sm">
-                {pendingSearch.from} → {pendingSearch.to} · {pendingSearch.date}
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              {/* Customer option */}
-              <button
-                onClick={() => {
-                  setShowRoleModal(false);
-                  router.push(`/b2c/flights?from=${pendingSearch.from}&to=${pendingSearch.to}&date=${pendingSearch.date}`);
-                }}
-                className="w-full flex items-center gap-4 p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-all text-left group"
-              >
-                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                  <Users className="h-5 w-5 text-blue-400" />
-                </div>
-                <div>
-                  <p className="font-semibold text-sm">Book as Customer</p>
-                  <p className="text-xs text-muted-foreground">Personal travel · Pay online</p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto group-hover:text-primary transition-colors" />
-              </button>
-
-              {/* Agent option */}
-              <button
-                onClick={() => {
-                  setShowRoleModal(false);
-                  router.push(`/b2b/login?redirect=${encodeURIComponent(`/b2b/flights?origin=${pendingSearch.from}&destination=${pendingSearch.to}&date=${pendingSearch.date}`)}`);
-                }}
-                className="w-full flex items-center gap-4 p-4 rounded-xl border border-border hover:border-amber-400/50 hover:bg-amber-400/5 transition-all text-left group"
-              >
-                <div className="w-10 h-10 rounded-xl bg-amber-400/10 flex items-center justify-center flex-shrink-0">
-                  <Building2 className="h-5 w-5 text-amber-400" />
-                </div>
-                <div>
-                  <p className="font-semibold text-sm">Book as Travel Agent</p>
-                  <p className="text-xs text-muted-foreground">B2B portal · Wallet payment · Better rates</p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto group-hover:text-amber-400 transition-colors" />
-              </button>
-            </div>
-
-            <p className="text-xs text-center text-muted-foreground mt-4">
-              Already have an account?{" "}
-              <button
-                onClick={() => { setShowRoleModal(false); router.push("/b2c/login"); }}
-                className="text-primary hover:underline"
-              >
-                Sign in
-              </button>
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* NAV */}
       <header
@@ -250,7 +177,7 @@ export default function HomePage() {
             <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30 group-hover:scale-105 transition-transform">
               <Plane className="h-4 w-4 text-primary-foreground" />
             </div>
-            <div>
+            <div className="hidden sm:block">
               <span className="font-bold text-lg font-display leading-none">
                 Tramps Aviation
               </span>
@@ -258,6 +185,7 @@ export default function HomePage() {
                 B2B & B2C Platform
               </span>
             </div>
+            <span className="sm:hidden font-bold text-base font-display">Tramps</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
@@ -277,28 +205,29 @@ export default function HomePage() {
             ))}
           </nav>
 
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-1.5">
             {user ? (
               <Link href={dashboardLink}>
-                <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-all shadow-md shadow-primary/25">
+                <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-all">
                   Dashboard <ArrowRight className="h-3.5 w-3.5" />
                 </button>
               </Link>
             ) : (
               <>
                 <Link href="/b2c/login">
-                  <button className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 rounded-xl transition-all">
+                  <button className="px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-all">
                     Sign In
                   </button>
                 </Link>
                 <Link href="/b2c/register">
-                  <button className="px-4 py-2 text-sm font-semibold bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-all shadow-md shadow-primary/20">
+                  <button className="px-3.5 py-1.5 text-sm font-semibold bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-all">
                     Get Started
                   </button>
                 </Link>
-                <Link href="/b2b/register">
-                  <button className="px-4 py-2 text-sm font-semibold border border-border hover:border-primary/50 hover:text-primary rounded-xl transition-all">
-                    Agent Portal
+                <div className="w-px h-5 bg-border/60 mx-0.5" />
+                <Link href="/b2b/login">
+                  <button className="px-3 py-1.5 text-xs font-semibold text-primary/80 hover:text-primary border border-primary/30 hover:border-primary/60 hover:bg-primary/5 rounded-lg transition-all whitespace-nowrap">
+                    Agent Portal ↗
                   </button>
                 </Link>
               </>
@@ -376,67 +305,93 @@ export default function HomePage() {
 
           {/* Search Card */}
           <div className="bg-card/85 glass border border-border/80 rounded-2xl p-5 sm:p-6 shadow-2xl shadow-black/10 max-w-3xl mx-auto text-left animate-in stagger-2">
+            {/* Tabs */}
             <div className="flex gap-1 mb-5 bg-muted/60 rounded-xl p-1 w-fit">
-              {(
-                [
-                  { key: "flights", label: "Flights", icon: Plane },
-                  { key: "hotels", label: "Hotels", icon: Hotel },
-                ] as const
-              ).map(({ key, label, icon: Icon }) => (
-                <button
-                  key={key}
-                  onClick={() => setActiveTab(key)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-medium transition-all",
-                    activeTab === key
-                      ? "bg-background shadow-sm text-foreground"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  <Icon className="h-3.5 w-3.5" />
+              {([
+                { key: "flights",   label: "✈ Flights",   },
+                { key: "hotels",    label: "🏨 Hotels",    },
+                { key: "insurance", label: "🛡 Insurance", },
+              ] as const).map(({ key, label }) => (
+                <button key={key} onClick={() => setActiveTab(key)}
+                  className={cn("px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                    activeTab===key ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                  )}>
                   {label}
                 </button>
               ))}
             </div>
 
-            <div className="grid sm:grid-cols-3 gap-3">
-              <SearchField
-                label="From"
-                icon={MapPin}
-                placeholder="Delhi (DEL)"
-                value={from}
-                onChange={setFrom}
-              />
-              <SearchField
-                label="To"
-                icon={MapPin}
-                placeholder="Mumbai (BOM)"
-                value={to}
-                onChange={setTo}
-              />
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  Departure Date
-                </label>
-                <div className="field-wrapper">
-                  <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  <input
-                    type="date"
-                    className="flex-1 bg-transparent text-sm outline-none text-foreground"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    min={new Date().toISOString().split("T")[0]}
-                  />
+            {/* Flight search */}
+            {activeTab === "flights" && (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <SearchField label="From" icon={MapPin} placeholder="Delhi (DEL)" value={from} onChange={setFrom}/>
+                <SearchField label="To"   icon={MapPin} placeholder="Mumbai (BOM)" value={to}   onChange={setTo}/>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Departure Date</label>
+                  <div className="field-wrapper">
+                    <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0"/>
+                    <input type="date" className="flex-1 bg-transparent text-sm outline-none text-foreground"
+                      value={date} onChange={e=>setDate(e.target.value)} min={new Date().toISOString().split("T")[0]}/>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Adults</label>
+                  <div className="field-wrapper">
+                    <Users className="h-4 w-4 text-muted-foreground flex-shrink-0"/>
+                    <input type="number" min="1" max="9" className="flex-1 bg-transparent text-sm outline-none text-foreground"
+                      value={adults} onChange={e=>setAdults(e.target.value)} placeholder="1"/>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            <button
-              onClick={handleSearch}
-              className="w-full mt-4 h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-all hover:shadow-lg hover:shadow-primary/25 active:scale-[0.99]"
-            >
-              <Search className="h-4 w-4" />
-              Search {activeTab === "flights" ? "Flights" : "Hotels"}
+            {/* Hotel search */}
+            {activeTab === "hotels" && (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <SearchField label="City / Destination" icon={MapPin} placeholder="Mumbai, Goa, Delhi…" value={hotelCity} onChange={setHotelCity}/>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Check-in</label>
+                  <div className="field-wrapper">
+                    <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0"/>
+                    <input type="date" className="flex-1 bg-transparent text-sm outline-none text-foreground"
+                      value={checkIn} onChange={e=>setCheckIn(e.target.value)} min={new Date().toISOString().split("T")[0]}/>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Check-out</label>
+                  <div className="field-wrapper">
+                    <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0"/>
+                    <input type="date" className="flex-1 bg-transparent text-sm outline-none text-foreground"
+                      value={checkOut} onChange={e=>setCheckOut(e.target.value)} min={checkIn||new Date().toISOString().split("T")[0]}/>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Rooms</label>
+                  <div className="field-wrapper">
+                    <Hotel className="h-4 w-4 text-muted-foreground flex-shrink-0"/>
+                    <input type="number" min="1" max="9" className="flex-1 bg-transparent text-sm outline-none text-foreground"
+                      value={rooms} onChange={e=>setRooms(e.target.value)} placeholder="1"/>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Insurance */}
+            {activeTab === "insurance" && (
+              <div className="py-4 text-center space-y-3">
+                <p className="text-muted-foreground text-sm">Get travel insurance for flights, trips and medical emergencies</p>
+                <div className="flex flex-wrap justify-center gap-3 text-xs text-muted-foreground">
+                  {["Medical Emergency Cover","Trip Cancellation","Baggage Loss","Flight Delay"].map(f=>(
+                    <span key={f} className="flex items-center gap-1 bg-muted/50 px-3 py-1.5 rounded-full">✓ {f}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <button onClick={handleSearch}
+              className="w-full mt-4 h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-all hover:shadow-lg hover:shadow-primary/25 active:scale-[0.99]">
+              <Search className="h-4 w-4"/>
+              {activeTab==="flights" ? "Search Flights" : activeTab==="hotels" ? "Search Hotels" : "Get Insurance Plans"}
             </button>
           </div>
 
@@ -593,12 +548,10 @@ export default function HomePage() {
       </section>
 
       {/* STATS BAND */}
-      <section className="py-16 px-4 bg-primary relative overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.08]">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary-foreground/15 rounded-full blur-[100px]" />
-          <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-primary-foreground/10 rounded-full blur-[80px]" />
-        </div>
-        <div className="relative max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-8 text-primary-foreground text-center">
+      <section className="py-16 px-4 relative overflow-hidden">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+        <div className="relative max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
           {[
             { value: "2,00,000+", label: "Happy Travelers", icon: Users },
             { value: "500+", label: "Agent Partners", icon: BadgeCheck },
@@ -606,11 +559,11 @@ export default function HomePage() {
             { value: "₹50Cr+", label: "Bookings Processed", icon: TrendingUp },
           ].map(({ value, label, icon: Icon }) => (
             <div key={label} className="space-y-2">
-              <Icon className="h-6 w-6 mx-auto opacity-75" />
-              <p className="text-2xl sm:text-3xl font-bold font-display">
+              <Icon className="h-6 w-6 mx-auto text-primary opacity-70" />
+              <p className="text-2xl sm:text-3xl font-bold font-display text-foreground">
                 {value}
               </p>
-              <p className="text-xs text-primary-foreground/70 font-medium">
+              <p className="text-xs text-muted-foreground font-medium">
                 {label}
               </p>
             </div>

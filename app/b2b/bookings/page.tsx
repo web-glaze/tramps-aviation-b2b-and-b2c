@@ -44,7 +44,8 @@ export default function B2bBookingsPage() {
   };
 
   const handleCancel = async (id: string) => {
-    if (!confirm("Are you sure you want to cancel this booking? Cancellation charges may apply.")) return;
+    // Replaced window.confirm with toast — see cancelBooking flow
+    toast.loading("Processing cancellation...");
     setCancelling(id);
     try {
       await agentApi.cancelBooking(id);

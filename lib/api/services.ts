@@ -1,309 +1,251 @@
-import apiClient, { USE_MOCK } from './client'
-import {
-  MOCK_FLIGHTS, MOCK_AGENT, MOCK_CUSTOMER,
-  MOCK_WALLET, MOCK_TRANSACTIONS, MOCK_BOOKINGS, MOCK_KYC,
-  MOCK_INSURANCE_PLANS, MOCK_COMMISSIONS,
-  MOCK_REPORT,
-  delay
-} from './mock'
+import apiClient from './client'
 
-const mock = async (data: any, ms = 600) => { await delay(ms); return { data } }
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+export const unwrap        = (res: any) => res?.data?.data ?? res?.data ?? res
+export const extractToken  = (res: any): string => { const d = unwrap(res); return d?.access_token || d?.token || '' }
+export const extractAgent  = (res: any) => { const d = unwrap(res); return d?.agent || d }
+export const extractUser   = (res: any) => { const d = unwrap(res); return d?.user  || d }
 
-// ─────────────────────────────────────────────────────────────────────
-// RESPONSE NORMALIZERS
-// Backend wraps responses as { message, data: { ... } }
-// These helpers unwrap cleanly so every page gets flat data
-// ─────────────────────────────────────────────────────────────────────
-export const unwrap      = (res: any) => res?.data?.data ?? res?.data ?? res
-export const extractToken = (res: any): string => { const d = unwrap(res); return d?.access_token || d?.token || '' }
-export const extractAgent = (res: any) => { const d = unwrap(res); return d?.agent || d }
-export const extractUser  = (res: any) => { const d = unwrap(res); return d?.user  || d }
-
-// ═════════════════════════════════════════════════════════════════════
-// AUTH
-// ═════════════════════════════════════════════════════════════════════
-export const authApi = {
-  registerAgent: (data: any) => USE_MOCK
-    ? mock({ data: { access_token: 'mock-jwt-agent', agent: { ...MOCK_AGENT, ...data } }, message: 'Registration successful.' }, 800)
-    : apiClient.post('/agents/register', data),
-
-  loginAgent: (data: { identifier: string; password: string }) => USE_MOCK
-    ? mock({ data: { access_token: 'mock-jwt-agent', agent: { ...MOCK_AGENT, email: data.identifier } } }, 600)
-    : apiClient.post('/agents/login', data),
-
-  forgotPassword: (data: any) => USE_MOCK
-    ? mock({ message: 'OTP sent' }, 500)
-    : apiClient.post('/agents/forgot-password', data),
-
-  resetPassword: (data: any) => USE_MOCK
-    ? mock({ message: 'Password reset successfully' }, 500)
-    : apiClient.post('/agents/reset-password', data),
-
-  changePassword: (data: { currentPassword: string; newPassword: string }) => USE_MOCK
-    ? mock({ message: 'Password changed successfully' }, 500)
-    : apiClient.post('/agents/change-password', data),
-
-  registerCustomer: (data: any) => USE_MOCK
-    ? mock({ data: { access_token: 'mock-jwt-customer', user: { ...MOCK_CUSTOMER, ...data } } }, 700)
-    : apiClient.post('/auth/customer/register', data),
-
-  loginCustomer: (data: { email: string; password: string }) => USE_MOCK
-    ? mock({ data: { access_token: 'mock-jwt-customer', user: { ...MOCK_CUSTOMER, email: data.email } } }, 600)
-    : apiClient.post('/auth/customer/login', data),
-
-  sendOtp: (phoneNumber: string) => USE_MOCK
-    ? mock({ message: 'OTP sent', otp: '123456' }, 500)
-    : apiClient.post('/auth/otp/send', { phoneNumber, provider: 'sms' }),
-
-  verifyOtp: (phoneNumber: string, otp: string) => USE_MOCK
-    ? mock({ data: { access_token: 'mock-jwt-customer', user: { ...MOCK_CUSTOMER, phone: phoneNumber } } }, 600)
-    : apiClient.post('/auth/otp/verify', { phoneNumber, otp }),
-
-  resendOtp: (phoneNumber: string) => USE_MOCK
-    ? mock({ message: 'OTP resent', otp: '123456' }, 500)
-    : apiClient.post('/auth/otp/resend', { phoneNumber, provider: 'sms' }),
-
-  me: () => USE_MOCK ? mock(MOCK_AGENT) : apiClient.get('/auth/me'),
-}
-
-// ═════════════════════════════════════════════════════════════════════
-// AGENT (B2B)
-// ═════════════════════════════════════════════════════════════════════
-export const agentApi = {
-  getProfile:    ()       => USE_MOCK ? mock({ ...MOCK_AGENT }) : apiClient.get('/agents/profile'),
-  updateProfile: (d: any) => USE_MOCK ? mock({ ...MOCK_AGENT, ...d }) : apiClient.put('/agents/profile', d),
-
-  getKycStatus: () => USE_MOCK
-    ? mock({ kycStatus: MOCK_KYC.status, kycDocuments: [], ...MOCK_KYC }, 400)
-    : apiClient.get('/agents/kyc/status'),
-
-  uploadKycDocument: (docType: string, file: File) => {
-    const fd = new FormData(); fd.append('document', file); fd.append('docType', docType)
-    return apiClient.post('/agents/kyc/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
-  },
-
-  submitKyc: (data: any) => USE_MOCK
-    ? mock({ message: 'KYC submitted successfully', kycStatus: 'submitted' }, 800)
-    : apiClient.post('/kyc/submit', data),
-
-  getWallet:            ()        => USE_MOCK ? mock({ balance: MOCK_WALLET.balance || 10000, currency: 'INR' }) : apiClient.get('/agents/wallet/balance'),
-  getWalletTransactions:(params?: any) => USE_MOCK ? mock({ transactions: MOCK_TRANSACTIONS, pagination: { total: MOCK_TRANSACTIONS.length, page: 1, limit: 20, totalPages: 1 } }) : apiClient.get('/agents/wallet/transactions', { params }),
-
-  getBookings:    (params?: any) => USE_MOCK ? mock({ data: MOCK_BOOKINGS, pagination: { total: MOCK_BOOKINGS.length, page: 1, limit: 20 } }) : apiClient.get('/bookings/my', { params }),
-  getBookingById: (id: string)   => USE_MOCK ? mock({ booking: MOCK_BOOKINGS.find((b: any) => b._id === id) || MOCK_BOOKINGS[0] }) : apiClient.get(`/bookings/${id}`),
-  cancelBooking:  (id: string)   => USE_MOCK ? mock({ message: 'Booking cancelled', penalty: 500 }, 600) : apiClient.patch(`/bookings/${id}/cancel`),
-
-  bookFlight: async (data: any) => {
-    if (USE_MOCK) {
-      await delay(1200)
-      const ref = 'TP' + Date.now().toString().slice(-7)
-      const pnr = Math.random().toString(36).substring(2, 8).toUpperCase()
-      return { data: { booking: { bookingRef: ref, pnr, status: 'confirmed', ticketNumber: 'TK' + pnr }, message: 'Flight booked successfully!' } }
-    }
-    return apiClient.post('/bookings/agent/flight', data)
-  },
-
-  getDashboard:       ()        => USE_MOCK ? mock({ walletBalance: 10000, totalBookings: 24, totalRevenue: 284000, kycStatus: 'approved', agencyName: 'Demo Agency' }) : apiClient.get('/agents/dashboard'),
-  getCommissions:     (p?: any) => USE_MOCK ? mock({ report: MOCK_REPORT, commissions: MOCK_COMMISSIONS }) : apiClient.get('/reports/agent/summary', { params: p }),
-  getWalletStatement: (p?: any) => USE_MOCK ? mock({ transactions: MOCK_TRANSACTIONS }) : apiClient.get('/reports/agent/wallet-statement', { params: p }),
-}
-
-// ═════════════════════════════════════════════════════════════════════
-// CUSTOMER (B2C)
-// ═════════════════════════════════════════════════════════════════════
-export const customerApi = {
-  getProfile:      ()        => USE_MOCK ? mock({ user: MOCK_CUSTOMER }) : apiClient.get('/customer/profile'),
-  getBookings:     (p?: any) => USE_MOCK ? mock({ bookings: MOCK_BOOKINGS }) : apiClient.get('/bookings/my', { params: p }),
-  cancelBooking:   (id: string) => USE_MOCK ? mock({ message: 'Cancelled' }) : apiClient.patch(`/bookings/${id}/cancel`),
-  requestRefund:   (data: any) => USE_MOCK ? mock({ message: 'Refund requested' }) : apiClient.post('/refunds/request', data),
-  getRefunds:      ()        => USE_MOCK ? mock({ refunds: [] }) : apiClient.get('/refunds/my'),
-  initiateBooking: async (data: any) => {
-    if (USE_MOCK) {
-      await delay(1200);
-      const ref = 'TRV-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + Math.random().toString(36).substring(2,8).toUpperCase();
-      const pnr = Math.random().toString(36).substring(2,8).toUpperCase();
-      return { data: { bookingRef: ref, pnr, status: 'confirmed', message: 'Booking confirmed! E-ticket sent via email.' } };
-    }
-    // Real API: B2C init + auto-confirm (MOCK/CUSTOM tokens confirm instantly)
-    const initRes = await apiClient.post('/bookings/customer/flight/initiate', data);
-    const initData = (initRes.data as any)?.data || initRes.data;
-    const bookingRef = initData?.bookingRef;
-    // If payment not required (mock/custom fares), booking is already done
-    if (initData?.status === 'confirmed' || initData?.pnr) return initRes;
-    // For real TBO flights: return initData for Razorpay payment flow
-    return initRes;
-  },
-}
-
-// ═════════════════════════════════════════════════════════════════════
-// SEARCH (Public)
-// ═════════════════════════════════════════════════════════════════════
-export const searchApi = {
-  searchFlights: async (data: any) => {
-    if (USE_MOCK) {
-      await delay(800)
-      const flights = MOCK_FLIGHTS(data.origin, data.destination, data.date)
-      return { data: { flights, total: flights.length } }
-    }
-    const payload = {
-      origin: data.origin, destination: data.destination,
-      departureDate: data.departureDate || data.date,
-      adults: data.adults || data.passengers || 1,
-      children: data.children || 0, infants: data.infants || 0,
-      cabinClass: data.cabinClass || 'ECONOMY',
-      returnDate: data.returnDate, tripType: data.tripType,
-    }
-    const res = await apiClient.post('/search/flights', payload)
-    const raw = res.data as any
-    const flights = (raw.flights || raw.results || raw.data?.flights || []).map((f: any) => ({
-      ...f,
-      flightKey:     f.flightKey     || f.resultToken || f.id,
-      departureTime: f.departureTime || (f.departure ? f.departure.split('T')[1]?.slice(0,5) : ''),
-      arrivalTime:   f.arrivalTime   || (f.arrival   ? f.arrival.split('T')[1]?.slice(0,5)   : ''),
-      fare: { ...(f.fare || {}), baseFare: f.fare?.baseFare || 0, taxes: f.fare?.taxes || 0, totalFare: f.fare?.totalFare || f.fare?.total || f.price || 0, total: f.fare?.total || f.fare?.totalFare || f.price || 0, currency: f.fare?.currency || 'INR' },
-    }))
-    return { data: { flights, totalCount: flights.length, source: raw.source || 'API' } }
-  },
-  revalidateFlight: (data: any) => USE_MOCK ? mock({ valid: true, flight: data.flightData }, 400) : apiClient.post('/search/flights/revalidate', data),
-  searchInsurance:  (data: any) => USE_MOCK ? mock({ plans: MOCK_INSURANCE_PLANS }, 500) : apiClient.post('/search/insurance/plans', data),
-}
-
-// ═════════════════════════════════════════════════════════════════════
-// FLIGHTS (B2C normalized)
-// ═════════════════════════════════════════════════════════════════════
-// Helper: extract HH:MM from ISO string or plain "HH:MM"
 const toHHMM = (v?: string) => {
   if (!v) return '';
-  if (v.includes('T')) return v.split('T')[1].slice(0,5);
-  if (v.includes(':')) return v.slice(0,5);
+  if (v.includes('T')) return v.split('T')[1].slice(0, 5);
+  if (v.includes(':')) return v.slice(0, 5);
   return v;
 };
 
+// ═════════════════════════════════════════════════════════════════════════════
+// AUTH — always real API
+// ═════════════════════════════════════════════════════════════════════════════
+export const authApi = {
+  registerAgent:    (data: any) => apiClient.post('/agents/register', data),
+  loginAgent:       (data: { identifier: string; password: string }) => apiClient.post('/agents/login', data),
+  forgotPassword:   (data: any) => apiClient.post('/agents/forgot-password', data),
+  resetPassword:    (data: any) => apiClient.post('/agents/reset-password', data),
+  changePassword:   (data: { currentPassword: string; newPassword: string }) => apiClient.post('/agents/change-password', data),
+  registerCustomer: (data: any) => apiClient.post('/auth/customer/register', data),
+  loginCustomer:    (data: { email: string; password: string }) => apiClient.post('/auth/customer/login', data),
+  sendOtp:   (phoneNumber: string) => apiClient.post('/auth/otp/send', { phoneNumber, provider: 'sms' }),
+  verifyOtp: (phoneNumber: string, otp: string) => apiClient.post('/auth/otp/verify', { phoneNumber, otp }),
+  resendOtp: (phoneNumber: string) => apiClient.post('/auth/otp/resend', { phoneNumber, provider: 'sms' }),
+  me: () => apiClient.get('/auth/me'),
+}
+// B2C aliases
+;(authApi as any).loginWithEmail = (email: string, password: string) => authApi.loginCustomer({ email, password })
+;(authApi as any).loginWithOtp   = (phone: string, otp: string)      => authApi.verifyOtp(phone, otp)
+
+// ═════════════════════════════════════════════════════════════════════════════
+// AGENT (B2B) — always real API
+// ═════════════════════════════════════════════════════════════════════════════
+export const agentApi = {
+  getProfile:    ()       => apiClient.get('/agents/profile'),
+  updateProfile: (d: any) => apiClient.put('/agents/profile', d),
+  getKycStatus:  ()       => apiClient.get('/agents/kyc/status'),
+  submitKyc:     (data: any) => apiClient.post('/kyc/submit', data),
+  uploadKycDocument: (docType: string, file: File) => {
+    const fd = new FormData(); fd.append('document', file); fd.append('docType', docType);
+    return apiClient.post('/agents/kyc/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
+  getWallet:             ()        => apiClient.get('/agents/wallet/balance'),
+  getWalletTransactions: (p?: any) => apiClient.get('/agents/wallet/transactions', { params: p }),
+  getBookings:    (p?: any)    => apiClient.get('/bookings/my', { params: p }),
+  getBookingById: (id: string) => apiClient.get(`/bookings/${id}`),
+  cancelBooking:  (id: string) => apiClient.patch(`/bookings/${id}/cancel`),
+  bookFlight:     (data: any)  => apiClient.post('/bookings/agent/flight', data),
+  getDashboard:       ()        => apiClient.get('/agents/dashboard'),
+  getCommissions:     (p?: any) => apiClient.get('/reports/agent/summary', { params: p }),
+  getWalletStatement: (p?: any) => apiClient.get('/reports/agent/wallet-statement', { params: p }),
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// CUSTOMER (B2C) — always real API
+// ═════════════════════════════════════════════════════════════════════════════
+export const customerApi = {
+  getProfile:    ()           => apiClient.get('/customer/profile'),
+  getBookings:   (p?: any)    => apiClient.get('/bookings/my', { params: p }),
+  cancelBooking: (id: string) => apiClient.patch(`/bookings/${id}/cancel`),
+  requestRefund: (data: any)  => apiClient.post('/refunds/request', data),
+  getRefunds:    ()           => apiClient.get('/refunds/my'),
+  initiateBooking: async (data: any) => {
+    const res = await apiClient.post('/bookings/customer/flight/initiate', data);
+    const d   = (res.data as any)?.data || res.data;
+    if (d?.status === 'confirmed' || d?.pnr) return res;
+    return res;
+  },
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// SEARCH — hits backend always
+// Backend decides: TBO_USERNAME empty → DB mock data, set → real TBO
+// Tramps Aviation Tickets always merged on top
+// ═════════════════════════════════════════════════════════════════════════════
+export const searchApi = {
+  searchFlights: async (data: any) => {
+    const payload = {
+      origin:        data.origin        || data.from,
+      destination:   data.destination   || data.to,
+      departureDate: data.departureDate || data.date,
+      adults:        data.adults        || data.passengers || 1,
+      children:      data.children      || 0,
+      infants:       data.infants       || 0,
+      cabinClass:    data.cabinClass    || 'ECONOMY',
+      returnDate:    data.returnDate,
+      tripType:      data.tripType,
+    };
+    const res  = await apiClient.post('/search/flights', payload);
+    const raw  = res.data as any;
+    const list = raw.flights || raw.results || raw.data?.flights || [];
+    const flights = list.map((f: any) => ({
+      ...f,
+      flightKey:     f.flightKey     || f.resultToken || f.id,
+      departureTime: f.departureTime || (f.departure  ? f.departure.split('T')[1]?.slice(0,5) : ''),
+      arrivalTime:   f.arrivalTime   || (f.arrival    ? f.arrival.split('T')[1]?.slice(0,5)   : ''),
+      fare: {
+        ...(f.fare || {}),
+        baseFare:  f.fare?.baseFare  || 0,
+        taxes:     f.fare?.taxes     || 0,
+        totalFare: f.fare?.totalFare || f.fare?.total || f.price || 0,
+        total:     f.fare?.total     || f.fare?.totalFare || f.price || 0,
+        currency:  f.fare?.currency  || 'INR',
+      },
+    }));
+    return { data: { flights, totalCount: flights.length, source: raw.source || 'API' } };
+  },
+
+  searchHotels: async (data: any) => {
+    const res = await apiClient.post('/search/hotels', data);
+    const raw = res.data as any;
+    return { data: { hotels: raw.hotels || raw.results || [], totalCount: raw.totalCount || 0, source: raw.source || 'API' } };
+  },
+
+  searchInsurance: async (data: any) => {
+    const res = await apiClient.post('/search/insurance/plans', data);
+    const raw = res.data as any;
+    return { data: { plans: raw.plans || raw.data?.plans || [] } };
+  },
+
+  revalidateFlight: (data: any) => apiClient.post('/search/flights/revalidate', data),
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// FLIGHTS — normalized for B2C/B2B pages
+// ═════════════════════════════════════════════════════════════════════════════
 export const flightsApi = {
   search: async (data: any) => {
-    const res = await searchApi.searchFlights(data)
-    const raw = res.data as any
-    const flights = (raw.flights || []).map((f: any) => {
+    const res  = await searchApi.searchFlights(data);
+    const raw  = res.data as any;
+    const list = raw.flights || [];
+    const flights = list.map((f: any) => {
       const depRaw = f.departureTime || f.departure || '';
       const arrRaw = f.arrivalTime   || f.arrival   || '';
-      // duration: convert minutes number → "2h 15m" string
-      let durationStr = f.duration || f.durationStr || '';
+      let dur = f.duration || '';
       if (typeof f.duration === 'number') {
         const h = Math.floor(f.duration / 60), m = f.duration % 60;
-        durationStr = `${h}h ${m > 0 ? m + 'm' : ''}`.trim();
+        dur = `${h}h${m > 0 ? ` ${m}m` : ''}`;
       }
-      // Extract baggage strings BEFORE spread to avoid object contamination
-      const checkinBag = (typeof f.checkinBaggage === 'string' ? f.checkinBaggage : '')
-        || (typeof f.baggage === 'string' ? f.baggage : '')
-        || (typeof f.baggageInfo?.checkIn === 'string' ? f.baggageInfo.checkIn : '')
-        || '15 kg';
-      const cabinBag = (typeof f.cabinBaggage === 'string' ? f.cabinBaggage : '')
-        || (typeof f.baggageInfo?.cabin === 'string' ? f.baggageInfo.cabin : '')
-        || '7 kg';
-
+      const checkinBag =
+        (typeof f.checkinBaggage    === 'string' ? f.checkinBaggage    : '') ||
+        (typeof f.checkInBaggage    === 'string' ? f.checkInBaggage    : '') ||
+        (typeof f.baggage           === 'string' ? f.baggage           : '') ||
+        (typeof f.baggageInfo?.checkIn === 'string' ? f.baggageInfo.checkIn : '') || '15 KG';
+      const cabinBag =
+        (typeof f.cabinBaggage      === 'string' ? f.cabinBaggage      : '') ||
+        (typeof f.baggageInfo?.cabin === 'string' ? f.baggageInfo.cabin : '') || '7 KG';
       return {
         ...f,
-        id:       f.id       || f.flightKey || f.resultToken,
-        flightNo: f.flightNo || f.flightNumber,
-        from: f.from || f.origin,
-        to:   f.to   || f.destination,
-        departure: toHHMM(depRaw),
-        arrival:   toHHMM(arrRaw),
-        duration: durationStr,
-        price: f.price || f.fare?.total || f.fare?.totalFare || f.fare?.TotalFare || 0,
-        // Always strings — never objects
+        id:             f.id          || f.flightKey  || f.resultToken,
+        resultToken:    f.resultToken || f.flightKey  || f.id,
+        flightNo:       f.flightNo    || f.flightNumber,
+        from:           f.from        || f.origin,
+        to:             f.to          || f.destination,
+        departure:      toHHMM(depRaw),
+        arrival:        toHHMM(arrRaw),
+        duration:       dur,
+        price: (() => {
+          const p = f.price;
+          if (typeof p === 'number') return p;
+          if (typeof p === 'object' && p !== null) return p.total || p.grandTotal || p.perNight || 0;
+          return f.fare?.total || f.fare?.totalFare || f.fare?.TotalFare || f.fare?.total || 0;
+        })(),
         checkinBaggage: checkinBag,
         cabinBaggage:   cabinBag,
         baggage:        checkinBag,
-        // Explicitly remove nested objects that could be accidentally rendered
-        baggageInfo:  undefined,
-        amenities:    undefined,
-        stopDetails:  undefined,
-        refundable: f.refundable ?? f.isRefundable ?? true,
+        refundable:     f.refundable  ?? f.isRefundable ?? true,
         seatsAvailable: f.seatsAvailable || f.availableSeats || null,
+        baggageInfo:    undefined,
+        amenities:      undefined,
+        stopDetails:    undefined,
       };
-    })
-    return { data: { flights, totalCount: flights.length } }
+    });
+    return { data: { flights, totalCount: flights.length, source: raw.source } };
   },
   revalidate: (data: any) => searchApi.revalidateFlight(data),
 }
 
-// ═════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════════════════
 // HOTELS
-// ═════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════════════════
 export const hotelsApi = {
   searchCities: async (query: string) => {
     try {
-      const res = await apiClient.get('/search/hotels/cities', { params: { q: query } })
-      return res.data
+      return (await apiClient.get('/search/hotels/cities', { params: { q: query } })).data;
     } catch {
-      const CITIES = ['Delhi','Mumbai','Bangalore','Chennai','Kolkata','Hyderabad','Goa','Jaipur','Pune','Ahmedabad','Kochi','Chandigarh']
-      return CITIES.filter(c => c.toLowerCase().includes(query.toLowerCase())).map(c => ({ code: c.toUpperCase().slice(0,3), name: c, country: 'IN' }))
+      const CITIES = ['Delhi','Mumbai','Bangalore','Chennai','Kolkata','Hyderabad','Goa','Jaipur','Pune','Ahmedabad','Kochi','Chandigarh'];
+      return CITIES.filter(c => c.toLowerCase().includes(query.toLowerCase())).map(c => ({ code: c.toUpperCase().slice(0,3), name: c, country: 'IN' }));
     }
   },
   search: async (data: any) => {
-    try {
-      const res = await apiClient.post('/search/hotels', data)
-      const raw = res.data as any
-      const hotels = (raw.hotels || raw.results || []).map((h: any) => ({
-        id: h.id || h.hotelId || h.resultToken, name: h.name || h.HotelName || 'Hotel',
-        city: h.city || h.City || data.cityCode || '', stars: h.stars || h.StarRating || 3,
-        price: h.price?.grandTotal || h.price?.total || h.TotalFare || h.price || 0,
-        pricePerNight: h.price?.perNight || h.pricePerNight || 0,
-        rating: h.rating || (3.5 + Math.random() * 1.4).toFixed(1),
-        reviews: h.reviews || Math.floor(200 + Math.random() * 2000),
-        amenities: h.amenities || [], image: h.image || '🏨',
-        resultToken: h.resultToken || h.id || h.hotelId,
-        cancellation: h.cancellation || 'CHECK_POLICY', mealPlan: h.mealPlan || 'ROOM_ONLY',
-      }))
-      return { data: { hotels, totalCount: hotels.length } }
-    } catch { return { data: { hotels: [], totalCount: 0 } } }
+    const res  = await searchApi.searchHotels(data);
+    const raw  = res.data as any;
+    return { data: { hotels: (raw.hotels||[]).map((h: any) => ({
+      id:            h.id           || h.hotelId    || h.resultToken,
+      name:          h.name         || h.HotelName  || 'Hotel',
+      city:          h.city         || h.City        || data.cityCode || '',
+      stars:         h.stars        || h.StarRating  || 3,
+      price:         h.price?.grandTotal || h.price?.total || h.price || 0,
+      pricePerNight: h.price?.perNight   || h.pricePerNight || 0,
+      rating:        h.rating       || '4.0',
+      reviews:       h.reviews      || 0,
+      amenities:     Array.isArray(h.amenities) ? h.amenities : [],
+      image:         h.image        || '🏨',
+      resultToken:   h.resultToken  || h.id || h.hotelId,
+      cancellation:  h.cancellation || h.cancellationPolicy || 'CHECK_POLICY',
+      mealPlan:      h.mealPlan     || 'ROOM_ONLY',
+      nights:        h.nights       || data.nights  || 1,
+    })), totalCount: raw.totalCount || 0, source: raw.source } };
   },
-  getDetails: (hotelCode: string, params: any) => apiClient.get(`/hotels/${hotelCode}`, { params }),
-  book: (data: any) => apiClient.post('/hotels/book', data),
+  getDetails: (code: string, params: any) => apiClient.get(`/hotels/${code}`, { params }),
+  book:       (data: any) => apiClient.post('/hotels/book', data),
 }
 
-// ═════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════════════════
 // INSURANCE
-// ═════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════════════════
 export const insuranceApi = {
-  getPlans:     (data: any) => searchApi.searchInsurance(data),
-  buyPlan:      (data: any) => apiClient.post('/insurance/buy', data),
-  getMyPolicies: ()         => apiClient.get('/insurance/my-policies'),
+  getPlans:      (data: any) => searchApi.searchInsurance(data),
+  buyPlan:       (data: any) => apiClient.post('/insurance/buy', data),
+  getMyPolicies: ()          => apiClient.get('/insurance/my-policies'),
 }
 
-// ═════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════════════════
 // PAYMENT
-// ═════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════════════════
 export const paymentApi = {
-  createOrder: (data: { bookingId: string; amount: number }) => USE_MOCK
-    ? mock({ orderId: 'order_mock_' + Date.now(), amount: data.amount, currency: 'INR', key: 'rzp_test_mock' }, 500)
-    : apiClient.post('/payment/create-order', data),
-  verifyPayment: (data: any) => USE_MOCK
-    ? mock({ success: true, message: 'Payment verified' }, 600)
-    : apiClient.post('/payment/verify', data),
+  createOrder:   (data: { bookingId: string; amount: number }) => apiClient.post('/payment/create-order', data),
+  verifyPayment: (data: any) => apiClient.post('/payment/verify', data),
 }
 
-// ── Legacy stubs ──────────────────────────────────────────────────────
+// ═════════════════════════════════════════════════════════════════════════════
+// LEGACY STUBS
+// ═════════════════════════════════════════════════════════════════════════════
 export const statsApi = { getStats: () => apiClient.get('/api/stats') }
-
 export const usersApi = {
-  getUsers:   (params?: any) => apiClient.get('/api/users', { params }),
-  getAll:     (params?: any) => apiClient.get('/api/users', { params }),
-  getUser:    (id: string)   => apiClient.get(`/api/users/${id}`),
-  getById:    (id: string)   => apiClient.get(`/api/users/${id}`),
-  create:     (data: any)    => apiClient.post('/api/users', data),
-  update:     (id: string, data: any) => apiClient.put(`/api/users/${id}`, data),
-  updateUser: (id: string, data: any) => apiClient.put(`/api/users/${id}`, data),
-  delete:     (id: string)   => apiClient.delete(`/api/users/${id}`),
-  deleteUser: (id: string)   => apiClient.delete(`/api/users/${id}`),
+  getUsers:   (p?: any)            => apiClient.get('/api/users', { params: p }),
+  getAll:     (p?: any)            => apiClient.get('/api/users', { params: p }),
+  getUser:    (id: string)         => apiClient.get(`/api/users/${id}`),
+  getById:    (id: string)         => apiClient.get(`/api/users/${id}`),
+  create:     (data: any)          => apiClient.post('/api/users', data),
+  update:     (id: string, d: any) => apiClient.put(`/api/users/${id}`, d),
+  updateUser: (id: string, d: any) => apiClient.put(`/api/users/${id}`, d),
+  delete:     (id: string)         => apiClient.delete(`/api/users/${id}`),
+  deleteUser: (id: string)         => apiClient.delete(`/api/users/${id}`),
 }
-
-// ─────────────────────────────────────────────────────────────────────
-// ALIASES — backward compat for pages that still use these names
-// ─────────────────────────────────────────────────────────────────────
-// authApi.loginWithEmail / loginWithOtp used by b2c/login
-;(authApi as any).loginWithEmail = (email: string, password: string) =>
-  authApi.loginCustomer({ email, password })
-;(authApi as any).loginWithOtp = (phone: string, otp: string) =>
-  authApi.verifyOtp(phone, otp)

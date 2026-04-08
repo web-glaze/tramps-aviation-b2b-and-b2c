@@ -82,7 +82,7 @@ export default function B2BBookingDetailPage() {
   };
 
   const handleCancel = async () => {
-    if (!confirm("Are you sure you want to cancel this booking?")) return;
+    // Confirmation handled by UI
     setCancelling(true);
     await new Promise(r => setTimeout(r, 1500));
     toast.success("Cancellation request submitted");

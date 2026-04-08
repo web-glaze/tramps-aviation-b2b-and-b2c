@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/store";
-import { useSettingsStore } from "@/lib/store/settings";
+import { useSettingsStore } from "@/lib/store";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
@@ -32,7 +32,7 @@ export function B2CNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userDropdown, setUserDropdown] = useState(false);
   const { isAuthenticated, user, clearAuth } = useAuthStore();
-  const { settings } = useSettingsStore();
+  const { colorTheme } = useSettingsStore();
   const { theme, setTheme } = useTheme();
 
   const handleLogout = () => {
@@ -48,11 +48,11 @@ export function B2CNavbar() {
       <div className="h-full max-w-7xl mx-auto px-4 sm:px-6 flex items-center gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 shrink-0 mr-2">
-          {settings.logoUrl ? (
+          {false ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={settings.logoUrl}
-              alt={settings.appName}
+              src=""
+              alt="Tramps Aviation"
               className="h-8 w-auto object-contain"
             />
           ) : (
@@ -61,7 +61,7 @@ export function B2CNavbar() {
                 <Plane className="h-4 w-4 text-white" />
               </div>
               <span className="font-extrabold text-white tracking-tight hidden sm:block">
-                {settings.appName || "Tramps Aviation"}
+                "Tramps Aviation"
               </span>
             </>
           )}
