@@ -1,100 +1,72 @@
-# Tramps Aviation — B2B & B2C Frontend
+# Tramps Aviation — Web App
+## Pure Zustand State Management
 
-Next.js 14 frontend for the Travel Platform — B2B Agent Portal + B2C Customer Portal.
+### Stores — `lib/store/index.ts`
 
-> **Admin panel is a separate project** — `travel-admin` (React + MUI)
+| Store | localStorage Key | What it stores |
+|---|---|---|
+| `useSettingsStore` | `tp-settings` | theme, color, font, sidebar |
+| `useAuthStore` | `tp-auth` | user, token, role, isAuthenticated |
+| `useStatsStore` | none | dashboard stats (auto-refetches) |
+| `useUsersStore` | none | admin users list |
+| `useNotificationsStore` | `tp-notifications` | in-app notifications |
 
----
+### How to use in any page
 
-## Project Structure
+```typescript
+import { useAuthStore, useSettingsStore, useStatsStore, useUsersStore, useNotificationsStore } from '@/lib/store'
 
-```
-app/
-├── page.tsx              → Homepage (public landing page)
-├── layout.tsx            → Root layout (theme, toasts)
-├── b2b/                  → B2B Agent Portal
-│   ├── login/            → Agent login
-│   ├── register/         → Agency registration
-│   ├── kyc/              → KYC document upload
-│   ├── dashboard/        → Agent dashboard
-│   ├── flights/          → Search & book flights
-│   ├── hotels/           → Search & book hotels
-│   ├── insurance/        → Travel insurance
-│   ├── bookings/         → My bookings
-│   ├── wallet/           → Wallet & transactions
-│   ├── commission/       → Commission earnings
-│   ├── reports/          → Reports & analytics
-│   └── profile/          → Agent profile
-└── b2c/                  → B2C Customer Portal
-    ├── login/            → Customer login
-    ├── register/         → Customer registration
-    ├── flights/          → Search flights
-    ├── hotels/           → Search hotels
-    ├── insurance/        → Travel insurance
-    ├── my-trips/         → My bookings
-    └── booking/[id]/     → Booking detail
-```
+// ── AUTH ──────────────────────────────────────────────
+const { user, isAuthenticated, role, setAuth, clearAuth, _hasHydrated } = useAuthStore()
 
----
+// Login:
+setAuth(user, token)   // saves to store + localStorage + cookie
 
-## Getting Started
+// Logout:
+clearAuth()            // clears store + localStorage + cookie
 
-```bash
-# Install dependencies
-yarn install
+// SSR check (ALWAYS do this before redirecting):
+if (!_hasHydrated) return <Spinner />
+if (!isAuthenticated) router.push('/login')
 
-# Start development server (backend must be running)
-yarn dev
+// ── SETTINGS ──────────────────────────────────────────
+const { theme, setTheme, colorTheme, setColorTheme, sidebarOpen, toggleSidebar } = useSettingsStore()
 
-# Build for production
-yarn build
-yarn start
+// ── STATS (dashboard) ─────────────────────────────────
+const { stats, loading, fetchStats } = useStatsStore()
+useEffect(() => { fetchStats() }, [])
+
+// ── USERS (admin) ─────────────────────────────────────
+const { users, meta, loading, fetchUsers, deleteUser, setPage, setSearch } = useUsersStore()
+useEffect(() => { fetchUsers() }, [])
+
+// ── NOTIFICATIONS ─────────────────────────────────────
+const { notifications, unreadCount, addNotification, markAllRead } = useNotificationsStore()
+addNotification({ title: 'Booking confirmed!', message: 'PNR: ABC123', type: 'success' })
 ```
 
----
+### Pages — Which stores they use
 
-## Environment Variables
+| Page | Stores used |
+|---|---|
+| `app/page.tsx` | `useAuthStore` (user, role, isAuthenticated) |
+| `app/b2c/login/page.tsx` | `useAuthStore` (setAuth) |
+| `app/b2c/register/` | `useAuthStore` (setAuth) |
+| `app/b2c/flights/page.tsx` | `useAuthStore` (isAuthenticated, role) |
+| `app/b2c/hotels/page.tsx` | `useAuthStore` (isAuthenticated, role) |
+| `app/b2c/insurance/page.tsx` | `useAuthStore` (isAuthenticated) |
+| `app/b2c/my-trips/page.tsx` | `useAuthStore` (isAuthenticated, user) |
+| `app/b2b/layout.tsx` | `useAuthStore` + `useSettingsStore` (sidebarOpen) |
+| `app/b2b/dashboard/page.tsx` | `useAuthStore` (user) |
+| `components/layout/B2BSidebar.tsx` | `useAuthStore` (clearAuth) + `useSettingsStore` (sidebarOpen) |
+| `components/layout/B2CNavbar.tsx` | `useAuthStore` (isAuthenticated, clearAuth) |
+| `components/layout/SettingsProvider.tsx` | `useSettingsStore` (ALL settings) |
+| `components/settings/SettingsFab.tsx` | `useSettingsStore` (ALL settings) |
+| `components/dashboard/DashboardStats.tsx` | `useStatsStore` (stats, loading, fetchStats) |
+| `components/dashboard/DashboardChart.tsx` | `useStatsStore` (stats, loading, fetchStats) |
+| `components/dashboard/UsersTable.tsx` | `useUsersStore` (users, fetchUsers, deleteUser) |
+| `components/shared/NotificationBell.tsx` | `useNotificationsStore` |
 
-```env
-# .env.development
-NEXT_PUBLIC_API_URL=http://localhost:8080/api
-NEXT_PUBLIC_APP_NAME=Tramps Aviation
-NEXT_PUBLIC_USE_MOCK=false
-```
-
-Set `NEXT_PUBLIC_USE_MOCK=true` to run with mock data (no backend needed).
-
----
-
-## Auth Flow
-
-| User Type    | Login URL    | Dashboard        |
-| ------------ | ------------ | ---------------- |
-| B2B Agent    | `/b2b/login` | `/b2b/dashboard` |
-| B2C Customer | `/b2c/login` | `/b2c/flights`   |
-
----
-
-## Key Routes
-
-| Route            | Description                     |
-| ---------------- | ------------------------------- |
-| `/`              | Public landing page             |
-| `/b2b/login`     | Agent login                     |
-| `/b2b/register`  | Agency registration             |
-| `/b2b/kyc`       | KYC document upload             |
-| `/b2b/dashboard` | Agent dashboard (auth required) |
-| `/b2c/login`     | Customer login                  |
-| `/b2c/flights`   | Flight search (public)          |
-| `/b2c/my-trips`  | My trips (auth required)        |
-
----
-
-## Tech Stack
-
-- **Framework**: Next.js 14 (App Router)
-- **Styling**: Tailwind CSS + shadcn/ui
-- **State**: Zustand
-- **API**: Axios
-- **Forms**: React Hook Form + Zod
-- **Notifications**: Sonner
+### Logo
+Put `logo.jpg` in `public/` folder.
+Used in: Homepage navbar, B2C Navbar, B2B Sidebar, browser favicon.

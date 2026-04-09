@@ -32,6 +32,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <title>Tramps Aviation — B2B & B2C Travel Platform</title>
         <meta name="description" content="India's premier travel booking platform for agents and travelers." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/logo.jpg" type="image/jpeg" />
+        <link rel="apple-touch-icon" href="/logo.jpg" />
         {/* Runs before paint — prevents flash of wrong theme */}
         <script dangerouslySetInnerHTML={{ __html: ANTI_FLASH }} />
       </head>

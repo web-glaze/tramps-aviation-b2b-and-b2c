@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -174,8 +175,8 @@ export default function HomePage() {
       >
         <div className="max-w-7xl mx-auto h-full flex items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30 group-hover:scale-105 transition-transform">
-              <Plane className="h-4 w-4 text-primary-foreground" />
+            <div className="h-10 w-10 rounded-xl overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform">
+              <Image src="/logo.jpg" alt="Tramps Aviation" width={40} height={40} className="h-10 w-10 object-contain" />
             </div>
             <div className="hidden sm:block">
               <span className="font-bold text-lg font-display leading-none">
@@ -833,7 +834,7 @@ export default function HomePage() {
             <div className="col-span-2 space-y-4">
               <Link href="/" className="flex items-center gap-2.5 w-fit">
                 <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center">
-                  <Plane className="h-4 w-4 text-primary-foreground" />
+                  <Image src="/logo.jpg" alt="TA" width={20} height={20} className="h-5 w-5 object-contain" />
                 </div>
                 <span className="font-bold text-lg font-display">
                   Tramps Aviation

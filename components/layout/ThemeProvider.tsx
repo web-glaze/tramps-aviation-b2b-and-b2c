@@ -1,8 +1,7 @@
 "use client";
-
-import * as React from "react";
-import { ThemeProvider as NextThemesProvider, type ThemeProviderProps } from "next-themes";
-
-export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
+// ThemeProvider removed — Zustand useSettingsStore handles all themes
+// SettingsProvider.tsx applies them via data-* attributes and CSS vars
+// This file kept as passthrough so no import errors
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
 }

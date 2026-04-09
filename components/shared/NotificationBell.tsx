@@ -7,7 +7,8 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { useNotificationStore, Notification } from "@/lib/store/notifications";
+import { useNotificationsStore } from "@/lib/store";
+type Notification = any;
 import { cn } from "@/lib/utils";
 
 const TYPE_ICON = {
@@ -36,7 +37,7 @@ function timeAgo(dateStr: string) {
 
 export function NotificationBell() {
   const router = useRouter();
-  const { notifications, markRead, markAllRead, clearAll, unreadCount } = useNotificationStore();
+  const { notifications, markRead, markAllRead, clearAll, unreadCount } = useNotificationsStore();
   const count = unreadCount();
 
   const handleClick = (n: Notification) => {

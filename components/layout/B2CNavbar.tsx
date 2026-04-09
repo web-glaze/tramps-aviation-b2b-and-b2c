@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
@@ -57,11 +58,11 @@ export function B2CNavbar() {
             />
           ) : (
             <>
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shrink-0">
-                <Plane className="h-4 w-4 text-white" />
+              <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
+                <Image src="/logo.jpg" alt="Tramps Aviation" width={40} height={40} className="h-10 w-10 object-contain" />
               </div>
               <span className="font-extrabold text-white tracking-tight hidden sm:block">
-                "Tramps Aviation"
+                Tramps Aviation
               </span>
             </>
           )}

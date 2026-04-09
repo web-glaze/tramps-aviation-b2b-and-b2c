@@ -7,6 +7,7 @@ import { useSettingsStore, useAuthStore } from "@/lib/store";
 import { B2B_SIDEBAR_NAV, B2B_SIDEBAR_BOTTOM, APP_NAME } from "@/config/app";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PanelLeftClose, PanelLeftOpen, Plane, Wallet, LogOut } from "lucide-react";
+import Image from "next/image";
 
 export function B2BSidebar() {
   const pathname = usePathname();
@@ -30,8 +31,8 @@ export function B2BSidebar() {
         {/* Logo */}
         <div className="flex items-center h-16 border-b border-border px-4 flex-shrink-0">
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-md shadow-primary/25">
-              <Plane className="h-4 w-4" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl overflow-hidden">
+              <Image src="/logo.jpg" alt="Tramps Aviation" width={36} height={36} className="h-9 w-9 object-contain" />
             </div>
             {sidebarOpen && (
               <div>
