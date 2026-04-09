@@ -14,28 +14,21 @@ import {
   Search,
   MapPin,
   Calendar,
-  Phone,
-  Mail,
-  Instagram,
-  Twitter,
-  Facebook,
-  Linkedin,
   Zap,
   Clock,
   HeartHandshake,
   BadgeCheck,
-  Menu,
-  X,
   Sparkles,
   Award,
   Building2,
   CreditCard,
   BarChart3,
   Lock,
-  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/store";
+import { CommonHeader } from "@/components/layout/CommonHeader";
+import { CommonFooter } from "@/components/layout/CommonFooter";
 
 const POPULAR_ROUTES = [
   {
@@ -111,8 +104,8 @@ const TESTIMONIALS = [
 
 export default function HomePage() {
   const router = useRouter();
-  const { user, role, isAuthenticated } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<"flights" | "hotels" | "insurance">("flights");
+  const { user, isAuthenticated } = useAuthStore();
+  const [activeTab, setActiveTab] = useState<"flights" | "hotels" | "insurance" | "series-fare">("flights");
   // Flight search state
   const [from, setFrom] = useState("DEL");
   const [to, setTo] = useState("BOM");
@@ -123,15 +116,7 @@ export default function HomePage() {
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [rooms, setRooms] = useState("1");
-  const [mobileMenu, setMobileMenu] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   useEffect(() => {
     const t = setInterval(
@@ -152,123 +137,21 @@ export default function HomePage() {
       router.push("/b2c/insurance");
       return;
     }
+    if (activeTab === "series-fare") {
+      router.push(`/b2c/series-fare?from=${from.toUpperCase()}&to=${to.toUpperCase()}&date=${date}&adults=${adults}`);
+      return;
+    }
     // Flights — no auth check, just search
     if (!from || !to) { alert("Please enter origin and destination"); return; }
     if (!date)         { alert("Please select a travel date"); return; }
     router.push(`/b2c/flights?from=${from.toUpperCase()}&to=${to.toUpperCase()}&date=${date}&adults=${adults}`);
   };
 
-  const dashboardLink = role === "agent" ? "/b2b/dashboard" : "/b2c/my-trips";
-
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
 
-
-      {/* NAV */}
-      <header
-        className={cn(
-          "fixed top-0 inset-x-0 z-50 transition-all duration-500",
-          scrolled
-            ? "h-16 bg-background/95 backdrop-blur-xl border-b border-border shadow-sm"
-            : "h-20 bg-transparent",
-        )}
-      >
-        <div className="max-w-7xl mx-auto h-full flex items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="h-10 w-10 rounded-xl overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform">
-              <Image src="/logo.jpg" alt="Tramps Aviation" width={40} height={40} className="h-10 w-10 object-contain" />
-            </div>
-            <div className="hidden sm:block">
-              <span className="font-bold text-lg font-display leading-none">
-                Tramps Aviation
-              </span>
-              <span className="text-[10px] text-muted-foreground block leading-none tracking-wide">
-                B2B & B2C Platform
-              </span>
-            </div>
-            <span className="sm:hidden font-bold text-base font-display">Tramps</span>
-          </Link>
-
-          <nav className="hidden md:flex items-center gap-1">
-            {[
-              { href: "/b2c/flights", label: "Flights" },
-              { href: "#features", label: "Features" },
-              { href: "#agents", label: "For Agents" },
-              { href: "#contact", label: "Contact" },
-            ].map(({ href, label }) => (
-              <Link
-                key={label}
-                href={href}
-                className="px-3.5 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 rounded-lg transition-all"
-              >
-                {label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="hidden md:flex items-center gap-1.5">
-            {user ? (
-              <Link href={dashboardLink}>
-                <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-all">
-                  Dashboard <ArrowRight className="h-3.5 w-3.5" />
-                </button>
-              </Link>
-            ) : (
-              <>
-                <Link href="/b2c/login">
-                  <button className="px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-all">
-                    Sign In
-                  </button>
-                </Link>
-                <Link href="/b2c/register">
-                  <button className="px-3.5 py-1.5 text-sm font-semibold bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-all">
-                    Get Started
-                  </button>
-                </Link>
-                <div className="w-px h-5 bg-border/60 mx-0.5" />
-                <Link href="/b2b/login">
-                  <button className="px-3 py-1.5 text-xs font-semibold text-primary/80 hover:text-primary border border-primary/30 hover:border-primary/60 hover:bg-primary/5 rounded-lg transition-all whitespace-nowrap">
-                    Agent Portal ↗
-                  </button>
-                </Link>
-              </>
-            )}
-          </div>
-
-          <button
-            className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors"
-            onClick={() => setMobileMenu(!mobileMenu)}
-          >
-            {mobileMenu ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
-          </button>
-        </div>
-
-        {mobileMenu && (
-          <div className="md:hidden border-t border-border bg-background/98 backdrop-blur-xl animate-in">
-            <div className="px-4 py-4 space-y-1">
-              {[
-                { href: "/b2c/flights", label: "✈  Search Flights" },
-                { href: "/b2c/login", label: "👤  Sign In" },
-                { href: "/b2c/register", label: "🚀  Register (B2C)" },
-                { href: "/b2b/login", label: "🏢  Agent Login" },
-              ].map(({ href, label }) => (
-                <Link
-                  key={label}
-                  href={href}
-                  onClick={() => setMobileMenu(false)}
-                  className="flex items-center px-4 py-3 text-sm font-medium hover:bg-muted rounded-xl transition-colors"
-                >
-                  {label}
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-      </header>
+      {/* COMMON HEADER */}
+      <CommonHeader variant="home" />
 
       {/* HERO */}
       <section className="relative min-h-screen flex items-center justify-center px-4 pt-24 pb-16 overflow-hidden">
@@ -312,6 +195,7 @@ export default function HomePage() {
                 { key: "flights",   label: "✈ Flights",   },
                 { key: "hotels",    label: "🏨 Hotels",    },
                 { key: "insurance", label: "🛡 Insurance", },
+                { key: "series-fare", label: "🎫 Series Fare", },
               ] as const).map(({ key, label }) => (
                 <button key={key} onClick={() => setActiveTab(key)}
                   className={cn("px-4 py-2 rounded-lg text-sm font-medium transition-all",
@@ -389,10 +273,40 @@ export default function HomePage() {
               </div>
             )}
 
+            {/* Series Fare — Tramps Aviation exclusive fares */}
+            {activeTab === "series-fare" && (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <SearchField label="From" icon={MapPin} placeholder="Delhi (DEL)" value={from} onChange={setFrom}/>
+                <SearchField label="To"   icon={MapPin} placeholder="Mumbai (BOM)" value={to}   onChange={setTo}/>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Departure Date</label>
+                  <div className="field-wrapper">
+                    <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0"/>
+                    <input type="date" className="flex-1 bg-transparent text-sm outline-none text-foreground"
+                      value={date} onChange={e=>setDate(e.target.value)} min={new Date().toISOString().split("T")[0]}/>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Adults</label>
+                  <div className="field-wrapper">
+                    <Users className="h-4 w-4 text-muted-foreground flex-shrink-0"/>
+                    <input type="number" min="1" max="9" className="flex-1 bg-transparent text-sm outline-none text-foreground"
+                      value={adults} onChange={e=>setAdults(e.target.value)} placeholder="1"/>
+                  </div>
+                </div>
+                <div className="sm:col-span-2 lg:col-span-4">
+                  <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl px-4 py-2.5 text-xs text-amber-700 dark:text-amber-400">
+                    <span className="text-base">✈</span>
+                    <span><strong>Series Fare</strong> — Exclusive Tramps Aviation fares with bulk booking discounts. Group & series inventory at special rates.</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <button onClick={handleSearch}
               className="w-full mt-4 h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-all hover:shadow-lg hover:shadow-primary/25 active:scale-[0.99]">
               <Search className="h-4 w-4"/>
-              {activeTab==="flights" ? "Search Flights" : activeTab==="hotels" ? "Search Hotels" : "Get Insurance Plans"}
+              {activeTab==="flights" ? "Search Flights" : activeTab==="hotels" ? "Search Hotels" : activeTab==="series-fare" ? "Search Series Fares" : "Get Insurance Plans"}
             </button>
           </div>
 
@@ -411,7 +325,7 @@ export default function HomePage() {
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border hover:border-primary/50 hover:bg-primary/5 text-xs font-medium text-muted-foreground hover:text-primary transition-all"
                 >
                   {r.fromCity} → {r.toCity}
-                  <span className="text-primary font-semibold">{r.price}</span>
+                  <span className="text-[#e44b0f] font-semibold">{r.price}</span>
                 </button>
               ))}
             </div>
@@ -420,13 +334,13 @@ export default function HomePage() {
           {/* Stats */}
           <div className="flex items-center justify-center gap-8 sm:gap-14 flex-wrap animate-in stagger-4">
             {[
-              { value: "2L+", label: "Happy Travelers" },
-              { value: "500+", label: "Travel Agents" },
-              { value: "200+", label: "Airlines" },
-              { value: "₹50Cr+", label: "Bookings Processed" },
-            ].map(({ value, label }) => (
+              { value: "2L+",     label: "Happy Travelers",    color: "text-primary" },
+              { value: "500+",    label: "Travel Agents",      color: "text-[#208dcb]" },
+              { value: "200+",    label: "Airlines",           color: "text-primary" },
+              { value: "₹50Cr+", label: "Bookings Processed",  color: "text-[#208dcb]" },
+            ].map(({ value, label, color }) => (
               <div key={label} className="text-center">
-                <p className="text-2xl font-bold font-display gradient-text">
+                <p className={`text-2xl font-bold font-display ${color}`}>
                   {value}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
@@ -476,8 +390,8 @@ export default function HomePage() {
                 icon: Plane,
                 title: "Flight Booking",
                 desc: "Real-time search across 200+ airlines with instant PNR and e-ticket delivery in minutes.",
-                color: "text-blue-500",
-                bg: "bg-blue-500/10",
+                color: "text-primary",
+                bg: "bg-primary/10",
                 delay: 1,
               },
               {
@@ -560,8 +474,8 @@ export default function HomePage() {
             { value: "₹50Cr+", label: "Bookings Processed", icon: TrendingUp },
           ].map(({ value, label, icon: Icon }) => (
             <div key={label} className="space-y-2">
-              <Icon className="h-6 w-6 mx-auto text-primary opacity-70" />
-              <p className="text-2xl sm:text-3xl font-bold font-display text-foreground">
+              <Icon className="h-6 w-6 mx-auto text-primary" />
+              <p className="text-2xl sm:text-3xl font-bold font-display gradient-text">
                 {value}
               </p>
               <p className="text-xs text-muted-foreground font-medium">
@@ -600,7 +514,7 @@ export default function HomePage() {
                   {
                     icon: BarChart3,
                     text: "Commission dashboard with real-time earnings",
-                    color: "text-blue-500",
+                    color: "text-primary",
                   },
                   {
                     icon: Lock,
@@ -657,8 +571,8 @@ export default function HomePage() {
                   value: "284",
                   sub: "This month",
                   icon: Plane,
-                  color: "bg-blue-500/10",
-                  ic: "text-blue-600",
+                  color: "bg-primary/10",
+                  ic: "text-primary",
                 },
                 {
                   label: "Wallet Balance",
@@ -827,113 +741,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer id="contact" className="border-t border-border bg-card/30">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="py-14 grid grid-cols-2 sm:grid-cols-5 gap-8">
-            <div className="col-span-2 space-y-4">
-              <Link href="/" className="flex items-center gap-2.5 w-fit">
-                <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center">
-                  <Image src="/logo.jpg" alt="TA" width={20} height={20} className="h-5 w-5 object-contain" />
-                </div>
-                <span className="font-bold text-lg font-display">
-                  Tramps Aviation
-                </span>
-              </Link>
-              <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
-                India's premier B2B & B2C travel platform. Best prices on
-                flights, hotels and insurance.
-              </p>
-              <div className="flex gap-2">
-                {[Facebook, Twitter, Instagram, Linkedin].map((Icon, i) => (
-                  <button
-                    key={i}
-                    className="h-8 w-8 rounded-lg border border-border hover:border-primary/50 hover:text-primary flex items-center justify-center transition-all text-muted-foreground"
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                  </button>
-                ))}
-              </div>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <a
-                  href="tel:+911800001234"
-                  className="flex items-center gap-2 hover:text-foreground transition-colors"
-                >
-                  <Phone className="h-3.5 w-3.5" /> 1800-001-2345 (Toll Free)
-                </a>
-                <a
-                  href="mailto:support@trampsaviation.in"
-                  className="flex items-center gap-2 hover:text-foreground transition-colors"
-                >
-                  <Mail className="h-3.5 w-3.5" /> support@Tramps Aviation.in
-                </a>
-              </div>
-            </div>
-
-            {[
-              {
-                title: "Platform",
-                links: [
-                  { href: "/b2c/flights", label: "Search Flights" },
-                  { href: "/b2b/register", label: "Agent Portal" },
-                  { href: "/b2c/login", label: "Sign In" },
-                  { href: "/b2c/register", label: "Register" },
-                ],
-              },
-              {
-                title: "Company",
-                links: [
-                  { href: "/cms/about", label: "About Us" },
-                  { href: "/cms/careers", label: "Careers" },
-                  { href: "/cms/press", label: "Press" },
-                  { href: "/cms/contact", label: "Contact" },
-                ],
-              },
-              {
-                title: "Legal",
-                links: [
-                  { href: "/cms/terms", label: "Terms of Service" },
-                  { href: "/cms/privacy", label: "Privacy Policy" },
-                  { href: "/cms/refund", label: "Refund Policy" },
-                  { href: "/cms/faq", label: "FAQs" },
-                ],
-              },
-            ].map(({ title, links }) => (
-              <div key={title} className="space-y-4">
-                <h4 className="font-bold text-sm">{title}</h4>
-                <ul className="space-y-2.5">
-                  {links.map(({ href, label }) => (
-                    <li key={label}>
-                      <Link
-                        href={href}
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 group"
-                      >
-                        {label}
-                        <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all" />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-
-          <div className="py-5 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-xs text-muted-foreground">
-              © 2025 Tramps Aviation India Pvt. Ltd. All rights reserved. | IATA
-              Accredited | RBI Licensed
-            </p>
-            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Shield className="h-3 w-3 text-emerald-500" /> Secured by SSL
-              </span>
-              <span className="flex items-center gap-1">
-                <BadgeCheck className="h-3 w-3 text-blue-500" /> IATA Verified
-              </span>
-            </div>
-          </div>
-        </div>
-      </footer>
+      {/* COMMON FOOTER */}
+      <CommonFooter />
     </div>
   );
 }

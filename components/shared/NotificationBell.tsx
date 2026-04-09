@@ -19,7 +19,7 @@ const TYPE_ICON = {
 };
 
 const TYPE_COLOR = {
-  info: "text-blue-500",
+  info: "text-primary",
   success: "text-green-500",
   warning: "text-amber-500",
   error: "text-red-500",

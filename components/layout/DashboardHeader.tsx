@@ -28,12 +28,13 @@ export function DashboardHeader({ title }: { title?: string }) {
   return (
     <header
       className={cn(
-        "fixed top-0 right-0 z-20 h-16 bg-background/95 backdrop-blur-xl border-b border-border flex items-center px-6 gap-4 transition-all duration-300",
+        "fixed top-0 right-0 z-20 h-16 bg-background/95 dark:bg-card/95 backdrop-blur-xl border-b border-border flex items-center px-6 gap-4 transition-all duration-300",
         sidebarOpen ? "left-64" : "left-[70px]",
       )}
     >
+      {/* Page title */}
       <div className="flex-1">
-        <h1 className="font-bold text-base font-display">{pageTitle}</h1>
+        <h1 className="font-bold text-base font-display text-foreground">{pageTitle}</h1>
       </div>
 
       <div className="flex items-center gap-2">
@@ -41,6 +42,7 @@ export function DashboardHeader({ title }: { title?: string }) {
         <button
           onClick={toggleTheme}
           className="h-9 w-9 rounded-xl border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
         >
           {theme === "dark" ? (
             <Sun className="h-4 w-4" />
@@ -65,7 +67,7 @@ export function DashboardHeader({ title }: { title?: string }) {
               <p className="text-xs font-semibold leading-none">
                 {user.name || user.agencyName || "Agent"}
               </p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Agent</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Agent Portal</p>
             </div>
           </div>
         )}
@@ -73,3 +75,4 @@ export function DashboardHeader({ title }: { title?: string }) {
     </header>
   );
 }
+

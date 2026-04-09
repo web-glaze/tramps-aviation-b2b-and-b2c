@@ -51,7 +51,7 @@ export default function CommissionPage() {
 
       <div className="grid grid-cols-3 gap-4">
         <StatCard title="Total Earned" value={`₹${totalCommission.toLocaleString()}`} icon={DollarSign} iconColor="text-emerald-500" iconBg="bg-emerald-500/10" isLoading={loading} />
-        <StatCard title="Released" value={`₹${released.toLocaleString()}`} icon={CheckCircle} iconColor="text-blue-500" iconBg="bg-blue-500/10" isLoading={loading} />
+        <StatCard title="Released" value={`₹${released.toLocaleString()}`} icon={CheckCircle} iconColor="text-primary" iconBg="bg-primary/10" isLoading={loading} />
         <StatCard title="Pending" value={`₹${pending.toLocaleString()}`} icon={Clock} iconColor="text-amber-500" iconBg="bg-amber-500/10" isLoading={loading} />
       </div>
 

@@ -129,7 +129,7 @@ function LoginContent() {
         <div className="mb-6">
           <Link
             href="/b2c/flights"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-slate-300 transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground/80 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" /> Back to Flights
           </Link>
@@ -142,14 +142,14 @@ function LoginContent() {
               <Plane className="h-4.5 w-4.5 text-white" />
             </div>
             <div>
-              <p className="font-extrabold text-white text-base">
+              <p className="font-extrabold text-foreground text-base">
                 Tramps Aviation
               </p>
               <p className="text-xs text-muted-foreground">Customer Portal</p>
             </div>
           </div>
 
-          <h2 className="text-2xl font-bold text-white mb-1">Sign In</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-1">Sign In</h2>
           <p className="text-muted-foreground text-sm mb-6">
             Access your bookings and manage trips
           </p>
@@ -160,7 +160,7 @@ function LoginContent() {
               onClick={() => setTab("email")}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${
                 tab === "email"
-                  ? "bg-blue-600 text-white shadow"
+                  ? "bg-primary text-foreground shadow"
                   : "text-muted-foreground hover:text-white"
               }`}
             >
@@ -170,7 +170,7 @@ function LoginContent() {
               onClick={() => setTab("otp")}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${
                 tab === "otp"
-                  ? "bg-blue-600 text-white shadow"
+                  ? "bg-primary text-foreground shadow"
                   : "text-muted-foreground hover:text-white"
               }`}
             >
@@ -191,7 +191,7 @@ function LoginContent() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="you@example.com"
-                  className="w-full bg-muted border border-border text-white placeholder:text-muted-foreground/60 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all"
+                  className="w-full bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-blue-500/30 transition-all"
                 />
               </div>
               <div>
@@ -205,12 +205,12 @@ function LoginContent() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     placeholder="••••••••"
-                    className="w-full bg-muted border border-border text-white placeholder:text-muted-foreground/60 rounded-xl px-4 py-3 pr-10 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all"
+                    className="w-full bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 rounded-xl px-4 py-3 pr-10 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-blue-500/30 transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPwd((s) => !s)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-slate-300"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground/80"
                   >
                     {showPwd ? (
                       <EyeOff className="h-4 w-4" />
@@ -223,7 +223,7 @@ function LoginContent() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white rounded-xl py-3 text-sm font-semibold transition-all flex items-center justify-center gap-2"
+                className="w-full bg-primary hover:bg-primary/90 disabled:opacity-60 text-foreground rounded-xl py-3 text-sm font-semibold transition-all flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -255,13 +255,13 @@ function LoginContent() {
                     }
                     required
                     placeholder="9876543210"
-                    className="flex-1 bg-muted border border-border text-white placeholder:text-muted-foreground/60 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 transition-all"
+                    className="flex-1 bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary transition-all"
                   />
                   <button
                     type="button"
                     onClick={handleSendOtp}
                     disabled={otpLoading || countdown > 0}
-                    className="px-3 py-3 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-sm text-white rounded-xl transition-colors whitespace-nowrap"
+                    className="px-3 py-3 bg-muted hover:bg-muted disabled:opacity-50 text-sm text-foreground rounded-xl transition-colors whitespace-nowrap"
                   >
                     {otpLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -286,14 +286,14 @@ function LoginContent() {
                     }
                     placeholder="000000"
                     maxLength={6}
-                    className="w-full bg-muted border border-border text-white placeholder:text-muted-foreground/60 rounded-xl px-4 py-3 text-sm tracking-[0.4em] font-mono outline-none focus:border-blue-500 transition-all text-center"
+                    className="w-full bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 rounded-xl px-4 py-3 text-sm tracking-[0.4em] font-mono outline-none focus:border-primary transition-all text-center"
                   />
                 </div>
               )}
               <button
                 type="submit"
                 disabled={loading || !otpSent}
-                className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl py-3 text-sm font-semibold transition-all flex items-center justify-center gap-2"
+                className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50 text-foreground rounded-xl py-3 text-sm font-semibold transition-all flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -311,7 +311,7 @@ function LoginContent() {
               Don't have an account?{" "}
               <Link
                 href="/b2c/register"
-                className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                className="text-primary hover:text-primary/80 font-medium transition-colors"
               >
                 Register free
               </Link>
@@ -319,11 +319,11 @@ function LoginContent() {
           </div>
         </div>
 
-        <p className="text-center text-xs text-slate-700 mt-4">
+        <p className="text-center text-xs text-muted-foreground mt-4">
           Agent or Admin?{" "}
           <Link
             href="/b2b/login"
-            className="text-muted-foreground hover:text-slate-300 transition-colors"
+            className="text-muted-foreground hover:text-foreground/80 transition-colors"
           >
             Login here →
           </Link>

@@ -3,6 +3,18 @@
 import { useEffect } from 'react'
 import { useSettingsStore } from '@/lib/store'
 
+/**
+ * ╔══════════════════════════════════════════════════════════════════╗
+ * ║  TO CHANGE THE GLOBAL THEME — edit config/theme.ts              ║
+ * ║  AND update the defaults in lib/store/index.ts:                 ║
+ * ║    theme: 'light' | 'dark' | 'system'                           ║
+ * ║    colorTheme: 'brand' | 'blue' | 'violet' | ...               ║
+ * ║    fontFamily: 'jakarta' | 'inter' | 'poppins' | ...           ║
+ * ║    borderRadius: 'none' | 'sm' | 'md' | 'lg' | 'xl' | 'full'  ║
+ * ║  Color CSS vars live in app/globals.css :root { }              ║
+ * ╚══════════════════════════════════════════════════════════════════╝
+ */
+
 // Font map — matches globals.css [data-font="..."] attributes
 const FONT_IMPORTS: Record<string, string> = {
   inter:    'Inter:wght@400;500;600;700;800',
@@ -36,7 +48,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     }
   }, [theme])
 
-  // Apply all data-* attributes — globals.css reads these
+  // Apply all data-* attributes — globals.css reads these for color, font, size, radius
   useEffect(() => {
     const root = document.documentElement
     root.setAttribute('data-color',      colorTheme)
@@ -47,7 +59,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     root.setAttribute('data-animations', animations  ? 'true' : 'false')
   }, [colorTheme, fontFamily, fontSize, borderRadius, compactMode, animations])
 
-  // Load Google Font dynamically
+  // Load Google Font dynamically when fontFamily changes
   useEffect(() => {
     const imp = FONT_IMPORTS[fontFamily]
     if (!imp) return
@@ -62,3 +74,4 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
   return <>{children}</>
 }
+

@@ -190,12 +190,12 @@ export default function B2BRegisterPage() {
   };
 
   const inp =
-    "w-full bg-[#0f172a] border border-[#1e293b] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500 transition-colors placeholder:text-slate-600";
-  const lbl = "text-xs text-slate-400 font-medium block mb-1.5";
+    "w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground outline-none focus:border-primary transition-colors placeholder:text-muted-foreground";
+  const lbl = "text-xs text-muted-foreground font-medium block mb-1.5";
 
   if (step === "success") {
     return (
-      <div style={{ minHeight: "100vh", background: "#060b14", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+      <div style={{ minHeight: "100vh", background: "hsl(var(--background))", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
         <div style={{ width: "100%", maxWidth: "32rem", textAlign: "center" }}>
 
           {/* Success icon */}
@@ -203,40 +203,40 @@ export default function B2BRegisterPage() {
             <CheckCircle style={{ width: 40, height: 40, color: "#4ade80" }} />
           </div>
 
-          <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "white", marginBottom: "0.5rem" }}>
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "hsl(var(--foreground))", marginBottom: "0.5rem" }}>
             Registration Successful! 🎉
           </h1>
-          <p style={{ color: "#64748b", fontSize: "0.875rem", marginBottom: "1.5rem", lineHeight: 1.6 }}>
+          <p style={{ color: "hsl(var(--muted-foreground))", fontSize: "0.875rem", marginBottom: "1.5rem", lineHeight: 1.6 }}>
             Your agency account has been created. Save your Agent ID below — you will need it to login.
           </p>
 
           {/* Agent ID Card — most important info */}
           {registeredAgentId && (
-            <div style={{ background: "linear-gradient(135deg, #1e3a5f, #0f2744)", border: "1px solid #2563eb", borderRadius: "1rem", padding: "1.5rem", marginBottom: "1.5rem" }}>
-              <p style={{ fontSize: "0.75rem", color: "#94a3b8", fontWeight: 600, margin: "0 0 0.5rem", letterSpacing: "0.05em" }}>
+            <div style={{ background: "linear-gradient(135deg, hsl(var(--primary)/0.08), hsl(var(--primary)/0.03))", border: "1px solid hsl(var(--primary)/0.3)", borderRadius: "1rem", padding: "1.5rem", marginBottom: "1.5rem" }}>
+              <p style={{ fontSize: "0.75rem", color: "hsl(var(--muted-foreground))", fontWeight: 600, margin: "0 0 0.5rem", letterSpacing: "0.05em" }}>
                 YOUR AGENT ID
               </p>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.75rem" }}>
-                <span style={{ fontSize: "2rem", fontWeight: 800, color: "#60a5fa", fontFamily: "monospace", letterSpacing: "0.1em" }}>
+                <span style={{ fontSize: "2rem", fontWeight: 800, color: "hsl(var(--primary))", fontFamily: "monospace", letterSpacing: "0.1em" }}>
                   {registeredAgentId}
                 </span>
                 <button
                   onClick={() => { navigator.clipboard.writeText(registeredAgentId); setCopiedId(true); setTimeout(() => setCopiedId(false), 2000); }}
-                  style={{ background: copiedId ? "#16a34a" : "#1d4ed8", border: "none", borderRadius: "0.5rem", padding: "0.375rem 0.75rem", color: "white", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer", transition: "background 0.2s" }}
+                  style={{ background: copiedId ? "#16a34a" : "#1d4ed8", border: "none", borderRadius: "0.5rem", padding: "0.375rem 0.75rem", color: "hsl(var(--foreground))", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer", transition: "background 0.2s" }}
                 >
                   {copiedId ? "✓ Copied!" : "Copy"}
                 </button>
               </div>
-              <p style={{ fontSize: "0.75rem", color: "#475569", margin: "0.75rem 0 0" }}>
+              <p style={{ fontSize: "0.75rem", color: "hsl(var(--muted-foreground))", margin: "0.75rem 0 0" }}>
                 Login with this ID + your password
               </p>
             </div>
           )}
 
           {/* Email info */}
-          <div style={{ background: "#0a1020", border: "1px solid #1a2840", borderRadius: "0.75rem", padding: "1rem", marginBottom: "1.5rem", textAlign: "left" }}>
-            <p style={{ fontSize: "0.75rem", color: "#64748b", margin: "0 0 0.25rem" }}>Registered Email</p>
-            <p style={{ fontSize: "0.875rem", color: "#94a3b8", fontWeight: 500, margin: 0 }}>{registeredEmail}</p>
+          <div style={{ background: "hsl(var(--card))", border: "1px solid #1a2840", borderRadius: "0.75rem", padding: "1rem", marginBottom: "1.5rem", textAlign: "left" }}>
+            <p style={{ fontSize: "0.75rem", color: "hsl(var(--muted-foreground))", margin: "0 0 0.25rem" }}>Registered Email</p>
+            <p style={{ fontSize: "0.875rem", color: "hsl(var(--muted-foreground))", fontWeight: 500, margin: 0 }}>{registeredEmail}</p>
             <p style={{ fontSize: "0.7rem", color: "#334155", margin: "0.5rem 0 0" }}>
               You can login with your email, Agent ID ({registeredAgentId || "TRV-XXXXX"}), or phone number
             </p>
@@ -252,8 +252,8 @@ export default function B2BRegisterPage() {
                 justifyContent: "center",
                 gap: "0.5rem",
                 width: "100%",
-                background: "#2563eb",
-                color: "white",
+                background: "hsl(var(--primary))",
+                color: "hsl(var(--foreground))",
                 borderRadius: "0.75rem",
                 padding: "0.875rem",
                 fontSize: "0.875rem",
@@ -270,9 +270,9 @@ export default function B2BRegisterPage() {
                 alignItems: "center",
                 justifyContent: "center",
                 width: "100%",
-                background: "#0f172a",
+                background: "hsl(var(--background))",
                 border: "1px solid #1e293b",
-                color: "#94a3b8",
+                color: "hsl(var(--muted-foreground))",
                 borderRadius: "0.75rem",
                 padding: "0.75rem",
                 fontSize: "0.875rem",
@@ -287,7 +287,7 @@ export default function B2BRegisterPage() {
             style={{
               marginTop: "2rem",
               padding: "1.25rem",
-              background: "#0a1020",
+              background: "hsl(var(--card))",
               border: "1px solid #1a2840",
               borderRadius: "0.75rem",
               textAlign: "left",
@@ -297,7 +297,7 @@ export default function B2BRegisterPage() {
               style={{
                 fontSize: "0.875rem",
                 fontWeight: 600,
-                color: "white",
+                color: "hsl(var(--foreground))",
                 marginBottom: "0.75rem",
               }}
             >
@@ -337,14 +337,14 @@ export default function B2BRegisterPage() {
                     fontSize: "0.75rem",
                     fontWeight: 700,
                     flexShrink: 0,
-                    background: "#0f172a",
+                    background: "hsl(var(--background))",
                     border: "1px solid #1e293b",
-                    color: "#475569",
+                    color: "hsl(var(--muted-foreground))",
                   }}
                 >
                   {s.n}
                 </div>
-                <span style={{ color: "#64748b" }}>{s.text}</span>
+                <span style={{ color: "hsl(var(--muted-foreground))" }}>{s.text}</span>
               </div>
             ))}
           </div>
@@ -357,7 +357,7 @@ export default function B2BRegisterPage() {
     <div
       style={{
         minHeight: "100vh",
-        background: "#060b14",
+        background: "hsl(var(--background))",
         padding: "2.5rem 1rem",
       }}
     >
@@ -370,7 +370,7 @@ export default function B2BRegisterPage() {
               alignItems: "center",
               gap: "0.375rem",
               fontSize: "0.875rem",
-              color: "#475569",
+              color: "hsl(var(--muted-foreground))",
               textDecoration: "none",
             }}
           >
@@ -391,27 +391,27 @@ export default function B2BRegisterPage() {
             style={{
               width: 42,
               height: 42,
-              background: "linear-gradient(135deg, #3b82f6, #4f46e5)",
+              background: "hsl(var(--primary))",
               borderRadius: "0.75rem",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <Plane style={{ width: 20, height: 20, color: "white" }} />
+            <Plane style={{ width: 20, height: 20, color: "hsl(var(--foreground))" }} />
           </div>
           <div>
             <h1
               style={{
                 fontWeight: 700,
                 fontSize: "1.25rem",
-                color: "white",
+                color: "hsl(var(--foreground))",
                 margin: 0,
               }}
             >
               Tramps Aviation B2B
             </h1>
-            <p style={{ fontSize: "0.75rem", color: "#475569", margin: 0 }}>
+            <p style={{ fontSize: "0.75rem", color: "hsl(var(--muted-foreground))", margin: 0 }}>
               Register your travel agency
             </p>
           </div>
@@ -420,7 +420,7 @@ export default function B2BRegisterPage() {
         <form
           onSubmit={handleSubmit}
           style={{
-            background: "#0a1020",
+            background: "hsl(var(--card))",
             border: "1px solid #1a2840",
             borderRadius: "1rem",
             padding: "1.75rem",
@@ -434,13 +434,13 @@ export default function B2BRegisterPage() {
               style={{
                 fontSize: "1.25rem",
                 fontWeight: 700,
-                color: "white",
+                color: "hsl(var(--foreground))",
                 margin: "0 0 0.25rem",
               }}
             >
               Create Agency Account
             </h2>
-            <p style={{ color: "#64748b", fontSize: "0.875rem", margin: 0 }}>
+            <p style={{ color: "hsl(var(--muted-foreground))", fontSize: "0.875rem", margin: 0 }}>
               All fields marked * are required
             </p>
           </div>
@@ -451,7 +451,7 @@ export default function B2BRegisterPage() {
               style={{
                 fontSize: "0.875rem",
                 fontWeight: 600,
-                color: "#60a5fa",
+                color: "hsl(var(--primary))",
                 marginBottom: "1rem",
                 display: "flex",
                 alignItems: "center",
@@ -512,12 +512,12 @@ export default function B2BRegisterPage() {
                   <div style={{ display: "flex", gap: "0.5rem" }}>
                     <span
                       style={{
-                        background: "#0f172a",
+                        background: "hsl(var(--background))",
                         border: "1px solid #1e293b",
                         borderRadius: "0.75rem",
                         padding: "0.75rem",
                         fontSize: "0.875rem",
-                        color: "#64748b",
+                        color: "hsl(var(--muted-foreground))",
                         flexShrink: 0,
                       }}
                     >
@@ -536,12 +536,12 @@ export default function B2BRegisterPage() {
                       inputMode="numeric"
                       style={{
                         flex: 1,
-                        background: "#0f172a",
+                        background: "hsl(var(--background))",
                         border: "1px solid #1e293b",
                         borderRadius: "0.75rem",
                         padding: "0.75rem 1rem",
                         fontSize: "0.875rem",
-                        color: "white",
+                        color: "hsl(var(--foreground))",
                         outline: "none",
                       }}
                     />
@@ -552,12 +552,12 @@ export default function B2BRegisterPage() {
                   <div style={{ display: "flex", gap: "0.5rem" }}>
                     <span
                       style={{
-                        background: "#0f172a",
+                        background: "hsl(var(--background))",
                         border: "1px solid #1e293b",
                         borderRadius: "0.75rem",
                         padding: "0.75rem",
                         fontSize: "0.875rem",
-                        color: "#64748b",
+                        color: "hsl(var(--muted-foreground))",
                         flexShrink: 0,
                       }}
                     >
@@ -575,12 +575,12 @@ export default function B2BRegisterPage() {
                       inputMode="numeric"
                       style={{
                         flex: 1,
-                        background: "#0f172a",
+                        background: "hsl(var(--background))",
                         border: "1px solid #1e293b",
                         borderRadius: "0.75rem",
                         padding: "0.75rem 1rem",
                         fontSize: "0.875rem",
-                        color: "white",
+                        color: "hsl(var(--foreground))",
                         outline: "none",
                       }}
                     />
@@ -596,7 +596,7 @@ export default function B2BRegisterPage() {
               style={{
                 fontSize: "0.875rem",
                 fontWeight: 600,
-                color: "#60a5fa",
+                color: "hsl(var(--primary))",
                 marginBottom: "1rem",
                 display: "flex",
                 alignItems: "center",
@@ -630,23 +630,23 @@ export default function B2BRegisterPage() {
                   required
                   style={{
                     width: "100%",
-                    background: "#0f172a",
+                    background: "hsl(var(--background))",
                     border: "1px solid #1e293b",
                     borderRadius: "0.75rem",
                     padding: "0.75rem 1rem",
                     fontSize: "0.875rem",
-                    color: form.state ? "white" : "#475569",
+                    color: form.state ? "white" : "hsl(var(--muted-foreground))",
                     outline: "none",
                   }}
                 >
-                  <option value="" style={{ background: "#0a1020" }}>
+                  <option value="" style={{ background: "hsl(var(--card))" }}>
                     Select State
                   </option>
                   {STATES.map((s) => (
                     <option
                       key={s}
                       value={s}
-                      style={{ background: "#0a1020", color: "white" }}
+                      style={{ background: "hsl(var(--card))", color: "hsl(var(--foreground))" }}
                     >
                       {s}
                     </option>
@@ -683,7 +683,7 @@ export default function B2BRegisterPage() {
               style={{
                 fontSize: "0.875rem",
                 fontWeight: 600,
-                color: "#60a5fa",
+                color: "hsl(var(--primary))",
                 marginBottom: "0.5rem",
                 display: "flex",
                 alignItems: "center",
@@ -769,7 +769,7 @@ export default function B2BRegisterPage() {
               style={{
                 fontSize: "0.875rem",
                 fontWeight: 600,
-                color: "#60a5fa",
+                color: "hsl(var(--primary))",
                 marginBottom: "1rem",
                 display: "flex",
                 alignItems: "center",
@@ -797,12 +797,12 @@ export default function B2BRegisterPage() {
                     placeholder="Min 8 characters"
                     style={{
                       width: "100%",
-                      background: "#0f172a",
+                      background: "hsl(var(--background))",
                       border: "1px solid #1e293b",
                       borderRadius: "0.75rem",
                       padding: "0.75rem 2.5rem 0.75rem 1rem",
                       fontSize: "0.875rem",
-                      color: "white",
+                      color: "hsl(var(--foreground))",
                       outline: "none",
                       boxSizing: "border-box",
                     }}
@@ -817,7 +817,7 @@ export default function B2BRegisterPage() {
                       transform: "translateY(-50%)",
                       background: "none",
                       border: "none",
-                      color: "#475569",
+                      color: "hsl(var(--muted-foreground))",
                       cursor: "pointer",
                       padding: 0,
                     }}
@@ -851,12 +851,12 @@ export default function B2BRegisterPage() {
                   placeholder="Re-enter password"
                   style={{
                     width: "100%",
-                    background: "#0f172a",
-                    border: `1px solid ${form.confirmPassword && form.confirmPassword !== form.password ? "#ef4444" : "#1e293b"}`,
+                    background: "hsl(var(--background))",
+                    border: `1px solid ${form.confirmPassword && form.confirmPassword !== form.password ? "#ef4444" : "hsl(var(--border))"}`,
                     borderRadius: "0.75rem",
                     padding: "0.75rem 1rem",
                     fontSize: "0.875rem",
-                    color: "white",
+                    color: "hsl(var(--foreground))",
                     outline: "none",
                     boxSizing: "border-box",
                   }}
@@ -895,8 +895,8 @@ export default function B2BRegisterPage() {
             disabled={loading}
             style={{
               width: "100%",
-              background: loading ? "#1d4ed8" : "#2563eb",
-              color: "white",
+              background: loading ? "#1d4ed8" : "hsl(var(--primary))",
+              color: "hsl(var(--foreground))",
               border: "none",
               borderRadius: "0.75rem",
               padding: "0.875rem",
@@ -932,7 +932,7 @@ export default function B2BRegisterPage() {
           style={{
             textAlign: "center",
             fontSize: "0.875rem",
-            color: "#475569",
+            color: "hsl(var(--muted-foreground))",
             marginTop: "1.5rem",
           }}
         >
@@ -940,7 +940,7 @@ export default function B2BRegisterPage() {
           <Link
             href="/b2b/login"
             style={{
-              color: "#60a5fa",
+              color: "hsl(var(--primary))",
               textDecoration: "none",
               fontWeight: 500,
             }}

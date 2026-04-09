@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 // ════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ════════════════════════════════════════════════════════════════════════════
-type ColorTheme   = 'blue'|'violet'|'emerald'|'rose'|'orange'|'teal'|'cyan'|'amber'|'pink'|'indigo'|'slate'|'lime'
+type ColorTheme   = 'brand'|'blue'|'violet'|'emerald'|'rose'|'orange'|'teal'|'cyan'|'amber'|'pink'|'indigo'|'slate'|'lime'
 type FontSize     = 'xs'|'sm'|'md'|'lg'|'xl'
 type FontFamily   = 'inter'|'poppins'|'rajdhani'|'nunito'|'jakarta'|'dm-sans'|'outfit'|'sora'|'space'
 type BorderRadius = 'none'|'sm'|'md'|'lg'|'xl'|'2xl'|'full'
@@ -45,7 +45,16 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
-      theme:'dark', colorTheme:'blue', fontSize:'md', fontFamily:'jakarta',
+      // ═══════════════════════════════════════════════════════════════════
+      // GLOBAL THEME DEFAULTS — change these to retheme the entire app
+      // See also: config/theme.ts (component tokens) + app/globals.css (CSS vars)
+      //
+      // theme:        'light' | 'dark' | 'system'
+      // colorTheme:   'brand'(azure #208dcb) | 'blue' | 'violet' | 'emerald' | 'rose' | ...
+      // fontFamily:   'jakarta' | 'inter' | 'poppins' | 'outfit' | 'sora' | ...
+      // borderRadius: 'none' | 'sm' | 'md' | 'lg' | 'xl' | 'full'
+      // ═══════════════════════════════════════════════════════════════════
+      theme:'light', colorTheme:'brand', fontSize:'md', fontFamily:'jakarta',
       borderRadius:'lg', sidebarOpen:true, compactMode:false, animations:true,
       setTheme:        (theme)        => set({ theme }),
       setColorTheme:   (colorTheme)   => set({ colorTheme }),

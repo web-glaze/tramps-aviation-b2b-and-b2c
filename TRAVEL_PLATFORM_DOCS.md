@@ -1,385 +1,248 @@
-# ✈️ Travel Platform — Complete Developer Documentation
-*MakeMyTrip / Booking.com style B2B+B2C travel platform*
+# Tramps Aviation — Travel Platform Documentation
+
+Complete reference for the B2B & B2C travel booking platform frontend.
+
+## Overview
+
+**Tramps Aviation** is a modern travel booking platform serving:
+- **B2B Agents**: Travel agents who book flights, manage inventory, track commissions
+- **B2C Customers**: Individual travelers who search and book flights, hotels, insurance
+
+Built with Next.js 16, React 19, TypeScript, and Tailwind CSS.
 
 ---
 
-## 📁 Project Structure
+## Key Features
 
-```
-project/
-├── backend/          NestJS API (Node.js + MongoDB)
-└── frontend/         Next.js 14 App Router
-```
+### For Agents (B2B)
+- **Flight Management**: Browse, book, and manage flight inventory
+- **Wallet System**: Pre-funded wallet for bookings with transaction history
+- **Commission Tracking**: Real-time commission earnings and payouts
+- **KYC Verification**: Document submission and approval tracking
+- **Booking Management**: View all bookings with filtering and search
+- **Reports & Analytics**: Sales performance and revenue insights
+- **Profile Management**: Agent details and settings
 
----
+### For Customers (B2C)
+- **Flight Search**: Real-time flight search with filters
+- **Hotel Booking**: Search and book accommodations
+- **Travel Insurance**: Browse and purchase insurance plans
+- **Booking History**: Manage and view all trips
+- **User Profile**: Manage personal information and preferences
 
-## 🚀 Quick Start — Local Development (No 3rd party keys needed)
-
-### 1. Prerequisites
-```bash
-# Install these first:
-# - Node.js 18+
-# - MongoDB Community (or Docker)
-# - Redis (or Docker)
-
-# Docker quick start (easiest):
-docker run -d -p 27017:27017 --name mongo mongo:7
-docker run -d -p 6379:6379 --name redis redis:alpine
-```
-
-### 2. Backend Setup
-```bash
-cd backend
-cp .env.development .env        # Already configured for local dev
-yarn install
-yarn start:dev                  # Starts on http://localhost:3000
-# Swagger UI: http://localhost:3000/api/docs
-```
-
-### 3. Frontend Setup
-```bash
-cd frontend
-yarn install
-yarn dev                        # Starts on http://localhost:3001
-```
+### Platform Features
+- **12 Color Themes**: Fully customizable color scheme
+- **Dark/Light Mode**: System preference detection and manual toggle
+- **Responsive Design**: Works on mobile, tablet, and desktop
+- **Accessibility**: WCAG compliant with keyboard navigation
+- **Real-time Notifications**: Toast-based alerts and updates
 
 ---
 
-## 🗄️ Database — MongoDB
+## Authentication
 
-All data is automatically saved to MongoDB. Connection: `mongodb://localhost:27017/travel_platform_dev`
+### Agent (B2B) Login
+- Email and password authentication
+- Session stored in localStorage with JWT token
+- Protected routes via AuthGuard component
+- Auto-redirect to dashboard on login
 
-### Collections Created Automatically:
-| Collection | Description |
-|---|---|
-| `users` | Admin users |
-| `agents` | B2B travel agents |
-| `customers` | B2C customers |
-| `bookings` | Flight bookings |
-| `hotelbookings` | Hotel bookings |
-| `insurancepolicies` | Insurance policies |
-| `wallets` | Agent wallet |
-| `wallettransactions` | All wallet credits/debits |
-| `payments` | Payment records |
-| `refunds` | Refund requests |
-| `commissions` | Commission profiles |
-| `kycs` | KYC documents |
+### Customer (B2C) Login
+- Email/phone-based authentication
+- Password reset via OTP
+- Session management via auth store
+- Personal dashboard access
 
----
-
-## 👥 Three User Roles
-
-### 1. 🔑 ADMIN
-- Full platform control
-- Approve/reject agent KYC
-- View all bookings, refunds, policies
-- Manage commission profiles
-- Create admin via seed script
-
-**Create First Admin:**
-```bash
-# POST /api/auth/seed-admin (runs once, then disables)
-# OR directly in MongoDB:
-# db.users.insertOne({ email:"admin@travel.com", password: "<bcrypt>", role:"admin" })
-```
-
-### 2. 🏢 AGENT (B2B)
-- Register → Upload KYC docs → Admin approves → Can book
-- Pays via Wallet (pre-funded by admin)
-- Earns commission on bookings
-- Manages own customers/sub-agents
-
-**Agent Registration Flow:**
-```
-POST /api/auth/agent/register    ← Create account
-POST /api/kyc/submit             ← Upload PAN, Aadhaar, GST
-GET  /api/kyc/status             ← Check approval status
-[Admin approves in dashboard]
-POST /api/wallet/topup           ← Admin funds wallet
-POST /api/bookings/init          ← Can now book!
-```
-
-### 3. 👤 CUSTOMER (B2C)
-- Register → Verify OTP → Book directly
-- Pays via Razorpay (UPI, Card, Net Banking)
-
-**Customer Registration Flow:**
-```
-POST /api/auth/customer/register  ← Create account
-POST /api/auth/verify-otp         ← Verify phone OTP
-POST /api/flights/search          ← Search flights
-POST /api/bookings/init           ← Book
-POST /api/payments/razorpay/order ← Pay
-POST /api/payments/razorpay/verify← Confirm
-```
+### Logout
+- Clears token from storage
+- Removes user session
+- Redirects to home page
 
 ---
 
-## ✈️ Flight Booking — Complete API Flow
+## Pages & Routes
 
-### Search Flights
-```bash
-POST /api/flights/search
-{
-  "origin": "DEL",
-  "destination": "BOM",
-  "departureDate": "2025-04-15",
-  "adults": 2,
-  "children": 0,
-  "cabinClass": "Economy"
+### Public Pages
+- `/` — Home/Landing page
+- `/b2b/login` — Agent login
+- `/b2b/register` — Agent registration
+- `/b2c/login` — Customer login
+- `/b2c/register` — Customer signup
+- `/b2b/forgot-password` — Password recovery
+
+### Agent Portal (B2B)
+Protected routes require agent login (`/b2b/*`)
+
+| Page | URL | Purpose |
+|------|-----|---------|
+| Dashboard | `/b2b/dashboard` | Overview, stats, recent bookings |
+| Flights | `/b2b/flights` | Search and book flights |
+| Bookings | `/b2b/bookings` | All bookings list |
+| Booking Detail | `/b2b/bookings/:id` | Full booking info |
+| Wallet | `/b2b/wallet` | Balance and transactions |
+| Commission | `/b2b/commission` | Earnings tracking |
+| Reports | `/b2b/reports` | Sales analytics |
+| KYC | `/b2b/kyc` | Document submission |
+| Profile | `/b2b/profile` | Agent settings |
+
+### Customer Portal (B2C)
+Protected routes require customer login (`/b2c/*`)
+
+| Page | URL | Purpose |
+|------|-----|---------|
+| Flights | `/b2c/flights` | Search and book flights |
+| Hotels | `/b2c/hotels` | Search and book hotels |
+| Insurance | `/b2c/insurance` | Travel insurance options |
+| My Trips | `/b2c/my-trips` | Trip history |
+| Booking Detail | `/b2c/booking/:id` | Booking confirmation |
+
+---
+
+## State Management
+
+Uses **Zustand** with localStorage persistence for:
+- **Auth**: User session, login/logout, tokens
+- **Settings**: Theme, colors, fonts, sidebar state
+- **Stats**: Dashboard numbers and metrics
+- **Notifications**: Toast messages and alerts
+
+See [GUIDE.md](./GUIDE.md#state-management) for store details.
+
+---
+
+## Customization
+
+### Change Brand/Logo
+1. Replace `/public/logo.png` with your logo
+2. Update `APP_NAME` in `config/app.ts`
+3. Update metadata in `app/layout.tsx`
+
+### Change Color Theme
+1. Click ⚙️ Settings button (bottom-right)
+2. Select "Color Theme"
+3. Choose from 12 options
+4. Changes persist automatically
+
+### Add Navigation Links
+Edit `config/app.ts`:
+- `B2B_SIDEBAR_NAV` — Agent sidebar menu
+- `B2C_NAVBAR_NAV` — Customer top nav
+- `ROUTES` — All route constants
+
+### Modify Colors
+Update CSS variables in `app/globals.css`:
+```css
+:root {
+  --primary: 217 91% 60%;  /* Change primary color */
+  --secondary: ...
+  /* ... more colors */
 }
-# Returns: list of flights with resultToken per flight
-# MOCK: Returns realistic fake data when TBO keys absent
-```
-
-### Book a Flight
-```bash
-# Step 1: Initialize booking
-POST /api/bookings/init
-Authorization: Bearer <token>
-{
-  "resultToken": "from_search_result",
-  "tripType": "one_way",
-  "passengers": [{
-    "firstName": "Rahul",
-    "lastName": "Sharma",
-    "dateOfBirth": "1990-05-15",
-    "gender": "M",
-    "passportNumber": "A1234567"  # international only
-  }],
-  "contactEmail": "rahul@example.com",
-  "contactPhone": "9876543210",
-  "addInsurance": true,
-  "insurancePlanType": "domestic_basic"
-}
-# Returns: bookingRef, totalAmount, paymentMethod
-
-# Step 2a: B2B Agent — Pay from wallet
-POST /api/bookings/confirm
-{ "bookingRef": "TRV-20250315-ABCDEF" }
-
-# Step 2b: B2C Customer — Pay via Razorpay
-POST /api/payments/razorpay/order
-{ "bookingRef": "TRV-20250315-ABCDEF" }
-# → Use Razorpay SDK on frontend
-POST /api/payments/razorpay/verify
-{ "razorpay_order_id": "...", "razorpay_payment_id": "...", "razorpay_signature": "..." }
 ```
 
 ---
 
-## 🏨 Hotel Booking — API Flow
+## Development
 
+### Setup
 ```bash
-# Search
-POST /api/hotels/search
-{
-  "cityCode": "DEL",
-  "cityName": "New Delhi",
-  "checkIn": "2025-04-15",
-  "checkOut": "2025-04-18",
-  "rooms": 1,
-  "adults": 2
-}
-
-# Get Room Rates
-GET /api/hotels/:hotelCode/rates?checkIn=...&checkOut=...&rooms=1&adults=2
-
-# Pre-book (lock rate)
-POST /api/hotels/pre-book
-{ "rateToken": "from_rates_response" }
-
-# Confirm
-POST /api/hotels/confirm
-{ "preBookToken": "...", "guestDetails": {...} }
+pnpm install
+pnpm dev
 ```
 
----
-
-## 🛡️ Insurance — Bajaj Allianz (Mock locally)
-
+### Build
 ```bash
-# Get plans during booking (add-ons screen)
-GET /api/insurance/plans?origin=DEL&destination=BOM&departureDate=2025-04-15&passengerCount=2
-# Returns 4 plans: domestic_basic, domestic_standard, international_standard, international_premium
-
-# Issue policy after payment
-POST /api/insurance/issue
-Authorization: Bearer <token>
-{
-  "bookingRef": "TRV-20250315-ABCDEF",
-  "planType": "domestic_basic",
-  "passengers": [{ "firstName": "Rahul", "lastName": "Sharma", "dateOfBirth": "1990-05-15", "gender": "M" }],
-  "contactEmail": "rahul@example.com",
-  "contactPhone": "9876543210"
-}
-# Returns policyRef immediately (Bajaj call happens async)
-
-# Check policy status
-GET /api/insurance/:policyRef
-
-# My policies
-GET /api/insurance/my
-
-# Cancel
-POST /api/insurance/:policyRef/cancel
-{ "reason": "Flight cancelled" }
+pnpm build
+pnpm start
 ```
 
-### Insurance Plans & Pricing:
-| Plan | Type | Price/Person | Coverage |
-|---|---|---|---|
-| Domestic Basic | Domestic | ₹149 | Trip cancel ₹25K + delay ₹5K |
-| Domestic Standard | Domestic | ₹399 | Cancel + baggage + accident |
-| International Standard | International | ₹499 | Medical ₹5L + cancel + baggage |
-| International Premium | International | ₹999 | Medical ₹25L + full coverage |
-
-**Platform earns 17% commission on each policy sold.**
-
----
-
-## 💰 Wallet System (B2B Agents)
-
-```bash
-# Admin: Top up agent wallet
-POST /api/wallet/topup
-{ "agentId": "...", "amount": 50000, "remarks": "Initial credit" }
-
-# Agent: Check balance
-GET /api/wallet/balance
-
-# Agent: Transaction history
-GET /api/wallet/transactions?page=1&limit=20
-
-# Wallet deducted automatically on booking confirmation
-# Wallet credited on refund/cancellation
-```
-
----
-
-## 📁 File Upload (Local mode — no AWS needed)
-
-```bash
-# Upload image
-POST /api/upload/image
-Content-Type: multipart/form-data
-file: <image_file>
-
-# Upload KYC document
-POST /api/upload/image  (same endpoint, returns url)
-
-# Storage modes (set in .env):
-# STORAGE_PROVIDER=local  → saves to ./uploads/ folder (default for dev)
-# STORAGE_PROVIDER=minio  → local MinIO S3-compatible
-# STORAGE_PROVIDER=aws    → real AWS S3
-```
-
----
-
-## 🔧 Adding Real 3rd Party Keys (Production)
-
-### TBO Flights
+### Environment Variables
 ```env
-TBO_API_URL=https://api.tboconsumer.com
-TBO_USERNAME=your_username
-TBO_PASSWORD=your_password
-TBO_MEMBER_ID=your_member_id
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_USE_MOCK=false
 ```
 
-### Bajaj Allianz Insurance
-```env
-BAJAJ_ALLIANZ_API_URL=https://api.bajajallianz.com/partner
-BAJAJ_ALLIANZ_PARTNER_ID=your_partner_id
-BAJAJ_ALLIANZ_API_KEY=your_api_key
-BAJAJ_ALLIANZ_SECRET_KEY=your_secret
-```
+See [README.md](./README.md) for detailed setup.
 
-### AWS S3
-```env
-STORAGE_PROVIDER=aws
-AWS_ACCESS_KEY_ID=AKIA...
-AWS_SECRET_ACCESS_KEY=...
-AWS_REGION=ap-south-1
-AWS_S3_BUCKET=your-bucket-name
-```
+---
 
-### Razorpay (use test keys for dev)
-```env
-RAZORPAY_KEY_ID=rzp_test_xxxx
-RAZORPAY_KEY_SECRET=yyyy
-```
+## File Structure
 
-### SMS (Twilio or MSG91)
-```env
-TWILIO_ACCOUNT_SID=ACxxx
-TWILIO_AUTH_TOKEN=xxx
-TWILIO_FROM_NUMBER=+1234567890
+```
+app/
+├── page.tsx              # Home page
+├── layout.tsx            # Root layout
+├── globals.css           # Styles & variables
+├── b2b/                  # Agent portal
+│   ├── layout.tsx
+│   ├── dashboard/
+│   ├── flights/
+│   ├── bookings/
+│   ├── wallet/
+│   ├── commission/
+│   ├── reports/
+│   ├── kyc/
+│   ├── profile/
+│   ├── login/
+│   ├── register/
+│   └── forgot-password/
+└── b2c/                  # Customer portal
+    ├── layout.tsx
+    ├── flights/
+    ├── hotels/
+    ├── insurance/
+    ├── my-trips/
+    ├── booking/
+    ├── login/
+    └── register/
+
+components/
+├── layout/               # Navigation, headers, footers
+├── shared/               # Reusable components
+├── dashboard/            # Dashboard-specific
+├── forms/                # Form components
+├── settings/             # Settings UI
+└── ui/                   # shadcn/ui components
+
+lib/
+├── api/                  # API services
+├── store/                # Zustand stores
+├── hooks/                # Custom hooks
+├── validators/           # Zod schemas
+└── utils.ts             # Utilities
+
+config/
+├── app.ts               # Routes and constants
+└── design-system.ts     # Themes and colors
+
+types/
+└── index.ts             # TypeScript interfaces
 ```
 
 ---
 
-## 🔴 Mock Mode — What Works Without Keys
+## Deployment
 
-| Feature | Mock Behavior |
-|---|---|
-| **TBO Flights** | Returns 5-10 realistic mock flights |
-| **TBO Hotels** | Returns 3-5 mock hotels with rates |
-| **Insurance** | Returns 4 plans, auto-issues MOCK policy number |
-| **SMS** | Logs OTP to console (check server logs) |
-| **Email** | Logs to console OR use Ethereal test account |
-| **File Upload** | Saves to `./uploads/` folder |
-| **Razorpay** | Use test mode keys (works fully with test cards) |
-| **MongoDB** | Fully functional — all data saved |
-| **Redis** | Optional — caching disabled if not running |
-
----
-
-## 📊 Admin Dashboard APIs
-
+### Vercel (Recommended)
 ```bash
-# Stats overview
-GET /api/admin/dashboard/stats
+vercel deploy
+```
 
-# Manage agents
-GET  /api/admin/agents?status=pending_kyc
-PUT  /api/admin/agents/:id/kyc/approve
-PUT  /api/admin/agents/:id/kyc/reject
-PUT  /api/admin/agents/:id/suspend
-
-# All bookings
-GET /api/admin/bookings?status=CONFIRMED&from=2025-01-01
-
-# Refunds
-GET    /api/refunds?status=PENDING
-PATCH  /api/refunds/:refundId/process
-PATCH  /api/refunds/:refundId/reject
-
-# Commission profiles
-GET  /api/admin/commission-profiles
-POST /api/admin/commission-profiles
-POST /api/admin/commission-profiles/:id/assign/:agentId
+### Docker
+```dockerfile
+FROM node:20-alpine
+WORKDIR /app
+COPY . .
+RUN pnpm install && pnpm build
+CMD ["pnpm", "start"]
 ```
 
 ---
 
-## 🛠️ Common Issues & Solutions
+## Support & Resources
 
-| Error | Fix |
-|---|---|
-| MongoDB connection failed | Run `docker run -d -p 27017:27017 mongo:7` |
-| Redis error in logs | OK to ignore locally — caching just disabled |
-| OTP not received | Check server console logs for OTP |
-| Insurance MOCK mode warning | Expected — real Bajaj keys not set |
-| JWT expires fast | Change `JWT_EXPIRES_IN=7d` in .env |
-| KYC doc upload fails | Ensure `./uploads/` folder has write permission |
+- **README.md** — Project overview and quick start
+- **GUIDE.md** — Development patterns and architecture
+- **Code Comments** — Inline documentation
+- **Component Files** — JSDoc and prop documentation
 
----
-
-## 📞 API Base URL
-
-- **Local**: `http://localhost:3000/api`
-- **Swagger Docs**: `http://localhost:3000/api/docs`
-
----
-
-*Built with NestJS + MongoDB + Next.js 14. All 3rd party integrations run in mock mode locally.*
+For more details, see the individual documentation files or code comments.

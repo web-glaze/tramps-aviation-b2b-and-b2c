@@ -72,7 +72,7 @@ export default function MyTripsPage() {
           {(["upcoming", "past", "cancelled"] as const).map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               className={`px-4 py-2 text-sm font-medium rounded-lg capitalize transition-colors ${
-                activeTab === tab ? "bg-slate-700 text-white" : "text-muted-foreground hover:text-slate-300"
+                activeTab === tab ? "bg-muted text-white" : "text-muted-foreground hover:text-foreground/80"
               }`}>
               {tab}
             </button>
@@ -87,9 +87,9 @@ export default function MyTripsPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20">
-            <Plane className="h-10 w-10 text-slate-700 mx-auto mb-3" />
+            <Plane className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
             <p className="text-muted-foreground">No {activeTab} trips found</p>
-            <Link href="/b2c/flights" className="inline-block mt-4 text-sm text-blue-400 hover:underline">
+            <Link href="/b2c/flights" className="inline-block mt-4 text-sm text-primary hover:underline">
               Search Flights →
             </Link>
           </div>
@@ -102,7 +102,7 @@ export default function MyTripsPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-4">
                       <div className="h-10 w-10 bg-muted rounded-xl flex items-center justify-center">
-                        <Icon className="h-5 w-5 text-blue-400" />
+                        <Icon className="h-5 w-5 text-primary" />
                       </div>
                       <div>
                         <div className="font-semibold text-sm">{trip.service}</div>
@@ -114,7 +114,7 @@ export default function MyTripsPage() {
                             <Calendar className="h-3 w-3" /> Travel: {trip.travelDate}
                           </span>
                           {trip.pnr && trip.pnr !== "—" && (
-                            <span className="text-xs text-muted-foreground">PNR: <span className="text-white font-mono">{trip.pnr}</span></span>
+                            <span className="text-xs text-muted-foreground">PNR: <span className="text-foreground font-mono">{trip.pnr}</span></span>
                           )}
                         </div>
                       </div>
@@ -129,7 +129,7 @@ export default function MyTripsPage() {
 
                   {trip.status === "confirmed" && (
                     <div className="flex gap-2 mt-4 pt-3 border-t border-border">
-                      <button className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors">
+                      <button className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors">
                         <Download className="h-3.5 w-3.5" /> Download Ticket
                       </button>
                       {activeTab === "upcoming" && (

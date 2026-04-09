@@ -130,7 +130,7 @@ export default function BookingConfirmPage() {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">Loading booking details…</p>
         </div>
       </div>
@@ -148,10 +148,10 @@ export default function BookingConfirmPage() {
           <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
             <CheckCircle2 className="h-8 w-8 text-green-400" />
           </div>
-          <h1 className="text-2xl font-black text-white mb-1">Booking Confirmed!</h1>
-          <p className="text-slate-300 text-sm">
+          <h1 className="text-2xl font-black text-foreground mb-1">Booking Confirmed!</h1>
+          <p className="text-foreground/80 text-sm">
             Your {booking.type.toLowerCase()} has been booked successfully. Confirmation sent to{" "}
-            <span className="text-white font-medium">{booking.passengerEmail}</span>
+            <span className="text-foreground font-medium">{booking.passengerEmail}</span>
           </p>
           <div className="flex items-center justify-center gap-3 mt-4">
             <span className="text-xs text-muted-foreground">Booking ID:</span>
@@ -163,16 +163,16 @@ export default function BookingConfirmPage() {
 
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-2 mb-6 justify-center">
-          <Button onClick={handleDownload} className="gap-2 bg-blue-600 hover:bg-blue-500">
+          <Button onClick={handleDownload} className="gap-2 bg-primary hover:bg-primary/90">
             <Download className="h-4 w-4" />
             Download {booking.type === "Insurance" ? "Policy" : "Ticket"} (PDF)
           </Button>
           {booking.pnr && (
-            <Button variant="outline" onClick={handleSharePNR} className="gap-2 border-border text-slate-300">
+            <Button variant="outline" onClick={handleSharePNR} className="gap-2 border-border text-foreground/80">
               <Copy className="h-4 w-4" /> Copy PNR
             </Button>
           )}
-          <Button variant="outline" onClick={() => window.print()} className="gap-2 border-border text-slate-300">
+          <Button variant="outline" onClick={() => window.print()} className="gap-2 border-border text-foreground/80">
             <Printer className="h-4 w-4" /> Print
           </Button>
           <Link href="/b2c/my-trips">
@@ -193,7 +193,7 @@ export default function BookingConfirmPage() {
                 : <Shield className="h-5 w-5 text-white" />}
               <span className="font-bold text-white">{booking.type} Booking</span>
             </div>
-            <span className="text-xs bg-green-500 text-white font-semibold px-3 py-1 rounded-full uppercase tracking-wide">
+            <span className="text-xs bg-green-500 text-foreground font-semibold px-3 py-1 rounded-full uppercase tracking-wide">
               {booking.status}
             </span>
           </div>
@@ -210,9 +210,9 @@ export default function BookingConfirmPage() {
                 <div className="text-center flex-1 px-4">
                   <p className="text-xs text-muted-foreground mb-1">{booking.duration} · {booking.stops}</p>
                   <div className="flex items-center gap-1">
-                    <div className="flex-1 h-px bg-slate-700" />
-                    <Plane className="h-4 w-4 text-blue-400" />
-                    <div className="flex-1 h-px bg-slate-700" />
+                    <div className="flex-1 h-px bg-muted" />
+                    <Plane className="h-4 w-4 text-primary" />
+                    <div className="flex-1 h-px bg-muted" />
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">{booking.airline} {booking.flightNo}</p>
                 </div>
@@ -242,7 +242,7 @@ export default function BookingConfirmPage() {
                   <div key={item.label} className="bg-muted/50 rounded-xl p-3">
                     <item.icon className="h-3.5 w-3.5 text-muted-foreground mb-1" />
                     <p className="text-xs text-muted-foreground">{item.label}</p>
-                    <p className={`text-sm font-bold text-white mt-0.5 ${item.mono ? "font-mono" : ""}`}>
+                    <p className={`text-sm font-bold text-foreground mt-0.5 ${item.mono ? "font-mono" : ""}`}>
                       {item.value}
                     </p>
                   </div>
@@ -257,7 +257,7 @@ export default function BookingConfirmPage() {
                 {booking.passengers.map((p: any, i: number) => (
                   <div key={i} className="flex items-center gap-3 bg-muted/40 rounded-xl p-3 mb-2">
                     <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                      <User className="h-4 w-4 text-blue-400" />
+                      <User className="h-4 w-4 text-primary" />
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-white">{p.name}</p>
@@ -293,7 +293,7 @@ export default function BookingConfirmPage() {
                 ].map(item => (
                   <div key={item.label} className="bg-muted/50 rounded-xl p-3">
                     <p className="text-xs text-muted-foreground">{item.label}</p>
-                    <p className={`text-sm font-bold text-white mt-0.5 ${(item as any).mono ? "font-mono" : ""}`}>{item.value}</p>
+                    <p className={`text-sm font-bold text-foreground mt-0.5 ${(item as any).mono ? "font-mono" : ""}`}>{item.value}</p>
                   </div>
                 ))}
               </div>
@@ -321,7 +321,7 @@ export default function BookingConfirmPage() {
                 ].map(item => (
                   <div key={item.label} className="bg-muted/50 rounded-xl p-3">
                     <p className="text-xs text-muted-foreground">{item.label}</p>
-                    <p className={`text-sm font-bold text-white mt-0.5 ${(item as any).mono ? "font-mono" : ""}`}>{item.value}</p>
+                    <p className={`text-sm font-bold text-foreground mt-0.5 ${(item as any).mono ? "font-mono" : ""}`}>{item.value}</p>
                   </div>
                 ))}
               </div>
@@ -333,7 +333,7 @@ export default function BookingConfirmPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-green-400 font-semibold uppercase tracking-wide mb-1">Payment Confirmed</p>
-                <div className="flex items-center gap-3 text-sm text-slate-300">
+                <div className="flex items-center gap-3 text-sm text-foreground/80">
                   <span className="flex items-center gap-1"><CreditCard className="h-3.5 w-3.5" /> {booking.paymentMethod}</span>
                   <span className="text-muted-foreground/60">·</span>
                   <span className="font-mono text-xs">{booking.transactionId}</span>
@@ -350,20 +350,20 @@ export default function BookingConfirmPage() {
           <div className="mx-6 mb-6 pt-4 border-t border-border">
             <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-3">Contact Details</p>
             <div className="flex flex-wrap gap-4">
-              <span className="flex items-center gap-1.5 text-sm text-slate-300"><User className="h-3.5 w-3.5 text-muted-foreground" /> {booking.passengerName}</span>
-              <span className="flex items-center gap-1.5 text-sm text-slate-300"><Mail className="h-3.5 w-3.5 text-muted-foreground" /> {booking.passengerEmail}</span>
-              <span className="flex items-center gap-1.5 text-sm text-slate-300"><Phone className="h-3.5 w-3.5 text-muted-foreground" /> {booking.passengerPhone}</span>
+              <span className="flex items-center gap-1.5 text-sm text-foreground/80"><User className="h-3.5 w-3.5 text-muted-foreground" /> {booking.passengerName}</span>
+              <span className="flex items-center gap-1.5 text-sm text-foreground/80"><Mail className="h-3.5 w-3.5 text-muted-foreground" /> {booking.passengerEmail}</span>
+              <span className="flex items-center gap-1.5 text-sm text-foreground/80"><Phone className="h-3.5 w-3.5 text-muted-foreground" /> {booking.passengerPhone}</span>
             </div>
           </div>
         </div>
 
         {/* Back */}
         <div className="mt-6 flex justify-between items-center">
-          <Link href="/" className="text-sm text-muted-foreground hover:text-white flex items-center gap-1.5">
+          <Link href="/" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5">
             <ArrowLeft className="h-3.5 w-3.5" /> Back to Home
           </Link>
           <Link href="/b2c/my-trips">
-            <Button variant="outline" size="sm" className="border-border text-slate-300 hover:text-white">
+            <Button variant="outline" size="sm" className="border-border text-foreground/80 hover:text-white">
               View All Bookings
             </Button>
           </Link>

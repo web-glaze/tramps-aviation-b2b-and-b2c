@@ -28,40 +28,40 @@ export default function B2BForgotPasswordPage() {
 
   const page: React.CSSProperties = {
     minHeight: "100vh",
-    background: "#060b14",
+    background: "hsl(var(--background))",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     padding: "1rem",
   };
   const card: React.CSSProperties = {
-    background: "#0a1020",
-    border: "1px solid #1a2840",
+    background: "hsl(var(--card))",
+    border: "1px solid hsl(var(--border))",
     borderRadius: "1rem",
     padding: "1.75rem",
   };
   const inp: React.CSSProperties = {
     width: "100%",
-    background: "#0f172a",
-    border: "1px solid #1e293b",
+    background: "hsl(var(--background))",
+    border: "1px solid hsl(var(--border))",
     borderRadius: "0.75rem",
     padding: "0.75rem 1rem",
     fontSize: "0.875rem",
-    color: "white",
+    color: "hsl(var(--foreground))",
     outline: "none",
     boxSizing: "border-box",
   };
   const lbl: React.CSSProperties = {
     fontSize: "0.75rem",
-    color: "#94a3b8",
+    color: "hsl(var(--muted-foreground))",
     fontWeight: 500,
     display: "block",
     marginBottom: "0.375rem",
   };
   const submitBtn = (disabled: boolean): React.CSSProperties => ({
     width: "100%",
-    background: disabled ? "#1e3a8a" : "#2563eb",
-    color: "white",
+    background: disabled ? "hsl(var(--primary)/0.6)" : "hsl(var(--primary))",
+    color: "hsl(var(--foreground))",
     border: "none",
     borderRadius: "0.75rem",
     padding: "0.75rem",
@@ -133,7 +133,7 @@ export default function B2BForgotPasswordPage() {
               alignItems: "center",
               gap: "0.375rem",
               fontSize: "0.875rem",
-              color: "#475569",
+              color: "hsl(var(--muted-foreground))",
               textDecoration: "none",
             }}
           >
@@ -153,27 +153,27 @@ export default function B2BForgotPasswordPage() {
             style={{
               width: 42,
               height: 42,
-              background: "linear-gradient(135deg, #3b82f6, #4f46e5)",
+              background: "hsl(var(--primary))",
               borderRadius: "0.75rem",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <Plane style={{ width: 20, height: 20, color: "white" }} />
+            <Plane style={{ width: 20, height: 20, color: "hsl(var(--foreground))" }} />
           </div>
           <div>
             <h1
               style={{
                 fontWeight: 700,
                 fontSize: "1.25rem",
-                color: "white",
+                color: "hsl(var(--foreground))",
                 margin: 0,
               }}
             >
               Tramps Aviation B2B
             </h1>
-            <p style={{ fontSize: "0.75rem", color: "#475569", margin: 0 }}>
+            <p style={{ fontSize: "0.75rem", color: "hsl(var(--muted-foreground))", margin: 0 }}>
               Reset your password
             </p>
           </div>
@@ -226,14 +226,14 @@ export default function B2BForgotPasswordPage() {
                     >
                       {done ? (
                         <CheckCircle
-                          style={{ width: 15, height: 15, color: "white" }}
+                          style={{ width: 15, height: 15, color: "hsl(var(--foreground))" }}
                         />
                       ) : (
                         <Icon
                           style={{
                             width: 13,
                             height: 13,
-                            color: active ? "white" : "#475569",
+                            color: active ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
                           }}
                         />
                       )}
@@ -257,7 +257,7 @@ export default function B2BForgotPasswordPage() {
                       style={{
                         flex: 1,
                         height: 2,
-                        background: done ? "#16a34a" : "#1e293b",
+                        background: done ? "#16a34a" : "hsl(var(--muted))",
                         margin: "0 0.5rem",
                         marginBottom: "1.1rem",
                       }}
@@ -276,7 +276,7 @@ export default function B2BForgotPasswordPage() {
                 style={{
                   fontSize: "1.25rem",
                   fontWeight: 700,
-                  color: "white",
+                  color: "hsl(var(--foreground))",
                   margin: "0 0 0.25rem",
                 }}
               >
@@ -284,7 +284,7 @@ export default function B2BForgotPasswordPage() {
               </h2>
               <p
                 style={{
-                  color: "#64748b",
+                  color: "hsl(var(--muted-foreground))",
                   fontSize: "0.875rem",
                   margin: "0 0 1.5rem",
                 }}
@@ -341,7 +341,7 @@ export default function B2BForgotPasswordPage() {
                 style={{
                   fontSize: "1.25rem",
                   fontWeight: 700,
-                  color: "white",
+                  color: "hsl(var(--foreground))",
                   margin: "0 0 0.25rem",
                 }}
               >
@@ -349,13 +349,13 @@ export default function B2BForgotPasswordPage() {
               </h2>
               <p
                 style={{
-                  color: "#64748b",
+                  color: "hsl(var(--muted-foreground))",
                   fontSize: "0.875rem",
                   margin: "0 0 1.5rem",
                 }}
               >
                 A 6-digit OTP was sent to{" "}
-                <strong style={{ color: "#93c5fd" }}>{email}</strong>. Check
+                <strong style={{ color: "hsl(var(--primary))" }}>{email}</strong>. Check
                 inbox and spam.
               </p>
               <form
@@ -404,7 +404,7 @@ export default function B2BForgotPasswordPage() {
                   style={{
                     background: "none",
                     border: "none",
-                    color: "#64748b",
+                    color: "hsl(var(--muted-foreground))",
                     fontSize: "0.8rem",
                     cursor: "pointer",
                     padding: 0,
@@ -423,7 +423,7 @@ export default function B2BForgotPasswordPage() {
                 style={{
                   fontSize: "1.25rem",
                   fontWeight: 700,
-                  color: "white",
+                  color: "hsl(var(--foreground))",
                   margin: "0 0 0.25rem",
                 }}
               >
@@ -431,7 +431,7 @@ export default function B2BForgotPasswordPage() {
               </h2>
               <p
                 style={{
-                  color: "#64748b",
+                  color: "hsl(var(--muted-foreground))",
                   fontSize: "0.875rem",
                   margin: "0 0 1.5rem",
                 }}
@@ -561,7 +561,7 @@ export default function B2BForgotPasswordPage() {
                 style={{
                   fontSize: "1.25rem",
                   fontWeight: 700,
-                  color: "white",
+                  color: "hsl(var(--foreground))",
                   margin: "0 0 0.5rem",
                 }}
               >
@@ -569,7 +569,7 @@ export default function B2BForgotPasswordPage() {
               </h2>
               <p
                 style={{
-                  color: "#64748b",
+                  color: "hsl(var(--muted-foreground))",
                   fontSize: "0.875rem",
                   margin: "0 0 1.75rem",
                 }}

@@ -61,7 +61,7 @@ export function B2CNavbar() {
               <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
                 <Image src="/logo.jpg" alt="Tramps Aviation" width={40} height={40} className="h-10 w-10 object-contain" />
               </div>
-              <span className="font-extrabold text-white tracking-tight hidden sm:block">
+              <span className="font-extrabold text-foreground tracking-tight hidden sm:block">
                 Tramps Aviation
               </span>
             </>
@@ -79,7 +79,7 @@ export function B2CNavbar() {
                 className={cn(
                   "flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all",
                   active
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
+                    ? "bg-primary text-foreground shadow-lg shadow-blue-600/25"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted",
                 )}
               >
@@ -116,15 +116,15 @@ export function B2CNavbar() {
             <div className="relative">
               <button
                 onClick={() => setUserDropdown(!userDropdown)}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors border border-white/10"
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-muted/40 hover:bg-muted/60 transition-colors border border-border"
               >
-                <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
+                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-foreground shrink-0">
                   {user.name?.charAt(0)?.toUpperCase() || "U"}
                 </div>
-                <span className="text-sm font-medium text-white max-w-[80px] truncate hidden sm:block">
+                <span className="text-sm font-medium text-foreground max-w-[80px] truncate hidden sm:block">
                   {user.name}
                 </span>
-                <ChevronDown className="h-3 w-3 text-slate-400 hidden sm:block" />
+                <ChevronDown className="h-3 w-3 text-muted-foreground hidden sm:block" />
               </button>
 
               {userDropdown && (
@@ -135,10 +135,10 @@ export function B2CNavbar() {
                   />
                   <div className="absolute right-0 top-full mt-2 z-50 w-52 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
                     <div className="px-4 py-3 border-b border-border">
-                      <p className="text-sm font-semibold text-white truncate">
+                      <p className="text-sm font-semibold text-foreground truncate">
                         {user.name}
                       </p>
-                      <p className="text-xs text-slate-500 truncate">
+                      <p className="text-xs text-muted-foreground truncate">
                         {user.email}
                       </p>
                     </div>
@@ -177,7 +177,7 @@ export function B2CNavbar() {
               </Link>
               <Link
                 href="/b2c/register"
-                className="px-4 py-1.5 text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-colors"
+                className="px-4 py-1.5 text-sm font-semibold bg-primary hover:bg-primary/90 text-foreground rounded-xl transition-colors"
               >
                 Sign Up
               </Link>
@@ -219,7 +219,7 @@ export function B2CNavbar() {
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors",
                   active
-                    ? "bg-blue-600 text-white"
+                    ? "bg-primary text-white"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted",
                 )}
               >
@@ -227,7 +227,7 @@ export function B2CNavbar() {
               </Link>
             );
           })}
-          <div className="pt-2 border-t border-white/5 space-y-1">
+          <div className="pt-2 border-t border-border/30 space-y-1">
             {isAuthenticated && user?.role === "customer" ? (
               <>
                 <Link
@@ -256,7 +256,7 @@ export function B2CNavbar() {
                 <Link
                   href="/b2c/register"
                   onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm bg-blue-600 text-white font-medium"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm bg-primary text-foreground font-medium"
                 >
                   Sign Up Free
                 </Link>

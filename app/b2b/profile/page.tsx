@@ -137,7 +137,7 @@ export default function B2BProfilePage() {
           <div className="flex gap-2 mt-1">
             <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium",
               data.kycStatus === 'approved' ? "bg-emerald-500/10 text-emerald-600" :
-              data.kycStatus === 'submitted' ? "bg-blue-500/10 text-blue-600" :
+              data.kycStatus === 'submitted' ? "bg-primary/10 text-primary" :
               data.kycStatus === 'rejected' ? "bg-red-500/10 text-red-600" : "bg-amber-500/10 text-amber-600")}>
               KYC {data.kycStatus || 'pending'}
             </span>

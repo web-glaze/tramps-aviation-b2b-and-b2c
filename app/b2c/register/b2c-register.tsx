@@ -174,7 +174,7 @@ export default function B2CRegisterPage() {
   };
 
   const inp =
-    "w-full bg-muted border border-border rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500 transition-colors placeholder:text-muted-foreground/50";
+    "w-full bg-muted border border-border rounded-xl px-4 py-3 text-sm text-foreground outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/50";
 
   return (
     <div className="flex flex-col items-center justify-center px-4 py-10 min-h-[calc(100vh-4rem)]">
@@ -182,14 +182,14 @@ export default function B2CRegisterPage() {
         {step === "otp" ? (
           <button
             onClick={() => setStep("form")}
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" /> Back
           </button>
         ) : (
           <Link
             href="/b2c/login"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" /> Already have an account?
           </Link>
@@ -278,7 +278,7 @@ export default function B2CRegisterPage() {
                       required
                       inputMode="numeric"
                       placeholder="9876543210"
-                      className="flex-1 bg-muted border border-border rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500 transition-colors"
+                      className="flex-1 bg-muted border border-border rounded-xl px-4 py-3 text-sm text-foreground outline-none focus:border-primary transition-colors"
                     />
                   </div>
                   {IS_DEV && (
@@ -300,7 +300,7 @@ export default function B2CRegisterPage() {
                       required
                       minLength={8}
                       placeholder="Min 8 characters"
-                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 pr-10 text-sm text-white outline-none focus:border-blue-500 transition-colors"
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 pr-10 text-sm text-foreground outline-none focus:border-primary transition-colors"
                     />
                     <button
                       type="button"
@@ -339,7 +339,7 @@ export default function B2CRegisterPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-60 rounded-xl py-3.5 text-sm font-semibold transition-colors flex items-center justify-center gap-2 mt-2"
+                  className="w-full bg-primary hover:bg-primary/90 disabled:opacity-60 rounded-xl py-3.5 text-sm font-semibold transition-colors flex items-center justify-center gap-2 mt-2"
                 >
                   {loading ? (
                     <>
@@ -356,12 +356,12 @@ export default function B2CRegisterPage() {
             <>
               <div className="text-center mb-6">
                 <div className="w-14 h-14 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="h-7 w-7 text-blue-400" />
+                  <CheckCircle className="h-7 w-7 text-primary" />
                 </div>
                 <h2 className="text-xl font-bold">Verify your number</h2>
                 <p className="text-muted-foreground text-sm mt-1">
                   OTP sent to{" "}
-                  <span className="text-white font-medium">
+                  <span className="text-foreground font-medium">
                     +91 {form.phone}
                   </span>
                 </p>
@@ -382,13 +382,13 @@ export default function B2CRegisterPage() {
                   inputMode="numeric"
                   maxLength={6}
                   placeholder="• • • • • •"
-                  className="w-full bg-muted border border-border rounded-xl px-4 py-4 text-white text-center text-3xl tracking-[0.5em] font-bold outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-muted border border-border rounded-xl px-4 py-4 text-foreground text-center text-3xl tracking-[0.5em] font-bold outline-none focus:border-primary transition-colors"
                 />
 
                 <button
                   type="submit"
                   disabled={loading || otp.length < 6}
-                  className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-60 rounded-xl py-3.5 text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+                  className="w-full bg-primary hover:bg-primary/90 disabled:opacity-60 rounded-xl py-3.5 text-sm font-semibold transition-colors flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <>
@@ -404,7 +404,7 @@ export default function B2CRegisterPage() {
                     type="button"
                     onClick={handleResend}
                     disabled={countdown > 0}
-                    className="text-blue-400 hover:underline disabled:text-muted-foreground disabled:no-underline transition-colors"
+                    className="text-primary hover:underline disabled:text-muted-foreground disabled:no-underline transition-colors"
                   >
                     {countdown > 0
                       ? `Resend OTP in ${countdown}s`
@@ -420,7 +420,7 @@ export default function B2CRegisterPage() {
               Already have an account?{" "}
               <Link
                 href="/b2c/login"
-                className="text-blue-400 hover:underline font-medium"
+                className="text-primary hover:underline font-medium"
               >
                 Sign in
               </Link>

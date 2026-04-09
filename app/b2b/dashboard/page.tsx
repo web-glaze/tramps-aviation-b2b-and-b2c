@@ -123,7 +123,7 @@ export default function B2BDashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Wallet Balance" value={fmtINR(walletBal)} icon={Wallet}     color="text-blue-500"    bg="bg-blue-500/10"    loading={loading} />
+        <StatCard title="Wallet Balance" value={fmtINR(walletBal)} icon={Wallet}     color="text-primary"    bg="bg-primary/10"    loading={loading} />
         <StatCard title="Total Bookings" value={totalBookings}       icon={BookOpen}  color="text-violet-500"  bg="bg-violet-500/10"  loading={loading} />
         <StatCard title="Total Revenue"  value={fmtINR(totalRevenue)} icon={DollarSign} color="text-emerald-500" bg="bg-emerald-500/10" loading={loading} />
         <StatCard title="KYC Status"
@@ -138,7 +138,7 @@ export default function B2BDashboard() {
       {/* Quick Actions */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Book Flight', icon: Plane,      href: '/b2b/flights',  color: 'text-blue-500',   bg: 'bg-blue-500/10' },
+          { label: 'Book Flight', icon: Plane,      href: '/b2b/flights',  color: 'text-primary',   bg: 'bg-primary/10' },
           { label: 'My Bookings', icon: BookOpen,   href: '/b2b/bookings', color: 'text-violet-500', bg: 'bg-violet-500/10' },
           { label: 'Wallet',      icon: Wallet,     href: '/b2b/wallet',   color: 'text-emerald-500',bg: 'bg-emerald-500/10' },
           { label: 'Commission',  icon: TrendingUp, href: '/b2b/commission',color: 'text-amber-500',  bg: 'bg-amber-500/10' },
@@ -238,8 +238,8 @@ export default function B2BDashboard() {
               }
               return (
                 <div key={b._id || i} className="px-5 py-3 flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                    <Plane className="h-4 w-4 text-blue-500" />
+                  <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Plane className="h-4 w-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{b.bookingRef || b.id || 'Booking'}</p>

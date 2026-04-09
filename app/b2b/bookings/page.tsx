@@ -136,7 +136,7 @@ export default function B2bBookingsPage() {
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2">
-                          <Plane className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+                          <Plane className="h-3.5 w-3.5 text-primary flex-shrink-0" />
                           <span className="truncate max-w-[140px]">{b.route || b.segments?.[0] ? `${b.segments[0]?.origin} → ${b.segments[0]?.destination}` : b.bookingRef || '—'}</span>
                         </div>
                       </td>

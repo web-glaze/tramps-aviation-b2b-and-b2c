@@ -1,374 +1,381 @@
-# Tramps Aviation — Complete Developer Guide
+# Development Guide — Tramps Aviation
 
-## 📋 Table of Contents
+Guide for developing, customizing, and extending the Tramps Aviation B2B & B2C travel platform.
 
-1. [Project Overview](#overview)
-2. [Quick Start](#quick-start)
-3. [Development Credentials](#dev-credentials)
-4. [All Pages Reference](#pages)
-5. [Mock Mode (No Backend Needed)](#mock-mode)
-6. [Color Themes & Dark Mode](#themes)
-7. [Settings FAB Usage](#settings)
-8. [API Integration](#api)
-9. [Known Issues Fixed](#fixes)
-10. [Production Deployment](#production)
+**Quick Links:**
+- [README.md](./README.md) — Project overview & setup
+- [Architecture Overview](#architecture)
+- [State Management](#state-management)
+- [Styling & Theming](#styling)
+- [API Integration](#api)
+- [Adding Features](#adding-features)
+- [Best Practices](#best-practices)
 
----
+**Tech Stack**: Next.js 16 · React 19 · TypeScript · Tailwind CSS · Zustand · Sonner · shadcn/ui
 
-## 1. Project Overview {#overview}
+## Architecture Overview {#architecture}
 
-**Tramps Aviation** is a Next.js 14 frontend for a B2B + B2C travel platform.
+### Directory Structure
+```
+app/
+├── page.tsx                 # Home page
+├── layout.tsx              # Root layout
+├── b2b/                    # Agent portal
+│   ├── dashboard/
+│   ├── flights/, hotels/
+│   ├── bookings/, wallet/
+│   └── kyc/, profile/, etc.
+├── b2c/                    # Customer portal
+│   ├── flights/, hotels/
+│   ├── insurance/
+│   ├── bookings/, my-trips/
+│   └── login/, register/
+└── globals.css             # Theme variables
 
-- **B2C**: Customers search and book flights, pay via Razorpay
-- **B2B**: Travel agents book flights with wallet deduction + earn commissions
-- **Admin**: Full management panel for agents, KYC, wallets, reports
+components/
+├── layout/                 # Navbar, Sidebar, Footer, Providers
+├── shared/                 # AuthGuard, DataTable, PageHeader, etc.
+├── dashboard/              # Dashboard-specific components
+├── forms/                  # Form components
+├── settings/               # Settings FAB
+└── ui/                     # shadcn/ui components
 
-**Tech Stack**: Next.js 14 · TypeScript · Tailwind CSS · Zustand · Sonner (toasts) · Axios
+lib/
+├── api/                    # Services, HTTP client
+├── store/                  # Zustand stores (auth, settings, etc.)
+├── hooks/                  # Custom React hooks
+├── validators/             # Zod schemas
+└── utils.ts               # Helper utilities
 
----
-
-## 2. Quick Start {#quick-start}
-
-```bash
-# 1. Unzip and enter project
-cd travel-frontend
-
-# 2. Install dependencies
-npm install
-
-# 3. Start development (mock mode — no backend needed)
-npm run dev
-
-# App runs at: http://localhost:3000
+config/
+├── app.ts                 # Routes, navigation, constants
+└── design-system.ts       # Color themes
 ```
 
-**With real backend:**
-
-```bash
-# Make sure backend is running at localhost:8080
-# Edit .env.development:
-NEXT_PUBLIC_API_URL=http://localhost:8080/api
-NEXT_PUBLIC_USE_MOCK=false
-
-npm run dev
+### Layout Hierarchy
+```
+RootLayout (theme providers)
+├── B2BLayout (sidebar + header)
+├── B2CLayout (navbar + footer)
+└── HomeLayout (navbar + footer)
 ```
 
----
+## State Management {#state-management}
 
-## 3. Development Credentials {#dev-credentials}
+Uses **Zustand** with localStorage persistence for global state.
 
-### Mock Mode (NEXT_PUBLIC_USE_MOCK=true)
+### Core Stores
 
-All these work instantly — no backend needed:
+#### 1. Auth Store (`useAuthStore`)
+```typescript
+const { isAuthenticated, user, role, setAuth, clearAuth } = useAuthStore()
+```
+- Manages user login/logout
+- Stores JWT token
+- Persists to `tp-auth` in localStorage
+- Auto-hydrates on app load
 
-| Role     | Login Field | Value            | Password     |
-| -------- | ----------- | ---------------- | ------------ |
-| Agent    | Agent ID    | `AG12345678`     | any password |
-| Customer | Email       | `user@demo.com`  | any password |
-| Admin    | Email       | `admin@demo.com` | any password |
+#### 2. Settings Store (`useSettingsStore`)
+```typescript
+const { theme, colorTheme, fontSize, fontFamily, sidebarOpen, setTheme } = useSettingsStore()
+```
+- Theme (light/dark/system)
+- Color theme (12 options)
+- Font & typography settings
+- Sidebar visibility
+- Persists to `tp-settings`
 
-> **OTP (Forgot Password)**: In dev mode, OTP is always **`123456`**
-> The OTP also appears in the success toast message on screen
+#### 3. Stats Store (`useStatsStore`)
+```typescript
+const { stats, loading, fetchStats } = useStatsStore()
+```
+- Dashboard statistics
+- Async data fetching with cache
+- 5-minute cache invalidation
 
-### KYC Test Data
+#### 4. Notifications Store (`useNotificationsStore`)
+```typescript
+const { notifications, addNotification, markRead } = useNotificationsStore()
+```
+- Toast-style notifications
+- Mark as read, clear all
+- Persists notification history
 
-When submitting KYC in mock mode, use:
+### Usage Pattern
+```typescript
+import { useAuthStore, useSettingsStore } from '@/lib/store'
 
-- PAN: `AAPFU0939F` (10 chars)
-- Aadhaar: `123456789012` (12 digits)
-- IFSC: `SBIN0001234` (11 chars)
+export function MyComponent() {
+  const { isAuthenticated } = useAuthStore()
+  const { theme, setTheme } = useSettingsStore()
+  
+  // Component code...
+}
+```
 
-### Real Backend (NEXT_PUBLIC_USE_MOCK=false)
+## Styling & Theming {#styling}
 
-- Default admin: `admin@travelplatform.com` / `Admin@123456`
-- (Created automatically on first backend startup)
+### CSS Variables System
 
----
+All colors and spacing use CSS variables defined in `app/globals.css`:
 
-## 4. All Pages Reference {#pages}
+```css
+/* Base colors */
+--background: 0 0% 100%;
+--foreground: 0 0% 3%;
+--card: 0 0% 100%;
+--primary: 217 91% 60%;
+--muted: 210 40% 96%;
+/* ... 30+ more variables */
+```
 
-### Public Pages (No Login Required)
+### 12 Color Themes
 
-| Page              | URL                     | Description                                     |
-| ----------------- | ----------------------- | ----------------------------------------------- |
-| Home              | `/`                     | Landing page with flight search, hero, features |
-| Login             | `/auth/login`           | Unified login — Traveler / Agent / Admin tabs   |
-| Customer Register | `/auth/register`        | New customer signup                             |
-| Agent Register    | `/auth/agent-register`  | 3-step agent registration wizard                |
-| Forgot Password   | `/auth/forgot-password` | OTP-based password reset                        |
+Built-in themes in `config/design-system.ts`:
+- **Cool**: Blue, Violet, Teal, Cyan, Indigo, Slate
+- **Warm**: Orange, Amber, Rose, Pink
+- **Vibrant**: Emerald, Lime
 
-### B2B Agent Pages (Login Required — role: agent)
+Change via Settings FAB (⚙️ button, bottom-right) or:
+```typescript
+const { setColorTheme } = useSettingsStore()
+setColorTheme('orange')
+```
 
-| Page           | URL                  | Description                             |
-| -------------- | -------------------- | --------------------------------------- |
-| Dashboard      | `/b2b/dashboard`     | Stats, recent bookings, wallet overview |
-| Book Flights   | `/b2b/flights`       | Search & book flights (TBO API / mock)  |
-| My Bookings    | `/b2b/bookings`      | All bookings list with filters          |
-| Booking Detail | `/b2b/bookings/[id]` | Full booking info, PNR, passengers      |
-| Wallet         | `/b2b/wallet`        | Balance, transactions, statement        |
-| Commission     | `/b2b/commission`    | Commission report, earned amounts       |
-| KYC            | `/b2b/kyc`           | Submit PAN, Aadhaar, bank details       |
+### Dark Mode
 
-### Admin Pages (Login Required — role: admin)
+Applied **before page paint** (no flash) via inline script in `<head>`.
 
-| Page        | URL                 | Description                           |
-| ----------- | ------------------- | ------------------------------------- |
-| Dashboard   | `/admin/dashboard`  | Platform stats, KPIs, recent activity |
-| Agents      | `/admin/agents`     | List, search, suspend/activate agents |
-| Customers   | `/admin/customers`  | Customer list and management          |
-| Bookings    | `/admin/bookings`   | All bookings across platform          |
-| KYC Review  | `/admin/kyc`        | Approve / reject agent KYC            |
-| Wallet Ops  | `/admin/wallet`     | Top-up, deduct, freeze agent wallets  |
-| Commissions | `/admin/commission` | Commission reports, settlements       |
-| Reports     | `/admin/reports`    | Revenue, airline performance charts   |
-| Flights     | `/admin/flights`    | Pricing rules management              |
-| Hotels      | `/admin/hotels`     | Hotel inventory                       |
-| Settings    | `/admin/settings`   | Appearance, platform config, security |
+**Features:**
+- System preference detection
+- Manual light/dark toggle
+- Theme persists in localStorage
+- All components have dark variants
 
----
+### Tailwind Usage
 
-## 5. Mock Mode (No Backend Needed) {#mock-mode}
+```tsx
+// Responsive
+<div className="md:flex lg:grid-cols-3">
 
-Set `NEXT_PUBLIC_USE_MOCK=true` in `.env.development` (already default).
+// Dark mode
+<div className="dark:bg-slate-800 dark:text-white">
 
-**What works in mock mode:**
+// Theme colors
+<div className="bg-primary text-primary-foreground">
 
-- ✅ Login / Register (all 3 roles)
-- ✅ OTP forgot password (static code `123456`)
-- ✅ Agent dashboard with dummy stats
-- ✅ Flight search (5 sample flights always returned)
-- ✅ Flight booking (returns mock PNR)
-- ✅ Wallet balance & transaction history
-- ✅ Commission report
-- ✅ KYC submission & status
-- ✅ Admin dashboard stats
-- ✅ Agent list, KYC list
-- ✅ All pages render correctly
+// Custom theme variables
+<div className="bg-[hsl(var(--primary))]">
+```
 
-**Mock login flow:**
+## API Integration {#api}
 
-1. Go to `/auth/login`
-2. Select "Agent" tab
-3. Enter Agent ID: `AG12345678`, any password
-4. → Redirected to `/b2b/dashboard`
+### Service Calls
 
-**Mock admin flow:**
+API calls are in `lib/api/services.ts`:
 
-1. Go to `/auth/login`
-2. Select "Admin" tab
-3. Enter email: `admin@demo.com`, any password
-4. → Redirected to `/admin/dashboard`
+```typescript
+export const flightsApi = {
+  async getFlights(params: FlightParams) {
+    const res = await apiClient.get('/flights', { params })
+    return res.data
+  },
+  async bookFlight(flightId: string, passengers: Passenger[]) {
+    const res = await apiClient.post('/flights/book', { flightId, passengers })
+    return res.data
+  }
+}
+```
 
----
+### Usage in Components
 
-## 6. Color Themes & Dark Mode {#themes}
+```typescript
+import { flightsApi } from '@/lib/api/services'
+import { useQuery } from '@tanstack/react-query'
 
-### Settings are persisted in localStorage (`tp-settings`)
+export function FlightsList() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['flights'],
+    queryFn: () => flightsApi.getFlights({})
+  })
+  
+  if (isLoading) return <Spinner />
+  return <DataTable data={data.flights} />
+}
+```
 
-Dark mode is applied **before page paint** (no white flash) via an inline script in `<head>`.
+### Error Handling
 
-**Changing theme:**
+```typescript
+try {
+  await flightsApi.bookFlight(id, passengers)
+  toast.success('Flight booked!')
+} catch (error: any) {
+  toast.error(error.response?.data?.message || 'Booking failed')
+}
+```
 
-- Click the ⚙️ **Settings FAB** (bottom-right corner)
-- Or go to `/admin/settings` → Appearance tab
+## Form Validation
 
-**Available Themes:**
-| Key | Name | Color |
-|-----|------|-------|
-| `blue` | Ocean | #3b82f6 |
-| `violet` | Royal | #8b5cf6 |
-| `emerald` | Forest | #10b981 |
-| `rose` | Rose | #f43f5e |
-| `orange` | Sunset | #f97316 |
-| `teal` | Teal | #14b8a6 |
-| `cyan` | Cyan | #06b6d4 |
-| `amber` | Amber | #f59e0b |
-| `pink` | Pink | #ec4899 |
-| `indigo` | Indigo | #6366f1 |
-| `slate` | Slate | #64748b |
-| `lime` | Lime | #65a30d |
+Uses **Zod** for type-safe validation:
 
-**Dark Mode Fixed Issues:**
+```typescript
+import { z } from 'zod'
 
-- ✅ No white flash on page load
-- ✅ Skeleton loaders use theme colors
-- ✅ Toggle switch knob is grey (not white) in dark mode
-- ✅ Gradient orbs use opacity variants (not raw `bg-white`)
-- ✅ All status badges have dark mode variants
+const bookingSchema = z.object({
+  passengers: z.array(z.object({
+    name: z.string().min(2),
+    email: z.string().email(),
+  })).min(1),
+  date: z.date(),
+  agreeTerms: z.boolean().refine(v => v === true)
+})
 
----
+const form = useForm({
+  resolver: zodResolver(bookingSchema),
+  defaultValues: { passengers: [] }
+})
+```
 
-## 7. Settings FAB Usage {#settings}
+## Adding Features {#adding-features}
 
-The ⚙️ button (bottom-right) opens a panel with 4 sections:
+### 1. New Page
 
-| Section              | Options                                                         |
-| -------------------- | --------------------------------------------------------------- |
-| **Appearance**       | Light / Dark / System                                           |
-| **Color Theme**      | 12 colors to choose from                                        |
-| **Typography**       | 9 font families + 5 font sizes                                  |
-| **Layout & Effects** | 7 corner radius options, Compact Mode toggle, Animations toggle |
+```
+app/b2b/new-feature/
+├── page.tsx
+├── layout.tsx (optional)
+└── components/ (optional)
+```
 
-All settings are saved to `localStorage` and persist across sessions.
+### 2. New Component
 
----
+```
+components/new-feature/
+├── NewComponent.tsx
+├── index.ts (optional export)
+```
 
-## 8. API Integration {#api}
+### 3. New API Service
 
-### Environment Variables
+- Add endpoint to `lib/api/services.ts`
+- Define TypeScript interface
+- Add validation schema if needed
+
+### 4. New Zustand Store
+
+```typescript
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+
+export const useMyStore = create<MyState>()(
+  persist(
+    (set) => ({
+      // state and actions
+    }),
+    { name: 'my-store' }
+  )
+)
+```
+
+## Common Patterns {#best-practices}
+
+### Authentication Check
+```typescript
+const { isAuthenticated, role } = useAuthStore()
+
+if (!isAuthenticated) return <LoginPrompt />
+if (role === 'agent') return <AgentDashboard />
+if (role === 'customer') return <CustomerDashboard />
+```
+
+### Sidebar Toggle
+```typescript
+const { sidebarOpen, toggleSidebar } = useSettingsStore()
+
+return (
+  <div className={sidebarOpen ? 'gap-64' : 'gap-20'}>
+    <button onClick={toggleSidebar}>Toggle</button>
+  </div>
+)
+```
+
+### Theme Toggle
+```typescript
+const { theme, setTheme } = useSettingsStore()
+
+return (
+  <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+    Toggle Theme
+  </button>
+)
+```
+
+### Protected Route
+```typescript
+import { AuthGuard } from '@/components/shared/AuthGuard'
+
+export default function DashboardPage() {
+  return (
+    <AuthGuard>
+      <Dashboard />
+    </AuthGuard>
+  )
+}
+```
+
+## Debugging
+
+### Check State in Console
+```typescript
+// Auth state
+localStorage.getItem('tp-auth')
+
+// Settings
+localStorage.getItem('tp-settings')
+
+// Current theme color
+document.documentElement.getAttribute('data-color')
+```
+
+### React DevTools
+- Use React DevTools browser extension
+- Check props, state, and hooks
+- Profile component renders
+
+### Network Tab
+- Inspect API requests in DevTools
+- Verify request/response headers
+- Check for CORS issues
+
+## Environment Variables
+
+Create `.env.local`:
 
 ```env
-# .env.development
-NEXT_PUBLIC_API_URL=http://localhost:8080/api
-NEXT_PUBLIC_USE_MOCK=true       # false = real backend
-
-# .env.production
-NEXT_PUBLIC_API_URL=https://api.yourdomain.com/api
+NEXT_PUBLIC_API_URL=http://localhost:8000
 NEXT_PUBLIC_USE_MOCK=false
+NEXT_PUBLIC_ENABLE_ANALYTICS=true
 ```
 
-### Backend Expected Endpoints
+## File Naming
 
-```
-POST /api/auth/agent/register
-POST /api/auth/agent/login
-POST /api/auth/customer/register
-POST /api/auth/customer/login
-POST /api/auth/admin/login
-POST /api/auth/forgot-password
-POST /api/auth/reset-password
-GET  /api/auth/me
+- **Components**: PascalCase (`MyComponent.tsx`)
+- **Pages**: `page.tsx`
+- **Types**: `types/index.ts`
+- **Utils**: camelCase (`lib/utils.ts`)
+- **Hooks**: `use` prefix (`useStats.ts`)
 
-POST /api/search/flights
-POST /api/search/flights/revalidate
-POST /api/search/insurance/plans
+## Import Aliases
 
-GET  /api/kyc/my
-POST /api/kyc/submit
-
-GET  /api/wallet
-GET  /api/wallet/transactions
-
-POST /api/bookings/agent/flight
-POST /api/bookings/customer/flight/initiate
-GET  /api/bookings/my
-GET  /api/bookings/:id
-PATCH /api/bookings/:id/cancel
-
-GET  /api/admin/dashboard
-GET  /api/admin/agents
-GET  /api/admin/kyc
-PATCH /api/admin/kyc/:id/approve
-PATCH /api/admin/kyc/:id/reject
-POST /api/admin/wallet/topup
-```
-
-### Token Storage
-
-JWT token is stored in `localStorage` as `auth_token` and attached to every API request automatically via Axios interceptor.
-
----
-
-## 9. Known Issues Fixed {#fixes}
-
-| Issue                                    | Fix Applied                                                        |
-| ---------------------------------------- | ------------------------------------------------------------------ |
-| Dark mode shows white background on load | Added inline `<script>` in `<head>` to set dark class before paint |
-| White gradient orbs visible in dark mode | Changed `bg-white` → `bg-primary-foreground/10`                    |
-| Toggle switch knob white in dark mode    | Added CSS variable `--toggle-knob` that changes per theme          |
-| Skeleton loader looks wrong in dark      | Uses `hsl(var(--muted))` and `hsl(var(--accent))`                  |
-| Admin settings page crashes              | Fixed wrong import from `@/lib/store/settings` → `@/lib/store`     |
-| Zip had brace-named folders              | Clean copy — no brace expansion in folder names                    |
-| Mock mode not working                    | `NEXT_PUBLIC_USE_MOCK=true` set by default in `.env.development`   |
-
----
-
-## 10. Production Deployment {#production}
-
-```bash
-# Build
-npm run build
-
-# Start
-npm run start
-```
-
-**Vercel (recommended):**
-
-1. Push to GitHub
-2. Import in Vercel
-3. Set env vars:
-   - `NEXT_PUBLIC_API_URL` = your backend URL
-   - `NEXT_PUBLIC_USE_MOCK` = `false`
-
-**Docker:**
-
-```dockerfile
-FROM node:20-alpine
-WORKDIR /app
-COPY . .
-RUN npm install && npm run build
-EXPOSE 3000
-CMD ["npm", "start"]
+```typescript
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import { useAuthStore } from '@/lib/store'
+import { User } from '@/types'
+import { ROUTES } from '@/config/app'
 ```
 
 ---
 
-## File Structure
-
-```
-travel-frontend/
-├── app/
-│   ├── page.tsx                 # Home / Landing
-│   ├── layout.tsx               # Root layout + theme init
-│   ├── globals.css              # All CSS variables & utilities
-│   ├── auth/
-│   │   ├── login/               # Unified login (3 roles)
-│   │   ├── register/            # Customer register
-│   │   ├── agent-register/      # Agent 3-step wizard
-│   │   └── forgot-password/     # OTP reset flow
-│   ├── b2b/
-│   │   ├── layout.tsx           # Agent layout (sidebar + header)
-│   │   ├── dashboard/           # Agent dashboard
-│   │   ├── flights/             # Search & book
-│   │   ├── bookings/            # Booking list + detail
-│   │   ├── wallet/              # Wallet + transactions
-│   │   ├── commission/          # Commission report
-│   │   └── kyc/                 # KYC submission
-│   └── admin/
-│       ├── layout.tsx           # Admin layout
-│       ├── dashboard/           # Admin stats
-│       ├── agents/              # Agent management
-│       ├── customers/           # Customer list
-│       ├── bookings/            # All bookings
-│       ├── kyc/                 # KYC review
-│       ├── wallet/              # Wallet operations
-│       ├── commission/          # Commission management
-│       ├── reports/             # Revenue reports
-│       └── settings/            # Platform settings
-├── components/
-│   ├── layout/
-│   │   ├── AdminSidebar.tsx     # Admin navigation
-│   │   ├── AgentSidebar.tsx     # Agent navigation
-│   │   └── DashboardHeader.tsx  # Top header bar
-│   ├── settings/
-│   │   └── SettingsFab.tsx      # ⚙️ Bottom-right settings panel
-│   ├── shared/
-│   │   ├── AuthGuard.tsx        # Route protection
-│   │   ├── DataTable.tsx        # Reusable table
-│   │   ├── StatCard.tsx         # Metric card
-│   │   └── StatusBadge.tsx      # Colored status pill
-│   └── ui/                      # Base UI components
-├── lib/
-│   ├── api/
-│   │   ├── client.ts            # Axios instance
-│   │   ├── services.ts          # All API calls + mock branching
-│   │   └── mock.ts              # Mock data & responses
-│   └── store/
-│       └── index.ts             # Zustand stores (auth + settings)
-└── GUIDE.md                     # This file
-```
-
----
-
-_Built with ❤️ for Tramps Aviation India — Last updated: March 2026_
+See [README.md](./README.md) for project overview and setup instructions.

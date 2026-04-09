@@ -10,7 +10,7 @@ export default function B2bReportsPage() {
       <PageHeader title="My Reports" subtitle="Commission and booking performance" />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Commission This Month" value="₹8,200" icon={TrendingUp} trend={12.1} iconColor="text-green-500" iconBg="bg-green-100 dark:bg-green-900/30" />
-        <StatCard title="Flight Commission" value="₹3,400" icon={Plane} iconColor="text-blue-500" iconBg="bg-blue-100 dark:bg-blue-900/30" />
+        <StatCard title="Flight Commission" value="₹3,400" icon={Plane} iconColor="text-primary" iconBg="bg-blue-100 dark:bg-blue-900/30" />
         <StatCard title="Hotel Commission" value="₹4,200" icon={Hotel} iconColor="text-amber-500" iconBg="bg-amber-100 dark:bg-amber-900/30" />
         <StatCard title="Insurance Commission" value="₹600" icon={Shield} iconColor="text-green-500" iconBg="bg-green-100 dark:bg-green-900/30" />
       </div>

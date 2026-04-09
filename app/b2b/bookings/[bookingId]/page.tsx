@@ -149,7 +149,7 @@ export default function B2BBookingDetailPage() {
             <span className="font-bold text-white">{booking.type} · {booking.airline}</span>
             <span className="text-blue-200 text-sm">{booking.flightNo}</span>
           </div>
-          <span className="text-xs bg-green-500 text-white font-semibold px-3 py-1 rounded-full uppercase">
+          <span className="text-xs bg-green-500 text-foreground font-semibold px-3 py-1 rounded-full uppercase">
             {booking.status}
           </span>
         </div>

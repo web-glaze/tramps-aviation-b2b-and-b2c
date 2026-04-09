@@ -2,25 +2,44 @@
 
 import "./globals.css";
 import { Toaster } from "sonner";
-import { SettingsFab } from "@/components/settings/SettingsFab";
 import { SettingsProvider } from "@/components/layout/SettingsProvider";
+import { DevPathBar } from "@/components/dev/DevPathBar";
 
 // Anti-flash: reads tp-settings BEFORE first paint → no theme flicker
+// Also migrates old 'dark' default to new 'light' default (v4 upgrade)
 const ANTI_FLASH = `
 (function(){
   try{
-    var s=JSON.parse(localStorage.getItem('tp-settings')||'{}');
-    var st=s.state||{};
-    var t=st.theme||'dark';
-    var dark=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);
-    if(dark)document.documentElement.classList.add('dark');
-    var r=document.documentElement;
-    r.setAttribute('data-color',    st.colorTheme  ||'blue');
-    r.setAttribute('data-font',     st.fontFamily  ||'jakarta');
-    r.setAttribute('data-fontsize', st.fontSize    ||'md');
-    r.setAttribute('data-radius',   st.borderRadius||'lg');
-    r.setAttribute('data-compact',  st.compactMode ?'true':'false');
-    r.setAttribute('data-animations',st.animations===false?'false':'true');
+    var raw = localStorage.getItem('tp-settings');
+    var s = raw ? JSON.parse(raw) : {};
+    var st = s.state || {};
+
+    // MIGRATION: If user never explicitly set a theme (old default was 'dark'),
+    // reset to 'light'. We detect this by checking if colorTheme is still 'blue'
+    // (the old default) — if so, it's a stale old config, reset everything.
+    if(st.colorTheme === 'blue' || st.colorTheme === undefined) {
+      st.theme = 'light';
+      st.colorTheme = 'brand';
+      // Save the migration so it only runs once
+      try{
+        s.state = Object.assign({}, st, {theme:'light', colorTheme:'brand'});
+        localStorage.setItem('tp-settings', JSON.stringify(s));
+      }catch(e){}
+    }
+
+    var t = st.theme || 'light';
+    var dark = t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    // Only add 'dark' class if user explicitly chose dark
+    if(dark) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+
+    var r = document.documentElement;
+    r.setAttribute('data-color',     st.colorTheme   || 'brand');
+    r.setAttribute('data-font',      st.fontFamily   || 'jakarta');
+    r.setAttribute('data-fontsize',  st.fontSize     || 'md');
+    r.setAttribute('data-radius',    st.borderRadius || 'lg');
+    r.setAttribute('data-compact',   st.compactMode  ? 'true' : 'false');
+    r.setAttribute('data-animations',st.animations === false ? 'false' : 'true');
   }catch(e){}
 })();
 `;
@@ -41,7 +60,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* SettingsProvider applies all theme/font/color attributes reactively */}
         <SettingsProvider>
           {children}
-          <SettingsFab />
+          {/* Dev path bar — only shows in development mode */}
+          <DevPathBar />
           <Toaster
             position="top-right"
             richColors

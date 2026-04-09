@@ -83,7 +83,7 @@ export default function B2BLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Public pages — no sidebar
+  // Public pages — no sidebar, no footer (login/register pages are standalone)
   if (isPublicPage) return <>{children}</>;
 
   // Not authenticated after check

@@ -26,7 +26,7 @@ const MOCK_PLANS = [
 ];
 
 const COLORS: Record<string, { border: string; bg: string; badge: string; btn: string; icon: string }> = {
-  blue:    { border: "border-blue-500/30",    bg: "bg-blue-500/5",    badge: "bg-blue-500/20 text-blue-300",    btn: "bg-blue-600 hover:bg-blue-500",    icon: "text-blue-400" },
+  blue:    { border: "border-blue-500/30",    bg: "bg-blue-500/5",    badge: "bg-blue-500/20 text-primary/80",    btn: "bg-primary hover:bg-primary/90",    icon: "text-primary" },
   emerald: { border: "border-emerald-500/30", bg: "bg-emerald-500/5", badge: "bg-emerald-500/20 text-emerald-300", btn: "bg-emerald-600 hover:bg-emerald-500", icon: "text-emerald-400" },
   violet:  { border: "border-violet-500/30",  bg: "bg-violet-500/5",  badge: "bg-violet-500/20 text-violet-300",  btn: "bg-violet-600 hover:bg-violet-500",  icon: "text-violet-400" },
 };
@@ -66,7 +66,7 @@ export default function B2CInsurancePage() {
         <div className="inline-flex h-14 w-14 bg-green-500/15 rounded-2xl items-center justify-center mb-4">
           <Shield className="h-7 w-7 text-green-400" />
         </div>
-        <h1 className="text-3xl font-black text-white mb-2">Travel Insurance</h1>
+        <h1 className="text-3xl font-black text-foreground mb-2">Travel Insurance</h1>
         <p className="text-muted-foreground text-sm">Powered by Bajaj Allianz · Instant policy issuance · Claim online</p>
         {!isAuthenticated && (
           <p className="text-amber-400 text-xs mt-2">Login required to purchase a plan</p>
@@ -90,13 +90,13 @@ export default function B2CInsurancePage() {
                 <Shield className={`h-5 w-5 ${c.icon}`} />
               </div>
 
-              <h3 className="text-lg font-bold text-white mb-1">{plan.name}</h3>
+              <h3 className="text-lg font-bold text-foreground mb-1">{plan.name}</h3>
               <p className="text-xs text-muted-foreground mb-4">{plan.type}</p>
 
               <div className="mb-5 flex-1">
                 <ul className="space-y-2">
                   {plan.coverage.map(item => (
-                    <li key={item} className="flex items-start gap-2 text-xs text-slate-300">
+                    <li key={item} className="flex items-start gap-2 text-xs text-foreground/80">
                       <CheckCircle className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${c.icon}`} />
                       {item}
                     </li>
@@ -112,7 +112,7 @@ export default function B2CInsurancePage() {
                 <button
                   onClick={() => handleBuy(plan)}
                   disabled={buying === plan.id}
-                  className={`w-full ${c.btn} disabled:opacity-60 text-white rounded-xl py-3 text-sm font-bold transition-all flex items-center justify-center gap-2`}
+                  className={`w-full ${c.btn} disabled:opacity-60 text-foreground rounded-xl py-3 text-sm font-bold transition-all flex items-center justify-center gap-2`}
                 >
                   {buying === plan.id
                     ? <><RefreshCcw className="h-4 w-4 animate-spin" /> Processing…</>
