@@ -17,7 +17,7 @@ const ANTI_FLASH = `
     // MIGRATION: If user never explicitly set a theme (old default was 'dark'),
     // reset to 'light'. We detect this by checking if colorTheme is still 'blue'
     // (the old default) — if so, it's a stale old config, reset everything.
-    if(st.colorTheme === 'blue' || st.colorTheme === undefined) {
+    if(st.colorTheme === 'blue' || st.colorTheme === 'brand' && !raw || st.colorTheme === undefined) {
       st.theme = 'light';
       st.colorTheme = 'brand';
       // Save the migration so it only runs once

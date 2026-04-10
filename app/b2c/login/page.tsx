@@ -19,7 +19,7 @@ import { toast } from "sonner";
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/b2c/flights";
+  const redirect = searchParams.get("redirect") || "/flights";
   const { setAuth, isAuthenticated, user, _hasHydrated } = useAuthStore();
 
   const [tab, setTab] = useState<"email" | "otp">("email");
@@ -128,7 +128,7 @@ function LoginContent() {
       <div className="w-full max-w-md">
         <div className="mb-6">
           <Link
-            href="/b2c/flights"
+            href="/flights"
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground/80 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" /> Back to Flights
@@ -138,8 +138,8 @@ function LoginContent() {
         <div className="bg-card border border-border rounded-2xl p-7 shadow-2xl">
           {/* Logo */}
           <div className="flex items-center gap-2.5 mb-7">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-              <Plane className="h-4.5 w-4.5 text-white" />
+            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
+              <Plane className="h-4 w-4 text-primary-foreground" />
             </div>
             <div>
               <p className="font-extrabold text-foreground text-base">
@@ -160,8 +160,8 @@ function LoginContent() {
               onClick={() => setTab("email")}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${
                 tab === "email"
-                  ? "bg-primary text-foreground shadow"
-                  : "text-muted-foreground hover:text-white"
+                  ? "bg-primary text-primary-foreground shadow"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
               }`}
             >
               <Mail className="h-3.5 w-3.5" /> Email
@@ -170,8 +170,8 @@ function LoginContent() {
               onClick={() => setTab("otp")}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${
                 tab === "otp"
-                  ? "bg-primary text-foreground shadow"
-                  : "text-muted-foreground hover:text-white"
+                  ? "bg-primary text-primary-foreground shadow"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
               }`}
             >
               <Phone className="h-3.5 w-3.5" /> Phone OTP
@@ -191,7 +191,7 @@ function LoginContent() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="you@example.com"
-                  className="w-full bg-muted border border-border text-foreground placeholder:text-muted-foreground/60 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-blue-500/30 transition-all"
+                  className="input-base"
                 />
               </div>
               <div>

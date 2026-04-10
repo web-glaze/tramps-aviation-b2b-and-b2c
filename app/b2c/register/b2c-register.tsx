@@ -40,7 +40,7 @@ export default function B2CRegisterPage() {
 
   useEffect(() => {
     if (_hasHydrated && isAuthenticated && user?.role === "customer")
-      router.push("/b2c/flights");
+      router.push("/flights");
   }, [_hasHydrated, isAuthenticated, user, router]);
 
   useEffect(() => {
@@ -138,7 +138,7 @@ export default function B2CRegisterPage() {
           token,
         );
         toast.success("Registration complete! Welcome aboard 🎉");
-        router.push("/b2c/flights");
+        router.push("/flights");
       } else {
         throw new Error("Verification failed — please login manually.");
       }
@@ -199,7 +199,7 @@ export default function B2CRegisterPage() {
       <div className="w-full max-w-md">
         <div className="flex items-center gap-2.5 mb-8">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-            <Plane className="h-5 w-5 text-white" />
+            <Plane className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
             <h1 className="font-bold text-xl">Tramps Aviation</h1>
@@ -305,7 +305,7 @@ export default function B2CRegisterPage() {
                     <button
                       type="button"
                       onClick={() => setShowPwd((s) => !s)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
                       {showPwd ? (
                         <EyeOff className="h-4 w-4" />

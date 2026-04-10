@@ -15,9 +15,9 @@ const MOCK_TRIPS = [
 ];
 
 const STATUS_STYLE: Record<string, string> = {
-  confirmed: "bg-green-900/40 text-green-400 border-green-500/30",
-  pending: "bg-yellow-900/40 text-yellow-400 border-yellow-500/30",
-  cancelled: "bg-red-900/40 text-red-400 border-red-500/30",
+  confirmed: "status-confirmed",
+  pending: "status-pending",
+  cancelled: "status-cancelled",
 };
 
 const TYPE_ICON: Record<string, any> = {
@@ -72,7 +72,7 @@ export default function MyTripsPage() {
           {(["upcoming", "past", "cancelled"] as const).map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               className={`px-4 py-2 text-sm font-medium rounded-lg capitalize transition-colors ${
-                activeTab === tab ? "bg-muted text-white" : "text-muted-foreground hover:text-foreground/80"
+                activeTab === tab ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground/80"
               }`}>
               {tab}
             </button>
@@ -89,7 +89,7 @@ export default function MyTripsPage() {
           <div className="text-center py-20">
             <Plane className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
             <p className="text-muted-foreground">No {activeTab} trips found</p>
-            <Link href="/b2c/flights" className="inline-block mt-4 text-sm text-primary hover:underline">
+            <Link href="/flights" className="inline-block mt-4 text-sm text-primary hover:underline">
               Search Flights →
             </Link>
           </div>

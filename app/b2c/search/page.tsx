@@ -12,5 +12,6 @@ export default function SearchRedirectPage({
   if (searchParams.adults) params.set('adults', searchParams.adults);
 
   const qs = params.toString();
-  redirect(`/b2c/flights${qs ? '?' + qs : ''}`);
+  // Redirect directly to common /flights (not /b2c/flights which gets redirected again)
+  redirect(`/flights${qs ? '?' + qs : ''}`);
 }
