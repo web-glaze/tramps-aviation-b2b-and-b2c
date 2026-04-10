@@ -173,7 +173,20 @@ export default function HomePage() {
       <CommonHeader variant="home" />
 
       {/* HERO */}
-      <section className="relative min-h-screen flex items-center justify-center px-4 pt-24 pb-16 overflow-hidden">
+      <section className="relative min-h-screen flex items-center justify-center px-4 pt-24 pb-24 overflow-hidden">
+        {" "}
+        {/* ADD THIS - Background image layer */}
+        <div
+          className="absolute inset-0 w-full h-full"
+          style={{
+            backgroundImage: "url('/map-background.png')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            opacity: 0.6,
+            mixBlendMode: "multiply", // 👈 ye background se blend kar dega
+          }}
+        />
         <div className="absolute inset-0 hero-bg" />
         <div className="absolute inset-0 mesh-bg pointer-events-none" />
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[700px] bg-primary/6 rounded-full blur-[160px] pointer-events-none" />
@@ -187,14 +200,7 @@ export default function HomePage() {
         >
           ◆
         </div>
-
         <div className="relative max-w-5xl mx-auto w-full text-center space-y-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/8 text-xs font-semibold text-foreground animate-in">
-            <Sparkles className="h-3 w-3 fill-current" />
-            India's Most Trusted B2B & B2C Tramps Aviation
-            <Sparkles className="h-3 w-3 fill-current" />
-          </div>
-
           <div className="space-y-3 animate-in stagger-1">
             <h1 className="text-4xl sm:text-5xl lg:text-[4.5rem] font-bold font-display tracking-tight leading-[1.08]">
               Tramps Aviation Smarter, <br className="hidden sm:block" />
@@ -415,16 +421,6 @@ export default function HomePage() {
                     />
                   </div>
                 </div>
-                <div className="sm:col-span-2 lg:col-span-4">
-                  <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl px-4 py-2.5 text-xs text-amber-700 dark:text-amber-400">
-                    <span className="text-base">✈</span>
-                    <span>
-                      <strong>Series Fare</strong> — Exclusive Tramps Aviation
-                      fares with bulk booking discounts. Group & series
-                      inventory at special rates.
-                    </span>
-                  </div>
-                </div>
               </div>
             )}
 
@@ -494,20 +490,22 @@ export default function HomePage() {
       </section>
 
       {/* AIRLINES */}
-      <div className="py-10 border-y border-border bg-muted/20">
-        <p className="text-center text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-6">
-          We cover all major airlines
-        </p>
-        <div className="flex items-center justify-center gap-8 flex-wrap px-4">
-          {AIRLINES.map((name) => (
-            <div
-              key={name}
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Plane className="h-3.5 w-3.5 text-primary/60" />
-              <span className="text-sm font-semibold">{name}</span>
-            </div>
-          ))}
+      <div className="px-4 mt-8 relative z-10">
+        <div className="max-w-4xl mx-auto bg-white dark:bg-card rounded-2xl shadow-xl shadow-black/8 border border-border/50 py-8 px-6">
+          <p className="text-center text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-6">
+            We cover all major airlines
+          </p>
+          <div className="flex items-center justify-center gap-8 flex-wrap">
+            {AIRLINES.map((name) => (
+              <div
+                key={name}
+                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Plane className="h-3.5 w-3.5 text-primary/60" />
+                <span className="text-sm font-semibold">{name}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
