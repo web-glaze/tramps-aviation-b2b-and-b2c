@@ -22,9 +22,9 @@ import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
 const NAV_LINKS = [
-  { href: "/b2c/flights", label: "Flights", icon: "✈" },
-  { href: "/b2c/hotels", label: "Hotels", icon: "🏨" },
-  { href: "/b2c/insurance", label: "Insurance", icon: "🛡" },
+  { href: "/flights", label: "Flights", icon: "✈" },
+  { href: "/hotels", label: "Hotels", icon: "🏨" },
+  { href: "/insurance", label: "Insurance", icon: "🛡" },
 ];
 
 export function B2CNavbar() {

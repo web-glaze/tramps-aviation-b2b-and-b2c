@@ -10,9 +10,9 @@ const FOOTER_LINKS = [
   {
     title: "Platform",
     links: [
-      { href: "/b2c/flights",  label: "Search Flights" },
-      { href: "/b2c/hotels",   label: "Book Hotels"    },
-      { href: "/b2c/insurance",label: "Travel Insurance"},
+      { href: "/flights",  label: "Search Flights" },
+      { href: "/hotels",   label: "Book Hotels"    },
+      { href: "/insurance",label: "Travel Insurance"},
       { href: "/b2b/register", label: "Agent Portal"   },
     ],
   },

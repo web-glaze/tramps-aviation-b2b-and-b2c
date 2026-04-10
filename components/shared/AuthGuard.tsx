@@ -20,8 +20,9 @@ export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
       return
     }
     if (requiredRole && role !== requiredRole) {
+      // Wrong role — send to their home
       if (role === 'agent') router.push('/b2b/dashboard')
-      else router.push('/b2c/flights')
+      else router.push('/flights')   // was /b2c/flights — now common page
     }
   }, [token, user, role, requiredRole])
 

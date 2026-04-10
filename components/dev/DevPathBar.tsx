@@ -16,28 +16,28 @@ const PAGE_FILES: Record<string, { label: string; type: "PAGE" | "LAYOUT" | "COM
     { label: "Root Layout",    type: "LAYOUT",    file: "app/layout.tsx" },
     { label: "Global CSS",     type: "CSS",       file: "app/globals.css" },
   ],
-  "/b2c/flights": [
+  "/flights": [
     { label: "Flights Page",   type: "PAGE",      file: "app/b2c/flights/page.tsx" },
     { label: "B2C Layout",     type: "LAYOUT",    file: "app/b2c/layout.tsx" },
     { label: "Common Header",  type: "COMPONENT", file: "components/layout/CommonHeader.tsx" },
     { label: "Common Footer",  type: "COMPONENT", file: "components/layout/CommonFooter.tsx" },
     { label: "Global CSS",     type: "CSS",       file: "app/globals.css" },
   ],
-  "/b2c/hotels": [
+  "/hotels": [
     { label: "Hotels Page",    type: "PAGE",      file: "app/b2c/hotels/page.tsx" },
     { label: "B2C Layout",     type: "LAYOUT",    file: "app/b2c/layout.tsx" },
     { label: "Common Header",  type: "COMPONENT", file: "components/layout/CommonHeader.tsx" },
     { label: "Common Footer",  type: "COMPONENT", file: "components/layout/CommonFooter.tsx" },
     { label: "Global CSS",     type: "CSS",       file: "app/globals.css" },
   ],
-  "/b2c/insurance": [
+  "/insurance": [
     { label: "Insurance Page", type: "PAGE",      file: "app/b2c/insurance/page.tsx" },
     { label: "B2C Layout",     type: "LAYOUT",    file: "app/b2c/layout.tsx" },
     { label: "Common Header",  type: "COMPONENT", file: "components/layout/CommonHeader.tsx" },
     { label: "Common Footer",  type: "COMPONENT", file: "components/layout/CommonFooter.tsx" },
     { label: "Global CSS",     type: "CSS",       file: "app/globals.css" },
   ],
-  "/b2c/series-fare": [
+  "/series-fare": [
     { label: "Series Fare Page", type: "PAGE",    file: "app/b2c/series-fare/page.tsx" },
     { label: "B2C Layout",     type: "LAYOUT",    file: "app/b2c/layout.tsx" },
     { label: "Common Header",  type: "COMPONENT", file: "components/layout/CommonHeader.tsx" },
