@@ -20,6 +20,7 @@ import {
 import { toast } from "sonner";
 import { useAuthStore } from "@/lib/store";
 import { authApi, extractToken, extractAgent } from "@/lib/api/services";
+import Image from "next/image";
 
 const STATES = [
   "Andhra Pradesh",
@@ -111,36 +112,50 @@ export default function B2BRegisterPage() {
         agencyName: form.agencyName.trim(),
         contactPerson: form.contactPerson.trim(),
         email: form.email.toLowerCase().trim(),
-        phone: form.phone.startsWith("+91") ? form.phone : `+91${form.phone.replace(/\D/g, "")}`,
-        ...(form.alternatePhone ? { alternatePhone: `+91${form.alternatePhone.replace(/\D/g, "")}` } : {}),
+        phone: form.phone.startsWith("+91")
+          ? form.phone
+          : `+91${form.phone.replace(/\D/g, "")}`,
+        ...(form.alternatePhone
+          ? { alternatePhone: `+91${form.alternatePhone.replace(/\D/g, "")}` }
+          : {}),
         password: form.password,
         city: form.city.trim(),
         state: form.state,
         ...(form.pincode ? { pincode: form.pincode } : {}),
         ...(form.address?.trim() ? { address: form.address.trim() } : {}),
-        gstNumber: form.gstNumber.trim() ? form.gstNumber.toUpperCase().trim() : undefined,
-        panNumber: form.panNumber.trim() ? form.panNumber.toUpperCase().trim() : undefined,
+        gstNumber: form.gstNumber.trim()
+          ? form.gstNumber.toUpperCase().trim()
+          : undefined,
+        panNumber: form.panNumber.trim()
+          ? form.panNumber.toUpperCase().trim()
+          : undefined,
       });
 
       const agentToken = extractToken(res);
       const agentData = extractAgent(res);
 
-      if (!agentToken) throw new Error("Registration succeeded but no token returned. Please login manually.");
+      if (!agentToken)
+        throw new Error(
+          "Registration succeeded but no token returned. Please login manually.",
+        );
 
       localStorage.setItem("auth_token", agentToken);
       localStorage.setItem("agent_token", agentToken);
       document.cookie = `auth_token=${agentToken}; path=/; max-age=86400; SameSite=Lax`;
 
-      setAuth({
-        id: agentData.id || agentData._id,
-        name: agentData.contactPerson || agentData.agencyName,
-        email: agentData.email,
-        role: "agent",
-        kycStatus: agentData.kycStatus || "pending",
-        status: agentData.status || "inactive",
-        agencyName: agentData.agencyName,
-        walletBalance: 0,
-      } as any, agentToken);
+      setAuth(
+        {
+          id: agentData.id || agentData._id,
+          name: agentData.contactPerson || agentData.agencyName,
+          email: agentData.email,
+          role: "agent",
+          kycStatus: agentData.kycStatus || "pending",
+          status: agentData.status || "inactive",
+          agencyName: agentData.agencyName,
+          walletBalance: 0,
+        } as any,
+        agentToken,
+      );
 
       setRegisteredEmail(form.email);
       setRegisteredAgentId(agentData?.agentId || "");
@@ -195,50 +210,170 @@ export default function B2BRegisterPage() {
 
   if (step === "success") {
     return (
-      <div style={{ minHeight: "100vh", background: "hsl(var(--background))", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "hsl(var(--background))",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "1rem",
+        }}
+      >
         <div style={{ width: "100%", maxWidth: "32rem", textAlign: "center" }}>
-
           {/* Success icon */}
-          <div style={{ width: 80, height: 80, background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.5rem" }}>
+          <div
+            style={{
+              width: 80,
+              height: 80,
+              background: "rgba(34,197,94,0.15)",
+              border: "1px solid rgba(34,197,94,0.3)",
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 1.5rem",
+            }}
+          >
             <CheckCircle style={{ width: 40, height: 40, color: "#4ade80" }} />
           </div>
 
-          <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "hsl(var(--foreground))", marginBottom: "0.5rem" }}>
+          <h1
+            style={{
+              fontSize: "1.5rem",
+              fontWeight: 700,
+              color: "hsl(var(--foreground))",
+              marginBottom: "0.5rem",
+            }}
+          >
             Registration Successful! 🎉
           </h1>
-          <p style={{ color: "hsl(var(--muted-foreground))", fontSize: "0.875rem", marginBottom: "1.5rem", lineHeight: 1.6 }}>
-            Your agency account has been created. Save your Agent ID below — you will need it to login.
+          <p
+            style={{
+              color: "hsl(var(--muted-foreground))",
+              fontSize: "0.875rem",
+              marginBottom: "1.5rem",
+              lineHeight: 1.6,
+            }}
+          >
+            Your agency account has been created. Save your Agent ID below — you
+            will need it to login.
           </p>
 
           {/* Agent ID Card — most important info */}
           {registeredAgentId && (
-            <div style={{ background: "linear-gradient(135deg, hsl(var(--primary)/0.08), hsl(var(--primary)/0.03))", border: "1px solid hsl(var(--primary)/0.3)", borderRadius: "1rem", padding: "1.5rem", marginBottom: "1.5rem" }}>
-              <p style={{ fontSize: "0.75rem", color: "hsl(var(--muted-foreground))", fontWeight: 600, margin: "0 0 0.5rem", letterSpacing: "0.05em" }}>
+            <div
+              style={{
+                background:
+                  "linear-gradient(135deg, hsl(var(--primary)/0.08), hsl(var(--primary)/0.03))",
+                border: "1px solid hsl(var(--primary)/0.3)",
+                borderRadius: "1rem",
+                padding: "1.5rem",
+                marginBottom: "1.5rem",
+              }}
+            >
+              <p
+                style={{
+                  fontSize: "0.75rem",
+                  color: "hsl(var(--muted-foreground))",
+                  fontWeight: 600,
+                  margin: "0 0 0.5rem",
+                  letterSpacing: "0.05em",
+                }}
+              >
                 YOUR AGENT ID
               </p>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.75rem" }}>
-                <span style={{ fontSize: "2rem", fontWeight: 800, color: "hsl(var(--primary))", fontFamily: "monospace", letterSpacing: "0.1em" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.75rem",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "2rem",
+                    fontWeight: 800,
+                    color: "hsl(var(--primary))",
+                    fontFamily: "monospace",
+                    letterSpacing: "0.1em",
+                  }}
+                >
                   {registeredAgentId}
                 </span>
                 <button
-                  onClick={() => { navigator.clipboard.writeText(registeredAgentId); setCopiedId(true); setTimeout(() => setCopiedId(false), 2000); }}
-                  style={{ background: copiedId ? "#16a34a" : "#1d4ed8", border: "none", borderRadius: "0.5rem", padding: "0.375rem 0.75rem", color: "hsl(var(--foreground))", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer", transition: "background 0.2s" }}
+                  onClick={() => {
+                    navigator.clipboard.writeText(registeredAgentId);
+                    setCopiedId(true);
+                    setTimeout(() => setCopiedId(false), 2000);
+                  }}
+                  style={{
+                    background: copiedId ? "#16a34a" : "#1d4ed8",
+                    border: "none",
+                    borderRadius: "0.5rem",
+                    padding: "0.375rem 0.75rem",
+                    color: "hsl(var(--foreground))",
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "background 0.2s",
+                  }}
                 >
                   {copiedId ? "✓ Copied!" : "Copy"}
                 </button>
               </div>
-              <p style={{ fontSize: "0.75rem", color: "hsl(var(--muted-foreground))", margin: "0.75rem 0 0" }}>
+              <p
+                style={{
+                  fontSize: "0.75rem",
+                  color: "hsl(var(--muted-foreground))",
+                  margin: "0.75rem 0 0",
+                }}
+              >
                 Login with this ID + your password
               </p>
             </div>
           )}
 
           {/* Email info */}
-          <div style={{ background: "hsl(var(--card))", border: "1px solid #1a2840", borderRadius: "0.75rem", padding: "1rem", marginBottom: "1.5rem", textAlign: "left" }}>
-            <p style={{ fontSize: "0.75rem", color: "hsl(var(--muted-foreground))", margin: "0 0 0.25rem" }}>Registered Email</p>
-            <p style={{ fontSize: "0.875rem", color: "hsl(var(--muted-foreground))", fontWeight: 500, margin: 0 }}>{registeredEmail}</p>
-            <p style={{ fontSize: "0.7rem", color: "#334155", margin: "0.5rem 0 0" }}>
-              You can login with your email, Agent ID ({registeredAgentId || "TRV-XXXXX"}), or phone number
+          <div
+            style={{
+              background: "hsl(var(--card))",
+              border: "1px solid #1a2840",
+              borderRadius: "0.75rem",
+              padding: "1rem",
+              marginBottom: "1.5rem",
+              textAlign: "left",
+            }}
+          >
+            <p
+              style={{
+                fontSize: "0.75rem",
+                color: "hsl(var(--muted-foreground))",
+                margin: "0 0 0.25rem",
+              }}
+            >
+              Registered Email
+            </p>
+            <p
+              style={{
+                fontSize: "0.875rem",
+                color: "hsl(var(--muted-foreground))",
+                fontWeight: 500,
+                margin: 0,
+              }}
+            >
+              {registeredEmail}
+            </p>
+            <p
+              style={{
+                fontSize: "0.7rem",
+                color: "#334155",
+                margin: "0.5rem 0 0",
+              }}
+            >
+              You can login with your email, Agent ID (
+              {registeredAgentId || "TRV-XXXXX"}), or phone number
             </p>
           </div>
           <div
@@ -344,7 +479,9 @@ export default function B2BRegisterPage() {
                 >
                   {s.n}
                 </div>
-                <span style={{ color: "hsl(var(--muted-foreground))" }}>{s.text}</span>
+                <span style={{ color: "hsl(var(--muted-foreground))" }}>
+                  {s.text}
+                </span>
               </div>
             ))}
           </div>
@@ -370,12 +507,17 @@ export default function B2BRegisterPage() {
               alignItems: "center",
               gap: "0.375rem",
               fontSize: "0.875rem",
-              color: "hsl(var(--muted-foreground))",
+              color: "hsl(var(--primary))",
               textDecoration: "none",
             }}
           >
-            <ArrowLeft style={{ width: 16, height: 16 }} /> Already registered?
-            Login
+            <ArrowLeft style={{ width: 16, height: 16 }} />
+            <span style={{ color: "hsl(var(--muted-foreground))" }}>
+              Already registered?
+            </span>
+            <span style={{ fontWeight: 700, color: "hsl(var(--primary))" }}>
+              Login
+            </span>
           </Link>
         </div>
 
@@ -387,18 +529,14 @@ export default function B2BRegisterPage() {
             marginBottom: "2rem",
           }}
         >
-          <div
-            style={{
-              width: 42,
-              height: 42,
-              background: "hsl(var(--primary))",
-              borderRadius: "0.75rem",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Plane style={{ width: 20, height: 20, color: "hsl(var(--foreground))" }} />
+          <div className="h-11 w-11 rounded-xl overflow-hidden bg-white border border-border flex-shrink-0">
+            <Image
+              src="/logo.jpg"
+              alt="Tramps Aviation"
+              width={44}
+              height={44}
+              className="h-11 w-11 object-contain"
+            />
           </div>
           <div>
             <h1
@@ -411,7 +549,13 @@ export default function B2BRegisterPage() {
             >
               Tramps Aviation B2B
             </h1>
-            <p style={{ fontSize: "0.75rem", color: "hsl(var(--muted-foreground))", margin: 0 }}>
+            <p
+              style={{
+                fontSize: "0.75rem",
+                color: "hsl(var(--muted-foreground))",
+                margin: 0,
+              }}
+            >
               Register your travel agency
             </p>
           </div>
@@ -440,7 +584,13 @@ export default function B2BRegisterPage() {
             >
               Create Agency Account
             </h2>
-            <p style={{ color: "hsl(var(--muted-foreground))", fontSize: "0.875rem", margin: 0 }}>
+            <p
+              style={{
+                color: "hsl(var(--muted-foreground))",
+                fontSize: "0.875rem",
+                margin: 0,
+              }}
+            >
               All fields marked * are required
             </p>
           </div>
@@ -630,23 +780,34 @@ export default function B2BRegisterPage() {
                   required
                   style={{
                     width: "100%",
-                    background: "hsl(var(--background))",
-                    border: "1px solid #1e293b",
+                    background: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
                     borderRadius: "0.75rem",
                     padding: "0.75rem 1rem",
                     fontSize: "0.875rem",
-                    color: form.state ? "white" : "hsl(var(--muted-foreground))",
+                    color: form.state
+                      ? "hsl(var(--foreground))"
+                      : "hsl(var(--muted-foreground))",
                     outline: "none",
                   }}
                 >
-                  <option value="" style={{ background: "hsl(var(--card))" }}>
+                  <option
+                    value=""
+                    style={{
+                      background: "hsl(var(--card))",
+                      color: "hsl(var(--muted-foreground))",
+                    }}
+                  >
                     Select State
                   </option>
                   {STATES.map((s) => (
                     <option
                       key={s}
                       value={s}
-                      style={{ background: "hsl(var(--card))", color: "hsl(var(--foreground))" }}
+                      style={{
+                        background: "hsl(var(--card))",
+                        color: "hsl(var(--foreground))",
+                      }}
                     >
                       {s}
                     </option>

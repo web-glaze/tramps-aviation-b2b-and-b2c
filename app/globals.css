@@ -161,6 +161,17 @@ body {
   @apply flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground text-foreground;
 }
 
+/* Fix select option text visibility — browser native dropdown */
+select option {
+  background-color: hsl(var(--card));
+  color: hsl(var(--foreground));
+}
+select option:checked,
+select option:hover {
+  background-color: hsl(var(--primary));
+  color: white;
+}
+
 /* ════════════════════════════════════════════════════════
    BUTTONS
 ════════════════════════════════════════════════════════ */
@@ -193,28 +204,41 @@ body {
    Theme-aware: works in both light and dark
 ════════════════════════════════════════════════════════ */
 .search-hero {
-  @apply bg-primary border-b border-border;
+  @apply border-b border-white/10;
   background: linear-gradient(135deg,
     hsl(var(--primary)) 0%,
-    hsl(205 72% 38%) 100%);
+    hsl(205 72% 32%) 100%);
+  backdrop-filter: blur(20px);
 }
 .search-hero .search-label {
-  @apply text-[11px] font-semibold uppercase tracking-widest text-white/80 block mb-1.5;
+  @apply text-[11px] font-semibold uppercase tracking-widest text-white/70 block mb-1.5;
 }
 .search-hero .search-input {
-  @apply w-full bg-white/15 border border-white/20 rounded-xl px-4 py-3 text-white font-bold
-         placeholder:text-white/50 outline-none transition-all backdrop-blur-sm;
+  @apply w-full border rounded-xl px-4 py-3 text-white font-bold
+         placeholder:text-white/40 outline-none transition-all;
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.20);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
 }
 .search-hero .search-input:focus {
-  @apply bg-white/20 border-white/40;
-  box-shadow: 0 0 0 3px rgba(255,255,255,.15);
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.45);
+  box-shadow: 0 0 0 3px rgba(255,255,255,.12), inset 0 1px 0 rgba(255,255,255,0.15);
 }
 .search-hero .search-input-date {
-  @apply w-full bg-white/15 border border-white/20 rounded-xl px-4 py-3 text-white text-sm
-         outline-none transition-all;
+  @apply w-full border rounded-xl px-4 py-3 text-white text-sm outline-none transition-all;
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.20);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+  color-scheme: dark;
 }
 .search-hero .search-input-date:focus {
-  @apply bg-white/20 border-white/40;
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.45);
 }
 
 /* ════════════════════════════════════════════════════════
@@ -312,3 +336,49 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity:.4; cursor:point
 [data-compact="true"] .p-4  { padding:.625rem !important; }
 [data-compact="true"] .p-5  { padding:.75rem  !important; }
 [data-compact="true"] .p-6  { padding:.875rem !important; }
+
+/* ════════════════════════════════════════════════════════
+   SCROLLBAR HIDE — for carousels
+════════════════════════════════════════════════════════ */
+.scrollbar-hide { scrollbar-width: none; -ms-overflow-style: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* ════════════════════════════════════════════════════════
+   HERO BG / MESH — homepage
+════════════════════════════════════════════════════════ */
+/* .hero-bg {
+  background:
+    linear-gradient(to bottom, rgba(255,255,255,0.6), rgba(255,255,255,0.9)),
+    radial-gradient(ellipse 60% 40% at 50% -10%, hsl(var(--primary)/.15), transparent);
+} */
+.mesh-bg {
+  background-image:
+    radial-gradient(at 30% 15%, hsl(var(--primary)/.06) 0, transparent 55%),
+    radial-gradient(at 80%  5%, hsl(var(--primary)/.04) 0, transparent 50%),
+    radial-gradient(at  5% 60%, hsl(var(--primary)/.05) 0, transparent 45%);
+}
+.glass {
+  background: hsl(var(--card)/.85);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+}
+.gradient-text-animated {
+  background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary)/.7), hsl(var(--primary)));
+  background-size: 200% auto;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  animation: gradshift 3s ease infinite;
+}
+.animate-float { animation: float 4s ease-in-out infinite; }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+@keyframes gradshift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+.field-wrapper {
+  @apply flex items-center gap-2.5 h-12 px-4 border border-input bg-card rounded-xl transition-all;
+}
+.field-wrapper:hover { @apply border-primary/50; }
+.field-wrapper:focus-within {
+  @apply border-primary;
+  box-shadow: 0 0 0 3px hsl(var(--primary)/.12);
+}
+.field-wrapper input, .field-wrapper select, .field-wrapper textarea {
+  @apply flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground text-foreground;
+}

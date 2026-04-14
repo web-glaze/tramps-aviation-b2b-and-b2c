@@ -160,7 +160,7 @@ function AgentBookingDialog({ flight, adults, from, to, date, onClose }: {
           ))}
 
           <button onClick={confirm} disabled={step==="loading"}
-            className="w-full h-12 bg-amber-500 hover:bg-amber-600 text-white disabled:opacity-60 text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm">
+            className="w-full h-12 bg-primary hover:opacity-90 text-primary-foreground disabled:opacity-60 text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm">
             {step==="loading"
               ? <><RefreshCcw className="h-4 w-4 animate-spin"/>Confirming…</>
               : <>Confirm & Deduct from Wallet ₹{total.toLocaleString("en-IN")} <ArrowRight className="h-4 w-4"/></>
@@ -381,16 +381,23 @@ function FlightsContent() {
 
   const doSearch = async (f=from, t=to, d=date) => {
     if (!f||!t) { toast.error("Enter origin and destination"); return; }
-    if (!d)     { toast.error("Select a travel date"); return; }
+    // Auto-set tomorrow if no date
+    if (!d) {
+      const tmr = new Date(); tmr.setDate(tmr.getDate()+1);
+      d = tmr.toISOString().split("T")[0];
+      setDate(d);
+    }
     const params = new URLSearchParams({from:f,to:t,date:d,adults:String(adults),tripType});
     window.history.replaceState(null,"",`/flights?${params}`);
     setLoading(true); setSearched(true); setFlights([]);
     try {
       const res  = await flightsApi.search({
-        origin:f.toUpperCase(), destination:t.toUpperCase(),
-        departureDate:d, adults,
-        tripType: tripType==="roundtrip"?"RoundTrip":"OneWay",
-        returnDate: tripType==="roundtrip"?retDate:undefined,
+        origin:        String(f).trim().toUpperCase(),
+        destination:   String(t).trim().toUpperCase(),
+        departureDate: String(d).trim(),
+        adults:        Number(adults) || 1,
+        tripType:      tripType==="roundtrip" ? "RoundTrip" : "OneWay",
+        returnDate:    tripType==="roundtrip" && retDate ? String(retDate) : undefined,
       });
       setFlights((res as any)?.data?.flights || []);
     } catch { toast.error("Search failed — please try again"); }
@@ -486,7 +493,7 @@ function FlightsContent() {
       )}
 
       {/* ── Results ── */}
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6">
         {searched && !loading && flights.length > 0 ? (
           <div className="flex gap-5">
             {/* Filter sidebar */}

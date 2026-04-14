@@ -39,10 +39,10 @@ export function FlightCard({ flight, adults, onBook, bookLabel = "Book Now" }: P
 
   return (
     <div className={cn(
-      "bg-card border rounded-2xl overflow-hidden transition-all duration-200",
-      "shadow-[0_1px_3px_rgba(16,30,54,.07)]",
-      "hover:shadow-[0_6px_20px_rgba(16,30,54,.10)] hover:-translate-y-0.5",
-      isCustom ? "border-amber-400/40" : "border-border hover:border-primary/25"
+      "rounded-2xl overflow-hidden transition-all duration-200",
+      "border shadow-sm hover:shadow-md hover:-translate-y-0.5",
+      "backdrop-blur-sm",
+      isCustom ? "bg-amber-50/80 dark:bg-amber-900/10 border-amber-300/60 dark:border-amber-700/40" : "bg-card/90 border-border/60 hover:border-primary/30"
     )}>
       {/* Special fare badge */}
       {isCustom && (

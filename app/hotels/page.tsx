@@ -42,11 +42,11 @@ function HotelCard({ hotel, nights, onBook }: { hotel:any; nights:number; onBook
   const ratingLabel = ratingNum >= 4.7 ? "Exceptional" : ratingNum >= 4.4 ? "Excellent" : "Very Good";
 
   return (
-    <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-primary/25 transition-all duration-200 hover:-translate-y-0.5">
+    <div className="rounded-2xl overflow-hidden border border-border/60 bg-card/90 backdrop-blur-sm shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-200 hover:-translate-y-0.5">
       <div className="p-5">
         <div className="flex flex-col sm:flex-row gap-4">
           {/* Image placeholder */}
-          <div className="w-full sm:w-24 h-20 sm:h-24 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl flex flex-col items-center justify-center flex-shrink-0">
+          <div className="w-full sm:w-24 h-20 sm:h-24 bg-gradient-to-br from-primary/15 via-primary/10 to-blue-500/10 rounded-xl flex flex-col items-center justify-center flex-shrink-0 border border-primary/10">
             <Hotel className="h-8 w-8 text-primary/60 mb-1"/>
             <div className="flex">
               {Array.from({length:stars}).map((_,i)=>(
@@ -212,7 +212,7 @@ function HotelsContent() {
 
       {/* Search bar */}
       <div className="search-hero">
-        <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <div className="lg:col-span-2">
               <label className="search-label">City / Destination</label>
@@ -249,7 +249,7 @@ function HotelsContent() {
       </div>
 
       {/* Results */}
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6">
         {searched && !loading && hotels.length > 0 ? (
           <div className="flex gap-5">
             {/* Filter sidebar */}

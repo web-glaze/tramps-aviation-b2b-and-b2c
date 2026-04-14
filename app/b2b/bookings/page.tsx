@@ -2,7 +2,8 @@
 import { useState, useEffect } from "react";
 import { agentApi, unwrap } from "@/lib/api/services";
 import { cn } from "@/lib/utils";
-import { Plane, Hotel, Shield, RefreshCw, Eye, XCircle, Loader2, Search, BookOpen } from "lucide-react";
+import { Plane, Hotel, Shield, RefreshCw, Eye, XCircle, Loader2, Search, BookOpen, Star } from "lucide-react";
+import { WriteReviewModal } from "@/components/reviews/WriteReviewModal";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -27,6 +28,7 @@ export default function B2bBookingsPage() {
   const [total, setTotal]       = useState(0);
   const [page, setPage]         = useState(1);
   const [cancelling, setCancelling] = useState<string | null>(null);
+  const [reviewBooking, setReviewBooking] = useState<any>(null);
 
   useEffect(() => { load() }, [page, statusFilter]);
 
@@ -156,6 +158,22 @@ export default function B2bBookingsPage() {
                             className="h-7 w-7 rounded-lg flex items-center justify-center border border-border hover:bg-muted transition-colors" title="View">
                             <Eye className="h-3.5 w-3.5" />
                           </Link>
+                          {(b.status === 'CONFIRMED' || b.status === 'confirmed' || b.status === 'TICKET_ISSUED') && (
+                            <button
+                              title="Write Review"
+                              onClick={() => setReviewBooking({
+                                id,
+                                bookingRef: b.bookingRef || id,
+                                type: 'flight' as const,
+                                entityId: b.segments?.[0]?.airline || b.airline || id,
+                                entityName: b.segments?.[0]?.airline || b.airline || 'Flight',
+                                route: b.segments?.[0] ? `${b.segments[0].origin} → ${b.segments[0].destination}` : b.route,
+                              })}
+                              className="h-7 w-7 rounded-lg flex items-center justify-center border border-amber-200 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors text-amber-600 dark:text-amber-400"
+                            >
+                              <Star className="h-3.5 w-3.5"/>
+                            </button>
+                          )}
                           {!isCancelled && (
                             <button onClick={() => handleCancel(id)} disabled={cancelling === id}
                               className="h-7 w-7 rounded-lg flex items-center justify-center border border-red-500/30 text-red-500 hover:bg-red-500/10 transition-colors" title="Cancel">

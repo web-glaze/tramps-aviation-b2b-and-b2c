@@ -1,141 +1,144 @@
 "use client";
 import Link from "next/link";
-import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Plane,
   Hotel,
   Shield,
-  Star,
   Users,
   TrendingUp,
   ArrowRight,
   Search,
   MapPin,
-  Calendar,
   Zap,
   Clock,
   HeartHandshake,
   BadgeCheck,
-  Sparkles,
-  Award,
   Building2,
   CreditCard,
   BarChart3,
   Lock,
+  Award,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { useAuthStore } from "@/lib/store";
+import { publicApiClient } from "@/lib/api/client";
 import { CommonHeader } from "@/components/layout/CommonHeader";
 import { CommonFooter } from "@/components/layout/CommonFooter";
-
-const POPULAR_ROUTES = [
-  {
-    from: "DEL",
-    fromCity: "Delhi",
-    to: "BOM",
-    toCity: "Mumbai",
-    price: "₹2,199",
-  },
-  {
-    from: "BOM",
-    fromCity: "Mumbai",
-    to: "BLR",
-    toCity: "Bangalore",
-    price: "₹1,899",
-  },
-  { from: "DEL", fromCity: "Delhi", to: "GOI", toCity: "Goa", price: "₹2,499" },
-  {
-    from: "BLR",
-    fromCity: "Bangalore",
-    to: "HYD",
-    toCity: "Hyderabad",
-    price: "₹1,299",
-  },
-  {
-    from: "MAA",
-    fromCity: "Chennai",
-    to: "DEL",
-    toCity: "Delhi",
-    price: "₹2,799",
-  },
-  {
-    from: "BOM",
-    fromCity: "Mumbai",
-    to: "CCU",
-    toCity: "Kolkata",
-    price: "₹2,399",
-  },
-];
-
-const AIRLINES = [
-  "IndiGo",
-  "Air India",
-  "SpiceJet",
-  "Vistara",
-  "GoFirst",
-  "AirAsia",
-];
-
-const TESTIMONIALS = [
-  {
-    name: "Priya Sharma",
-    role: "Frequent Traveler",
-    city: "Mumbai",
-    stars: 5,
-    text: "Best platform for booking flights! The prices are unbeatable and the booking process is super smooth. Highly recommended.",
-  },
-  {
-    name: "Rajesh Kumar",
-    role: "Travel Agent",
-    city: "Delhi",
-    stars: 5,
-    text: "The B2B portal has completely transformed my business. Commission structure is excellent and wallet system works perfectly.",
-  },
-  {
-    name: "Anita Verma",
-    role: "Freelance Traveler",
-    city: "Bangalore",
-    stars: 4,
-    text: "Great customer support and instant ticket delivery. Had an issue once and they resolved it within 30 minutes!",
-  },
-];
+import { PopularFlights } from "@/components/home/PopularFlights";
+import { PopularHotels } from "@/components/home/PopularHotels";
+import { PopularCities } from "@/components/home/PopularCities";
+import { PopularCountries } from "@/components/home/PopularCountries";
+import { PopularRoutes } from "@/components/home/PopularRoutes";
+import { UserReviews } from "@/components/home/UserReviews";
 
 export default function HomePage() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuthStore();
+  const { user } = useAuthStore();
+
+  // Search state
   const [activeTab, setActiveTab] = useState<
     "flights" | "hotels" | "insurance" | "series-fare"
   >("flights");
-  // Flight search state
   const [from, setFrom] = useState("DEL");
   const [to, setTo] = useState("BOM");
   const [date, setDate] = useState("");
   const [adults, setAdults] = useState("1");
-  // Hotel search state
   const [hotelCity, setHotelCity] = useState("");
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [rooms, setRooms] = useState("1");
-  const [activeTestimonial, setActiveTestimonial] = useState(0);
+
+  // Popular data — ONE fetch, split to components
+  const [popularFlights, setPopularFlights] = useState<any[]>([]);
+  const [popularHotels, setPopularHotels] = useState<any[]>([]);
+  const [popularCities, setPopularCities] = useState<any[]>([]);
+  const [popularCountries, setPopularCountries] = useState<any[]>([]);
+  const [popularAirlines, setPopularAirlines] = useState<string[]>([]);
+  const [dataReady, setDataReady] = useState(false);
+
+  // Set default dates
+  useEffect(() => {
+    const tmr = new Date();
+    tmr.setDate(tmr.getDate() + 1);
+    setDate(tmr.toISOString().split("T")[0]);
+    const today = new Date().toISOString().split("T")[0];
+    const nxt = new Date();
+    nxt.setDate(nxt.getDate() + 1);
+    setCheckIn(today);
+    setCheckOut(nxt.toISOString().split("T")[0]);
+  }, []);
+
+  // Fetch ALL popular data ONCE — no auth needed (publicApiClient)
+  const fetchPopular = useCallback(async () => {
+    try {
+      const res = await publicApiClient.get("/popular/homepage");
+      const body = res.data;
+      const data = body?.data ?? body ?? {};
+
+      const flights = Array.isArray(data.flights)
+        ? data.flights.filter((f: any) => f.isActive !== false)
+        : [];
+      const hotels = Array.isArray(data.hotels)
+        ? data.hotels.filter((h: any) => h.isActive !== false)
+        : [];
+      const cities = Array.isArray(data.cities)
+        ? data.cities.filter((c: any) => c.isActive !== false)
+        : [];
+      const countries = Array.isArray(data.countries)
+        ? data.countries.filter((c: any) => c.isActive !== false)
+        : [];
+
+      setPopularFlights(flights);
+      setPopularHotels(hotels);
+      setPopularCities(cities);
+      setPopularCountries(countries);
+
+      const STATIC = [
+        "IndiGo",
+        "Air India",
+        "SpiceJet",
+        "Vistara",
+        "GoFirst",
+        "AirAsia",
+      ];
+      const dynamic = Array.from(
+        new Set<string>(
+          flights
+            .filter((f: any) => f.airline)
+            .map((f: any) => f.airline as string),
+        ),
+      );
+      setPopularAirlines(dynamic.length > 0 ? dynamic : STATIC);
+    } catch {
+      const STATIC = [
+        "IndiGo",
+        "Air India",
+        "SpiceJet",
+        "Vistara",
+        "GoFirst",
+        "AirAsia",
+      ];
+      setPopularAirlines(STATIC);
+    } finally {
+      setDataReady(true);
+    }
+  }, []);
 
   useEffect(() => {
-    const t = setInterval(
-      () => setActiveTestimonial((v) => (v + 1) % TESTIMONIALS.length),
-      4500,
-    );
-    return () => clearInterval(t);
+    fetchPopular();
   }, []);
 
   const handleSearch = () => {
     if (activeTab === "hotels") {
       if (!hotelCity) {
-        alert("Please enter a city");
+        toast.error("Please enter a city");
         return;
       }
       if (!checkIn) {
-        alert("Please select check-in date");
+        toast.error("Please select check-in date");
         return;
       }
       router.push(
@@ -153,13 +156,12 @@ export default function HomePage() {
       );
       return;
     }
-    // Flights — no auth check, just search
     if (!from || !to) {
-      alert("Please enter origin and destination");
+      toast.error("Please enter origin and destination");
       return;
     }
     if (!date) {
-      alert("Please select a travel date");
+      toast.error("Please select a travel date");
       return;
     }
     router.push(
@@ -169,41 +171,29 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      {/* COMMON HEADER */}
       <CommonHeader variant="home" />
 
-      {/* HERO */}
-      <section className="relative min-h-screen flex items-center justify-center px-4 pt-24 pb-24 overflow-hidden">
-        {" "}
-        {/* ADD THIS - Background image layer */}
+      {/* ── HERO ── */}
+      <section className="relative flex items-center justify-center px-4 sm:px-6 pt-20 sm:pt-24 pb-6 sm:pb-10 overflow-hidden">
         <div
           className="absolute inset-0 w-full h-full"
           style={{
             backgroundImage: "url('/map-background.png')",
             backgroundSize: "cover",
             backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
             opacity: 0.6,
-            mixBlendMode: "multiply", // 👈 ye background se blend kar dega
           }}
         />
         <div className="absolute inset-0 hero-bg" />
         <div className="absolute inset-0 mesh-bg pointer-events-none" />
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[700px] bg-primary/6 rounded-full blur-[160px] pointer-events-none" />
         <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-primary/4 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute top-32 left-[8%] text-primary/15 text-5xl font-black select-none hidden lg:block animate-float">
-          ✦
-        </div>
-        <div
-          className="absolute bottom-40 right-[6%] text-primary/10 text-4xl font-black select-none hidden lg:block animate-float"
-          style={{ animationDelay: "1.5s" }}
-        >
-          ◆
-        </div>
-        <div className="relative max-w-5xl mx-auto w-full text-center space-y-8">
+
+        <div className="relative max-w-5xl mx-auto w-full text-center space-y-5">
           <div className="space-y-3 animate-in stagger-1">
             <h1 className="text-4xl sm:text-5xl lg:text-[4.5rem] font-bold font-display tracking-tight leading-[1.08]">
-              Tramps Aviation Smarter, <br className="hidden sm:block" />
+              Tramps Aviation Smarter,
+              <br className="hidden sm:block" />
               <span className="gradient-text-animated">Book Faster</span>
             </h1>
             <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
@@ -214,32 +204,36 @@ export default function HomePage() {
 
           {/* Search Card */}
           <div className="bg-card/85 glass border border-border/80 rounded-2xl p-5 sm:p-6 shadow-2xl shadow-black/10 max-w-3xl mx-auto text-left animate-in stagger-2">
-            {/* Tabs */}
-            <div className="flex gap-1 mb-5 bg-muted/60 rounded-xl p-1 w-fit">
+            {/* Search Tabs */}
+            <div
+              className="flex gap-1 mb-5 bg-muted/40 border border-border/60 rounded-xl p-1 w-full sm:w-fit overflow-x-auto"
+              style={{ scrollbarWidth: "none" }}
+            >
               {(
                 [
-                  { key: "flights", label: "✈ Flights" },
-                  { key: "hotels", label: "🏨 Hotels" },
-                  { key: "insurance", label: "🛡 Insurance" },
-                  { key: "series-fare", label: "🎫 Series Fare" },
+                  { key: "flights", label: "Flights", icon: "✈️" },
+                  { key: "hotels", label: "Hotels", icon: "🏨" },
+                  { key: "insurance", label: "Insurance", icon: "🛡️" },
+                  { key: "series-fare", label: "Series Fare", icon: "🎫" },
                 ] as const
-              ).map(({ key, label }) => (
+              ).map(({ key, label, icon }) => (
                 <button
                   key={key}
                   onClick={() => setActiveTab(key)}
                   className={cn(
-                    "px-4 py-3 rounded-lg text-sm font-bold transition-all",
+                    "flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap flex-shrink-0",
                     activeTab === key
-                      ? "bg-background shadow-sm text-foreground"
-                      : "text-foreground/80 hover:text-foreground",
+                      ? "bg-primary text-white shadow-md shadow-primary/20"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
                   )}
                 >
+                  <span className="text-sm leading-none">{icon}</span>
                   {label}
                 </button>
               ))}
             </div>
 
-            {/* Flight search */}
+            {/* Flights */}
             {activeTab === "flights" && (
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <SearchField
@@ -290,13 +284,13 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* Hotel search */}
+            {/* Hotels */}
             {activeTab === "hotels" && (
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <SearchField
                   label="City / Destination"
                   icon={MapPin}
-                  placeholder="city.."
+                  placeholder="Mumbai, Goa..."
                   value={hotelCity}
                   onChange={setHotelCity}
                 />
@@ -373,7 +367,7 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* Series Fare — Tramps Aviation exclusive fares */}
+            {/* Series Fare */}
             {activeTab === "series-fare" && (
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <SearchField
@@ -439,31 +433,10 @@ export default function HomePage() {
             </button>
           </div>
 
-          {/* Popular Routes */}
-          <div className="animate-in stagger-3">
-            <p className="text-xs text-muted-foreground mb-3 font-medium">
-              ✈ Popular Routes
-            </p>
-            <div className="flex flex-wrap justify-center gap-2">
-              {POPULAR_ROUTES.map((r) => (
-                <button
-                  key={r.from + r.to}
-                  onClick={() =>
-                    router.push(`/flights?from=${r.from}&to=${r.to}`)
-                  }
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border hover:border-primary/50 hover:bg-primary/5 text-xs font-medium text-muted-foreground hover:text-primary transition-all"
-                >
-                  {r.fromCity} → {r.toCity}
-                  <span className="text-[#e44b0f] font-semibold">
-                    {r.price}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
+          <PopularRoutes routes={popularFlights} date={date} />
 
           {/* Stats */}
-          <div className="flex items-center justify-center gap-8 sm:gap-14 flex-wrap animate-in stagger-4">
+          <div className="flex items-center justify-center gap-8 sm:gap-14 flex-wrap animate-in stagger-4 pt-2">
             {[
               { value: "2L+", label: "Happy Travelers", color: "text-primary" },
               {
@@ -489,30 +462,44 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* AIRLINES */}
-      <div className="px-4 mt-8 relative z-10">
-        <div className="max-w-4xl mx-auto bg-white dark:bg-card rounded-2xl shadow-xl shadow-black/8 border border-border/50 py-8 px-6">
-          <p className="text-center text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-6">
-            We cover all major airlines
-          </p>
-          <div className="flex items-center justify-center gap-8 flex-wrap">
-            {AIRLINES.map((name) => (
-              <div
-                key={name}
-                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Plane className="h-3.5 w-3.5 text-primary/60" />
-                <span className="text-sm font-semibold">{name}</span>
-              </div>
-            ))}
+      {/* Airlines */}
+      {popularAirlines.length > 0 && (
+        <div className="px-4 sm:px-6 mt-6 mb-2 relative z-10">
+          <div className="max-w-4xl mx-auto bg-white dark:bg-card rounded-2xl shadow-sm border border-border/50 py-4 px-6">
+            <p className="text-center text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
+              We cover all major airlines
+            </p>
+            <div className="flex items-center justify-center gap-8 flex-wrap">
+              {popularAirlines.map((name) => (
+                <div
+                  key={name}
+                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Plane className="h-3.5 w-3.5 text-primary/60" />
+                  <span className="text-sm font-semibold">{name}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
+      )}
+
+      {/* ── POPULAR FLIGHTS CAROUSEL ── */}
+      <div className="pt-8">
+        {dataReady && <PopularFlights preloaded={popularFlights} />}
       </div>
 
+      {/* ── POPULAR HOTELS CAROUSEL ── */}
+      {dataReady && <PopularHotels preloaded={popularHotels} />}
+
+      {/* ── POPULAR CITIES + COUNTRIES ── */}
+      {dataReady && <PopularCities preloaded={popularCities} />}
+      {dataReady && <PopularCountries preloaded={popularCountries} />}
+
       {/* FEATURES */}
-      <section id="features" className="py-24 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16 animate-in">
+      <section id="features" className="py-10 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-10 animate-in">
             <span className="text-xs font-bold text-primary uppercase tracking-[0.2em] px-3 py-1.5 rounded-full bg-primary/8 border border-primary/20">
               Why Tramps Aviation
             </span>
@@ -524,7 +511,6 @@ export default function HomePage() {
               your journey.
             </p>
           </div>
-
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {[
               {
@@ -533,7 +519,6 @@ export default function HomePage() {
                 desc: "Real-time search across 200+ airlines with instant PNR and e-ticket delivery in minutes.",
                 color: "text-primary",
                 bg: "bg-primary/10",
-                delay: 1,
               },
               {
                 icon: Hotel,
@@ -541,7 +526,6 @@ export default function HomePage() {
                 desc: "Thousands of hotels globally with best price guarantee and flexible cancellation.",
                 color: "text-amber-500",
                 bg: "bg-amber-500/10",
-                delay: 2,
               },
               {
                 icon: Shield,
@@ -549,7 +533,6 @@ export default function HomePage() {
                 desc: "Comprehensive plans from Bajaj Allianz starting ₹799 with cashless claim support.",
                 color: "text-emerald-500",
                 bg: "bg-emerald-500/10",
-                delay: 3,
               },
               {
                 icon: HeartHandshake,
@@ -557,7 +540,6 @@ export default function HomePage() {
                 desc: "Exclusive agent rates, structured commissions, credit wallet and dedicated support.",
                 color: "text-violet-500",
                 bg: "bg-violet-500/10",
-                delay: 4,
               },
               {
                 icon: Zap,
@@ -565,7 +547,6 @@ export default function HomePage() {
                 desc: "Immediate confirmation, instant ticket delivery with complete PNR details.",
                 color: "text-rose-500",
                 bg: "bg-rose-500/10",
-                delay: 5,
               },
               {
                 icon: Clock,
@@ -573,19 +554,18 @@ export default function HomePage() {
                 desc: "Round-the-clock customer support for all your travel needs, wherever you are.",
                 color: "text-cyan-500",
                 bg: "bg-cyan-500/10",
-                delay: 6,
               },
-            ].map(({ icon: Icon, title, desc, color, bg, delay }) => (
+            ].map(({ icon: Icon, title, desc, color, bg }, i) => (
               <div
                 key={title}
                 className={cn(
                   "bg-card border border-border rounded-2xl p-6 card-hover group animate-in",
-                  `stagger-${delay}`,
+                  `stagger-${i + 1}`,
                 )}
               >
                 <div
                   className={cn(
-                    "h-12 w-12 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform",
+                    "h-12 w-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform",
                     bg,
                   )}
                 >
@@ -604,10 +584,10 @@ export default function HomePage() {
       </section>
 
       {/* STATS BAND */}
-      <section className="py-16 px-4 relative overflow-hidden">
+      <section className="py-8 px-4 sm:px-6 relative overflow-hidden">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
         <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-        <div className="relative max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
+        <div className="relative max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
           {[
             { value: "2,00,000+", label: "Happy Travelers", icon: Users },
             { value: "500+", label: "Agent Partners", icon: BadgeCheck },
@@ -628,13 +608,12 @@ export default function HomePage() {
       </section>
 
       {/* B2B SECTION */}
-      <section id="agents" className="py-24 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-10 items-center">
-            <div className="space-y-6">
+      <section id="agents" className="py-10 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-8 items-center">
+            <div className="space-y-4">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/8 text-xs font-semibold text-primary">
-                <Building2 className="h-3.5 w-3.5" />
-                For Travel Professionals
+                <Building2 className="h-3.5 w-3.5" /> For Travel Professionals
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold font-display leading-snug">
                 Grow your travel business with our{" "}
@@ -643,7 +622,7 @@ export default function HomePage() {
               <p className="text-muted-foreground leading-relaxed">
                 Join hundreds of travel agents who trust Tramps Aviation for
                 competitive rates, powerful management tools, and dedicated
-                support to grow their business.
+                support.
               </p>
               <div className="space-y-3">
                 {[
@@ -696,7 +675,6 @@ export default function HomePage() {
                 </Link>
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               {[
                 {
@@ -757,111 +735,23 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* TESTIMONIALS */}
-      <section className="py-20 px-4 bg-muted/20">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold font-display">
-              Trusted by travelers & agents
-            </h2>
-            <p className="text-muted-foreground text-sm mt-2">
-              Real reviews from real customers
-            </p>
-          </div>
-          <div className="hidden sm:grid sm:grid-cols-3 gap-5">
-            {TESTIMONIALS.map(({ name, role, city, stars, text }) => (
-              <div
-                key={name}
-                className="bg-card border border-border rounded-2xl p-6 card-hover"
-              >
-                <div className="flex items-center gap-1 mb-3">
-                  {Array.from({ length: stars }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className="h-4 w-4 text-amber-400 fill-current"
-                    />
-                  ))}
-                </div>
-                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-                  "{text}"
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-                    {name[0]}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold">{name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {role} · {city}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="sm:hidden">
-            <div className="bg-card border border-border rounded-2xl p-6">
-              <div className="flex items-center gap-1 mb-3">
-                {Array.from({
-                  length: TESTIMONIALS[activeTestimonial].stars,
-                }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className="h-4 w-4 text-amber-400 fill-current"
-                  />
-                ))}
-              </div>
-              <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-                "{TESTIMONIALS[activeTestimonial].text}"
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-                  {TESTIMONIALS[activeTestimonial].name[0]}
-                </div>
-                <div>
-                  <p className="text-sm font-semibold">
-                    {TESTIMONIALS[activeTestimonial].name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {TESTIMONIALS[activeTestimonial].role} ·{" "}
-                    {TESTIMONIALS[activeTestimonial].city}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-center gap-2 mt-4">
-              {TESTIMONIALS.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveTestimonial(i)}
-                  className={cn(
-                    "h-1.5 rounded-full transition-all",
-                    i === activeTestimonial
-                      ? "w-6 bg-primary"
-                      : "w-1.5 bg-border",
-                  )}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+      <UserReviews />
 
-      {/* CTA BANNER */}
-      <section className="py-20 px-4">
+      {/* CTA */}
+      <section className="py-8 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto">
-          <div className="relative rounded-3xl bg-card border border-border overflow-hidden p-10 sm:p-14 text-center">
+          <div className="relative rounded-3xl bg-card border border-border overflow-hidden p-8 sm:p-10 text-center">
             <div className="absolute inset-0 mesh-bg opacity-60" />
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-48 bg-primary/10 rounded-full blur-[80px]" />
             <div className="relative">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/8 text-xs font-semibold text-primary mb-5">
-                <Zap className="h-3.5 w-3.5 fill-current" />
-                Start booking in seconds
+                <Zap className="h-3.5 w-3.5 fill-current" /> Start booking in
+                seconds
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold font-display mb-4">
                 Ready to explore the world?
               </h2>
-              <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                 Join 2 lakh+ happy travelers. Sign up free and unlock the best
                 deals on flights, hotels and more.
               </p>
@@ -882,7 +772,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* COMMON FOOTER */}
       <CommonFooter />
     </div>
   );

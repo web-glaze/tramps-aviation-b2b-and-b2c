@@ -10,9 +10,9 @@ import { toast } from "sonner";
 
 function detectIdentifierType(value: string): string {
   if (value.includes("@")) return "Email";
-  if (/^TRV-\d+$/i.test(value.trim())) return "Agent ID";
+  if (/^TAHP\d+$/i.test(value.trim())) return "Agent ID";
   if (/^\d{10}$/.test(value.replace(/\D/g, ""))) return "Phone";
-  return "Email / Agent ID / Phone";
+  return "Agent ID / Phone";
 }
 
 export default function B2BLoginPage() {
@@ -22,9 +22,7 @@ export default function B2BLoginPage() {
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [identifierType, setIdentifierType] = useState(
-    "Email / Agent ID / Phone",
-  );
+  const [identifierType, setIdentifierType] = useState("Agent ID / Phone");
 
   useEffect(() => {
     if (_hasHydrated && isAuthenticated && user?.role === "agent") {
@@ -127,19 +125,18 @@ export default function B2BLoginPage() {
             Agent Sign In
           </h2>
           <p className="text-sm text-muted-foreground mb-6">
-            Use your Email, Agent ID (TRV-XXXXX), or Phone number
+            Use Agent ID (TAHP00001) or Phone number
           </p>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-1.5">
                 {identifierType}
-                {identifier &&
-                  identifierType !== "Email / Agent ID / Phone" && (
-                    <span className="ml-2 text-emerald-600 dark:text-emerald-400 normal-case font-medium">
-                      ✓ {identifierType} detected
-                    </span>
-                  )}
+                {identifier && identifierType !== "Agent ID / Phone" && (
+                  <span className="ml-2 text-emerald-600 dark:text-emerald-400 normal-case font-medium">
+                    ✓ {identifierType} detected
+                  </span>
+                )}
               </label>
               <input
                 type="text"
@@ -148,7 +145,7 @@ export default function B2BLoginPage() {
                 required
                 autoFocus
                 autoComplete="username"
-                placeholder="e.g. agent@agency.com / TRV-00001 / 9876543210"
+                placeholder="e.g. TAHP00001 / 9876543210"
                 className="w-full bg-background border border-input rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition-all"
               />
               <div className="flex gap-1.5 flex-wrap mt-2"></div>

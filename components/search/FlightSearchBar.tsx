@@ -27,7 +27,7 @@ export function FlightSearchBar({
 
   return (
     <div className="search-hero">
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6">
         {/* Trip type */}
         {showTripType && setTripType && (
           <div className="flex items-center gap-2 mb-4">
@@ -94,7 +94,7 @@ export function FlightSearchBar({
           {/* Button */}
           <div className={cn("flex items-end", tripType==="roundtrip"?"col-span-2 sm:col-span-3 lg:col-span-1":"")}>
             <button onClick={onSearch} disabled={loading}
-              className="w-full h-[50px] bg-white text-primary hover:bg-white/90 disabled:opacity-60 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-sm active:scale-[.98]">
+              className="w-full h-[54px] bg-white text-primary hover:bg-white/90 disabled:opacity-60 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-sm active:scale-[.98]">
               {loading ? <RefreshCcw className="h-4 w-4 animate-spin"/> : <Search className="h-4 w-4"/>}
               {loading ? "Searching…" : "Search Flights"}
             </button>
