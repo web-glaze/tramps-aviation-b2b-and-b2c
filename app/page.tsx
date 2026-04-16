@@ -20,6 +20,9 @@ import {
   BarChart3,
   Lock,
   Award,
+  MessageCircle,
+  Phone,
+  Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -190,7 +193,7 @@ export default function HomePage() {
         <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-primary/4 rounded-full blur-[120px] pointer-events-none" />
 
         <div className="relative max-w-5xl mx-auto w-full text-center space-y-5">
-          <div className="space-y-3 animate-in stagger-1">
+          <div className="space-y-6 animate-in stagger-1">
             <h1 className="text-4xl sm:text-5xl lg:text-[4.5rem] font-bold font-display tracking-tight leading-[1.08]">
               Tramps Aviation Smarter,
               <br className="hidden sm:block" />
@@ -433,7 +436,9 @@ export default function HomePage() {
             </button>
           </div>
 
-          <PopularRoutes routes={popularFlights} date={date} />
+          <div className="div-spacing">
+            <PopularRoutes routes={popularFlights} date={date} />
+          </div>
 
           {/* Stats */}
           <div className="flex items-center justify-center gap-8 sm:gap-14 flex-wrap animate-in stagger-4 pt-2">
@@ -484,20 +489,28 @@ export default function HomePage() {
         </div>
       )}
 
+      <div className="mt-16"></div>
+
       {/* ── POPULAR FLIGHTS CAROUSEL ── */}
-      <div className="pt-8">
+      <div className="div-spacing">
         {dataReady && <PopularFlights preloaded={popularFlights} />}
       </div>
 
       {/* ── POPULAR HOTELS CAROUSEL ── */}
-      {dataReady && <PopularHotels preloaded={popularHotels} />}
+      <div className="div-spacing">
+        {dataReady && <PopularHotels preloaded={popularHotels} />}
+      </div>
 
       {/* ── POPULAR CITIES + COUNTRIES ── */}
-      {dataReady && <PopularCities preloaded={popularCities} />}
-      {dataReady && <PopularCountries preloaded={popularCountries} />}
+      <div className="div-spacing">
+        {dataReady && <PopularCities preloaded={popularCities} />}
+      </div>
+      <div className="div-spacing">
+        {dataReady && <PopularCountries preloaded={popularCountries} />}
+      </div>
 
       {/* FEATURES */}
-      <section id="features" className="py-10 px-4 sm:px-6">
+      <section id="features" className="py-16 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-10 animate-in">
             <span className="text-xs font-bold text-primary uppercase tracking-[0.2em] px-3 py-1.5 rounded-full bg-primary/8 border border-primary/20">
@@ -584,7 +597,7 @@ export default function HomePage() {
       </section>
 
       {/* STATS BAND */}
-      <section className="py-8 px-4 sm:px-6 relative overflow-hidden">
+      <section className="py-12 px-4 sm:px-6 relative overflow-hidden">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
         <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
         <div className="relative max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
@@ -608,7 +621,7 @@ export default function HomePage() {
       </section>
 
       {/* B2B SECTION */}
-      <section id="agents" className="py-10 px-4 sm:px-6">
+      <section id="agents" className="py-16 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-8 items-center">
             <div className="space-y-4">
@@ -738,33 +751,82 @@ export default function HomePage() {
       <UserReviews />
 
       {/* CTA */}
-      <section className="py-8 px-4 sm:px-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="relative rounded-3xl bg-card border border-border overflow-hidden p-8 sm:p-10 text-center">
+      <section className="py-16 px-4 sm:px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="relative rounded-3xl bg-card border border-border overflow-hidden p-8 sm:p-10">
             <div className="absolute inset-0 mesh-bg opacity-60" />
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-48 bg-primary/10 rounded-full blur-[80px]" />
             <div className="relative">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/8 text-xs font-semibold text-primary mb-5">
-                <Zap className="h-3.5 w-3.5 fill-current" /> Start booking in
-                seconds
+              {/* Heading — center */}
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/8 text-xs font-semibold text-primary mb-4">
+                  <Zap className="h-3.5 w-3.5 fill-current" /> We are here to
+                  help you
+                </div>
+                <h2 className="text-3xl sm:text-4xl font-bold font-display mb-3">
+                  Have questions? Let's talk.
+                </h2>
+                <p className="text-muted-foreground max-w-lg mx-auto">
+                  Whether you're a traveler or a travel agent — our team is
+                  available 24/7 to assist you with bookings, refunds, or
+                  anything else.
+                </p>
               </div>
-              <h2 className="text-3xl sm:text-4xl font-bold font-display mb-4">
-                Ready to explore the world?
-              </h2>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                Join 2 lakh+ happy travelers. Sign up free and unlock the best
-                deals on flights, hotels and more.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link href="/b2c/register">
-                  <button className="flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-all shadow-lg shadow-primary/25">
-                    Create Free Account <ArrowRight className="h-4 w-4" />
-                  </button>
+
+              {/* 2 contact cards — equal */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                {/* WhatsApp */}
+                <a
+                  href="https://wa.me/919115500112"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-4 p-5 rounded-2xl bg-[#25D366]/8 border border-[#25D366]/25 hover:bg-[#25D366]/15 hover:border-[#25D366]/50 transition-all group"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-[#25D366]/15 flex items-center justify-center shrink-0 group-hover:bg-[#25D366]/25 transition-colors">
+                    <MessageCircle className="h-6 w-6 text-[#25D366]" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-[#25D366] uppercase tracking-wide mb-0.5">
+                      WhatsApp
+                    </p>
+                    <p className="text-base font-bold text-foreground">
+                      Chat with Us
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Quick replies • Available now
+                    </p>
+                  </div>
+                </a>
+
+                {/* Contact Us */}
+                <Link
+                  href="/contact"
+                  className="flex items-center gap-4 p-5 rounded-2xl bg-primary/8 border border-primary/25 hover:bg-primary/15 hover:border-primary/50 transition-all group"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0 group-hover:bg-primary/25 transition-colors">
+                    <Mail className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-0.5">
+                      Email / Form
+                    </p>
+                    <p className="text-base font-bold text-foreground">
+                      Contact Us
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      We reply within 24 hours
+                    </p>
+                  </div>
                 </Link>
-                <Link href="/flights">
-                  <button className="flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl border border-border hover:border-primary/50 font-semibold transition-all">
-                    Search Flights <Search className="h-4 w-4" />
-                  </button>
+              </div>
+
+              {/* Bottom link */}
+              <div className="flex items-center justify-center mt-8 pt-6 border-t border-border">
+                <Link
+                  href="/flights"
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl border border-border hover:border-primary/50 hover:bg-muted/50 text-sm font-semibold transition-all"
+                >
+                  Search Flights <Search className="h-3.5 w-3.5" />
                 </Link>
               </div>
             </div>

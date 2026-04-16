@@ -79,9 +79,9 @@ export function PopularHotels({ preloaded }: { preloaded?: any[] }) {
   const scroll = (dir:"l"|"r") => ref.current?.scrollBy({ left: dir==="l"?-320:320, behavior:"smooth" });
 
   return (
-    <section className="py-8 sm:py-10">
+    <section className="py-4">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between mb-5 sm:mb-6">
+        <div className="flex items-center justify-between mb-3">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2.5">
               <span className="w-8 h-8 bg-amber-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -89,7 +89,7 @@ export function PopularHotels({ preloaded }: { preloaded?: any[] }) {
               </span>
               Popular Hotels
             </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1 ml-10">Top-rated stays across India</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 ml-10">Top-rated stays across India</p>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={()=>scroll("l")} disabled={!canL}
@@ -104,8 +104,8 @@ export function PopularHotels({ preloaded }: { preloaded?: any[] }) {
         </div>
 
         <div ref={ref} onScroll={update}
-          className="flex gap-3 sm:gap-4 overflow-x-auto pb-2"
-          style={{scrollbarWidth:"none", msOverflowStyle:"none"}}>
+            className="flex gap-3 sm:gap-4 overflow-x-auto py-2 px-0.5"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
           {hotels.map((h,i)=>(
             <HotelCard key={h._id||h.name+i} hotel={h}
               onClick={()=>router.push(`/hotels?city=${encodeURIComponent(h.city)}`)}/>

@@ -8,6 +8,7 @@ import {
   Wallet,
   BookOpen,
   TrendingUp,
+  Tag,
   FileText,
   HelpCircle,
   User,
@@ -32,6 +33,7 @@ export const ROUTES = {
   B2B_REPORTS: "/b2b/reports",
   B2B_PROFILE: "/b2b/profile",
   B2B_KYC: "/b2b/kyc",
+  B2B_SERIES_FARE: "/b2b/series-fare",
   // B2C Customer Portal
   B2C_LOGIN: "/b2c/login",
   B2C_REGISTER: "/b2c/register",
@@ -49,6 +51,7 @@ export const B2B_SIDEBAR_NAV: NavItem[] = [
   { label: "Insurance", href: ROUTES.B2B_INSURANCE, icon: Shield },
   { label: "My Bookings", href: ROUTES.B2B_BOOKINGS, icon: BookOpen },
   { label: "Wallet", href: ROUTES.B2B_WALLET, icon: Wallet },
+  { label: "Series Fare", href: "/b2b/series-fare", icon: Tag },
   { label: "Commission", href: ROUTES.B2B_COMMISSION, icon: TrendingUp },
   { label: "Reports", href: ROUTES.B2B_REPORTS, icon: BarChart3 },
 ];

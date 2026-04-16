@@ -19,8 +19,10 @@ export function PopularRoutes({ routes, date }: Props) {
         {routes.slice(0, 6).map((r) => (
           <button
             key={r._id || r.from + r.to}
-            onClick={() => router.push(`/flights?from=${r.from}&to=${r.to}&date=${date}`)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border hover:border-primary/50 hover:bg-primary/5 text-xs font-medium text-muted-foreground hover:text-primary transition-all"
+            onClick={() =>
+              router.push(`/flights?from=${r.from}&to=${r.to}&date=${date}`)
+            }
+            className="flex items-center gap-1.5 px-4 py-4 rounded-full border border-border hover:border-primary/50 hover:bg-primary/5 text-xs font-medium text-muted-foreground hover:text-primary transition-all"
           >
             {r.fromCity} → {r.toCity}
             {r.price && (

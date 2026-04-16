@@ -382,3 +382,7 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity:.4; cursor:point
 .field-wrapper input, .field-wrapper select, .field-wrapper textarea {
   @apply flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground text-foreground;
 }
+.div-spacing {
+  margin: 8px;
+  padding: 8px;
+}

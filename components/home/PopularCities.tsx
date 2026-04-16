@@ -238,9 +238,9 @@ export function PopularCities({ preloaded }: { preloaded?: any[] }) {
   };
 
   return (
-    <section className="py-8 sm:py-10">
+    <section className="py-4">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between mb-5 sm:mb-6">
+        <div className="flex items-center justify-between mb-3">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2.5">
               <span className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -248,7 +248,7 @@ export function PopularCities({ preloaded }: { preloaded?: any[] }) {
               </span>
               Popular Cities
             </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1 ml-10">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 ml-10">
               Click a city to search flights
               {nearestCode && (
                 <span className="ml-1 text-primary font-medium">
@@ -277,7 +277,7 @@ export function PopularCities({ preloaded }: { preloaded?: any[] }) {
         <div
           ref={ref}
           onScroll={update}
-          className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 px-0.5"
+           className="flex gap-3 sm:gap-4 overflow-x-auto py-2 px-0.5"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {sorted.map((c, i) => (

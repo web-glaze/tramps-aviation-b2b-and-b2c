@@ -269,3 +269,68 @@ export const useNotificationsStore = create<NotificationsState>()(
     { name: 'tp-notifications' }
   )
 )
+
+// ════════════════════════════════════════════════════════════════════════════
+// STORE 6 — PLATFORM SETTINGS (fetched from /admin/public-settings)
+// Cached for 10 minutes. Used in header, footer, sidebar for dynamic branding.
+//
+// Usage:
+//   import { usePlatformStore } from '@/lib/store'
+//   const { ps, fetchIfStale } = usePlatformStore()
+//   useEffect(() => { fetchIfStale() }, [])
+//   <span>{ps.platformName || APP_NAME}</span>
+// ════════════════════════════════════════════════════════════════════════════
+export interface PlatformSettings {
+  platformName?:        string
+  platformTagline?:     string
+  platformDescription?: string
+  footerCopyright?:     string
+  supportEmail?:        string
+  supportPhone?:        string
+  supportPhoneDisplay?: string
+  socialFacebook?:      string
+  socialTwitter?:       string
+  socialInstagram?:     string
+  socialLinkedin?:      string
+  socialYoutube?:       string
+  socialWhatsapp?:      string
+  // Address & company details (from Platform Settings → Company Address section)
+  addressLine1?:        string
+  addressLine2?:        string
+  city?:                string
+  state?:               string
+  pincode?:             string
+  country?:             string
+  gstNumber?:           string
+  panNumber?:           string
+  cinNumber?:           string
+}
+
+interface PlatformState {
+  ps:            PlatformSettings
+  lastFetched:   number | null
+  fetchIfStale:  () => Promise<void>
+}
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'
+
+export const usePlatformStore = create<PlatformState>()((set, get) => ({
+  ps: {},
+  lastFetched: null,
+  fetchIfStale: async () => {
+    // Cache for 10 minutes — avoid re-fetching on every component mount
+    const last = get().lastFetched
+    if (last && Date.now() - last < 10 * 60 * 1000) return
+    try {
+      const res = await fetch(`${API_BASE}/admin/public-settings`, { cache: 'no-store' })
+      if (!res.ok) return
+      const json = await res.json()
+      const data: PlatformSettings = json?.data || json
+      if (data?.platformName) {
+        set({ ps: data, lastFetched: Date.now() })
+      }
+    } catch {
+      // silently fail — components use APP_NAME fallback
+    }
+  },
+}))

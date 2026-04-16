@@ -373,7 +373,7 @@ export default function B2BRegisterPage() {
               }}
             >
               You can login with your email, Agent ID (
-              {registeredAgentId || "TRV-XXXXX"}), or phone number
+              {registeredAgentId || "TAHPXXXXX"}), or phone number
             </p>
           </div>
           <div

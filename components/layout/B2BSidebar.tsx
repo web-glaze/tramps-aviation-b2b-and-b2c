@@ -3,16 +3,20 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { useSettingsStore, useAuthStore } from "@/lib/store";
+import { useSettingsStore, useAuthStore, usePlatformStore } from "@/lib/store";
 import { B2B_SIDEBAR_NAV, B2B_SIDEBAR_BOTTOM, APP_NAME } from "@/config/app";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PanelLeftClose, PanelLeftOpen, Plane, Wallet, LogOut } from "lucide-react";
 import Image from "next/image";
+import { useEffect } from "react";
 
 export function B2BSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { sidebarOpen, toggleSidebar } = useSettingsStore();
+  const { ps, fetchIfStale } = usePlatformStore();
+  useEffect(() => { fetchIfStale(); }, []);
+  const platformName = ps.platformName || APP_NAME;
   const { user, clearAuth } = useAuthStore();
 
   const handleLogout = () => {
@@ -32,11 +36,11 @@ export function B2BSidebar() {
         <div className="flex items-center h-16 border-b border-border px-4 flex-shrink-0">
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl overflow-hidden bg-white border border-border">
-              <Image src="/logo.jpg" alt="Tramps Aviation" width={36} height={36} className="h-9 w-9 object-contain" />
+              <Image src="/logo.jpg" alt={platformName} width={36} height={36} className="h-9 w-9 object-contain" />
             </div>
             {sidebarOpen && (
               <div>
-                <p className="font-bold text-sm leading-none">{APP_NAME}</p>
+                <p className="font-bold text-sm leading-none">{platformName}</p>
                 <p className="text-[10px] text-muted-foreground leading-none mt-0.5">Agent Portal</p>
               </div>
             )}
