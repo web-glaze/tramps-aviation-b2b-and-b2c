@@ -213,8 +213,8 @@ function HotelsContent() {
       {/* Search bar */}
       <div className="search-hero">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <div className="lg:col-span-2">
+          <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="col-span-2 sm:col-span-2 lg:col-span-2">
               <label className="search-label">City / Destination</label>
               <div className="relative">
                 <input value={city} onChange={e=>setCity(e.target.value)} placeholder="Mumbai, Delhi, Goa…"
@@ -232,17 +232,18 @@ function HotelsContent() {
               <input type="date" value={checkOut} onChange={e=>setCheckOut(e.target.value)}
                 min={checkIn} className="search-input-date w-full"/>
             </div>
-            <div className="flex flex-col">
+            <div>
               <label className="search-label">Rooms</label>
-              <div className="flex gap-2 flex-1 items-end">
-                <input type="number" value={rooms} min={1} max={9} onChange={e=>setRooms(parseInt(e.target.value)||1)}
-                  className="search-input w-20 font-bold text-xl text-center flex-shrink-0"/>
-                <button onClick={()=>doSearch()} disabled={loading}
-                  className="flex-1 h-[50px] bg-white text-primary hover:bg-white/90 disabled:opacity-60 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-sm">
-                  {loading?<RefreshCcw className="h-4 w-4 animate-spin"/>:<Search className="h-4 w-4"/>}
-                  {loading?"Searching…":"Search"}
-                </button>
-              </div>
+              <input type="number" value={rooms} min={1} max={9} onChange={e=>setRooms(parseInt(e.target.value)||1)}
+                className="search-input w-full font-bold text-xl text-center"/>
+            </div>
+            <div className="flex flex-col">
+              <label className="search-label">&nbsp;</label>
+              <button onClick={()=>doSearch()} disabled={loading}
+                className="w-full h-[50px] bg-white text-primary hover:bg-white/90 disabled:opacity-60 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-sm">
+                {loading?<RefreshCcw className="h-4 w-4 animate-spin"/>:<Search className="h-4 w-4"/>}
+                {loading?"Searching…":"Search"}
+              </button>
             </div>
           </div>
         </div>

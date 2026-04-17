@@ -6,9 +6,10 @@ import { cn } from "@/lib/utils";
 import { useSettingsStore, useAuthStore, usePlatformStore } from "@/lib/store";
 import { B2B_SIDEBAR_NAV, B2B_SIDEBAR_BOTTOM, APP_NAME } from "@/config/app";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { PanelLeftClose, PanelLeftOpen, Plane, Wallet, LogOut } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Wallet, LogOut, RefreshCw } from "lucide-react";
 import Image from "next/image";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { agentApi, unwrap } from "@/lib/api/services";
 
 export function B2BSidebar() {
   const pathname = usePathname();
@@ -18,6 +19,31 @@ export function B2BSidebar() {
   useEffect(() => { fetchIfStale(); }, []);
   const platformName = ps.platformName || APP_NAME;
   const { user, clearAuth } = useAuthStore();
+
+  // ── Live wallet balance — fetch fresh from API, not from stale store ──
+  const [liveBalance, setLiveBalance] = useState<number | null>(null);
+  const [balLoading, setBalLoading] = useState(false);
+
+  const fetchBalance = async () => {
+    setBalLoading(true);
+    try {
+      const res = await agentApi.getWallet();
+      const d = unwrap(res) as any;
+      const bal = typeof d === "number" ? d : d?.balance ?? d?.walletBalance ?? 0;
+      setLiveBalance(bal);
+    } catch {
+      // fallback to store value
+      setLiveBalance(user?.walletBalance ?? 0);
+    } finally {
+      setBalLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) fetchBalance();
+  }, [user]);
+
+  const displayBalance = liveBalance !== null ? liveBalance : (user?.walletBalance ?? 0);
 
   const handleLogout = () => {
     clearAuth();
@@ -82,16 +108,31 @@ export function B2BSidebar() {
           })}
         </nav>
 
-        {/* Wallet Balance */}
+        {/* Wallet Balance — live from API */}
         {sidebarOpen && (
           <div className="mx-3 mb-2 p-3 bg-primary/8 rounded-xl border border-primary/20">
-            <div className="flex items-center gap-2 text-primary mb-1">
-              <Wallet className="h-3.5 w-3.5" />
-              <span className="text-xs font-semibold">Wallet Balance</span>
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2 text-primary">
+                <Wallet className="h-3.5 w-3.5" />
+                <span className="text-xs font-semibold">Wallet Balance</span>
+              </div>
+              <button
+                onClick={fetchBalance}
+                disabled={balLoading}
+                className="p-1 rounded-md hover:bg-primary/10 text-primary/60 hover:text-primary transition-colors"
+              >
+                <RefreshCw className={cn("h-3 w-3", balLoading && "animate-spin")} />
+              </button>
             </div>
             <p className="text-lg font-bold text-primary">
-              ₹{(user?.walletBalance || 0).toLocaleString("en-IN")}
+              {balLoading ? "—" : `₹${displayBalance.toLocaleString("en-IN")}`}
             </p>
+            <Link
+              href="/b2b/wallet"
+              className="text-[10px] text-primary/70 hover:text-primary transition-colors underline-offset-2 hover:underline"
+            >
+              View transactions →
+            </Link>
           </div>
         )}
 

@@ -74,7 +74,18 @@ export const agentApi = {
   getBookings: (p?: any) => apiClient.get("/bookings/my", { params: p }),
   getBookingById: (id: string) => apiClient.get(`/bookings/${id}`),
   cancelBooking: (id: string) => apiClient.patch(`/bookings/${id}/cancel`),
+  // ── Booking: 2-step flow ──────────────────────────────────────────────────
+  // Step 1: init booking (works for TBO live, Series/Custom fares, Mock)
+  initBooking: (data: any) => apiClient.post("/bookings/init", data),
+  // Step 2: confirm via wallet deduction (B2B only)
+  confirmB2bBooking: (bookingRef: string) =>
+    apiClient.post(`/bookings/${bookingRef}/confirm-b2b`, {}),
+  // Legacy — kept for backwards compatibility, points to OLD single-step endpoint
+  // Use initBooking + confirmB2bBooking instead for all new code
   bookFlight: (data: any) => apiClient.post("/bookings/agent/flight", data),
+  // Topup request
+  requestTopup: (data: { amount: number; utrNumber?: string }) =>
+    apiClient.post("/agents/wallet/topup-request", data),
   getDashboard: () => apiClient.get("/agents/dashboard"),
   getCommissions: (p?: any) =>
     apiClient.get("/reports/agent/summary", { params: p }),
