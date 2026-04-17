@@ -5,48 +5,32 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap');
 
 /* ════════════════════════════════════════════════════════
-   DESIGN TOKENS — change here → every page updates
-   Light: soft blue-white bg | white cards with shadow
-   Text: deep navy | Primary: azure #208dcb
-   Orange #e44b0f: ONLY for prices + Book Now button
+   DESIGN TOKENS
 ════════════════════════════════════════════════════════ */
 
 :root {
-  /* Backgrounds */
-  --background:     210 28% 95%;   /* #EBF0F8 — soft blue-grey page bg */
-  --card:           0 0% 100%;     /* #FFFFFF — pure white cards */
+  --background:     210 28% 95%;
+  --card:           0 0% 100%;
   --popover:        0 0% 100%;
-
-  /* Text */
-  --foreground:     220 40% 11%;   /* #101929 — deep navy, max readability */
+  --foreground:     220 40% 11%;
   --card-foreground:220 40% 11%;
   --popover-foreground: 220 40% 11%;
-  --muted-foreground: 220 14% 44%; /* #636E85 — secondary text */
-
-  /* Brand — Azure #208dcb = HSL 205 72% 45% */
-  --primary:        205 72% 42%;   /* slightly deeper for light bg contrast */
+  --muted-foreground: 220 14% 44%;
+  --primary:        205 72% 42%;
   --primary-foreground: 0 0% 100%;
   --ring:           205 72% 42%;
-
-  /* Surfaces */
   --secondary:      210 22% 90%;
   --secondary-foreground: 220 30% 22%;
   --muted:          210 22% 92%;
   --accent:         210 22% 90%;
   --accent-foreground: 220 30% 22%;
-
-  /* Semantic */
   --destructive:    0 80% 52%;
   --destructive-foreground: 0 0% 100%;
-
-  /* Structure */
-  --border:         210 20% 87%;   /* visible but not harsh */
+  --border:         210 20% 87%;
   --input:          210 20% 90%;
   --radius:         0.75rem;
-
-  /* Brand palette */
-  --brand-orange:   16 82% 46%;    /* #E3480C — prices & Book Now only */
-  --brand-blue:     205 72% 42%;   /* #208dcb alias */
+  --brand-orange:   16 82% 46%;
+  --brand-blue:     205 72% 42%;
   --toggle-knob:    0 0% 100%;
 }
 
@@ -106,7 +90,7 @@
 /* ════════════════════════════════════════════════════════
    BASE
 ════════════════════════════════════════════════════════ */
-* { @apply border-border box-border; }
+* { @apply border-border; box-sizing: border-box; }
 
 html { background-color: hsl(210, 28%, 95%); scroll-behavior: smooth; }
 html.dark { background-color: hsl(222, 24%, 8%); }
@@ -118,8 +102,7 @@ body {
 .font-display { font-family: var(--font-display,'Plus Jakarta Sans'), system-ui, sans-serif; }
 
 /* ════════════════════════════════════════════════════════
-   CARD — the core visual unit
-   White card on soft-blue bg = depth without dark
+   CARD
 ════════════════════════════════════════════════════════ */
 .card-base {
   @apply bg-card border border-border rounded-2xl;
@@ -135,7 +118,7 @@ body {
 }
 
 /* ════════════════════════════════════════════════════════
-   FORM INPUTS — consistent everywhere
+   FORM INPUTS
 ════════════════════════════════════════════════════════ */
 .input-base {
   @apply w-full bg-card border border-input rounded-xl px-4 py-3 text-sm text-foreground
@@ -146,7 +129,6 @@ body {
   box-shadow: 0 0 0 3px hsl(var(--primary)/.12);
 }
 
-/* ── Field wrapper (icon + input) ── */
 .field-wrapper {
   @apply flex items-center gap-2.5 h-12 px-4 border border-input bg-card rounded-xl transition-all;
 }
@@ -161,7 +143,6 @@ body {
   @apply flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground text-foreground;
 }
 
-/* Fix select option text visibility — browser native dropdown */
 select option {
   background-color: hsl(var(--card));
   color: hsl(var(--foreground));
@@ -182,7 +163,6 @@ select option:hover {
 .btn-primary:hover  { opacity: .92; }
 .btn-primary:active { transform: scale(.98); }
 
-/* Orange — ONLY for prices + Book Now */
 .btn-orange {
   @apply inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all text-white;
   background-color: hsl(var(--brand-orange));
@@ -200,8 +180,7 @@ select option:hover {
 }
 
 /* ════════════════════════════════════════════════════════
-   SEARCH BAR — used on flights/hotels/insurance/series
-   Theme-aware: works in both light and dark
+   SEARCH BAR
 ════════════════════════════════════════════════════════ */
 .search-hero {
   @apply border-b border-white/10;
@@ -270,7 +249,7 @@ select option:hover {
 .data-table tbody tr:last-child { @apply border-0; }
 
 /* ════════════════════════════════════════════════════════
-   PRICE TEXT — always brand orange
+   PRICE TEXT
 ════════════════════════════════════════════════════════ */
 .price-text { color: hsl(var(--brand-orange)); @apply font-bold; }
 
@@ -338,19 +317,14 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity:.4; cursor:point
 [data-compact="true"] .p-6  { padding:.875rem !important; }
 
 /* ════════════════════════════════════════════════════════
-   SCROLLBAR HIDE — for carousels
+   SCROLLBAR HIDE
 ════════════════════════════════════════════════════════ */
 .scrollbar-hide { scrollbar-width: none; -ms-overflow-style: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 
 /* ════════════════════════════════════════════════════════
-   HERO BG / MESH — homepage
+   HERO BG / MESH
 ════════════════════════════════════════════════════════ */
-/* .hero-bg {
-  background:
-    linear-gradient(to bottom, rgba(255,255,255,0.6), rgba(255,255,255,0.9)),
-    radial-gradient(ellipse 60% 40% at 50% -10%, hsl(var(--primary)/.15), transparent);
-} */
 .mesh-bg {
   background-image:
     radial-gradient(at 30% 15%, hsl(var(--primary)/.06) 0, transparent 55%),
@@ -368,21 +342,11 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity:.4; cursor:point
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   animation: gradshift 3s ease infinite;
 }
-.animate-float { animation: float 4s ease-in-out infinite; }
-@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-@keyframes gradshift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
-.field-wrapper {
-  @apply flex items-center gap-2.5 h-12 px-4 border border-input bg-card rounded-xl transition-all;
-}
-.field-wrapper:hover { @apply border-primary/50; }
-.field-wrapper:focus-within {
-  @apply border-primary;
-  box-shadow: 0 0 0 3px hsl(var(--primary)/.12);
-}
-.field-wrapper input, .field-wrapper select, .field-wrapper textarea {
-  @apply flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground text-foreground;
-}
+
+/* ════════════════════════════════════════════════════════
+   DIV SPACING — fixed, no more random margins
+════════════════════════════════════════════════════════ */
 .div-spacing {
-  margin: 8px;
-  padding: 8px;
+  margin: 0;
+  padding: 2.5rem 1rem;
 }

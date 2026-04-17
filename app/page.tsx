@@ -21,7 +21,6 @@ import {
   Lock,
   Award,
   MessageCircle,
-  Phone,
   Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -41,7 +40,6 @@ export default function HomePage() {
   const router = useRouter();
   const { user } = useAuthStore();
 
-  // Search state
   const [activeTab, setActiveTab] = useState<
     "flights" | "hotels" | "insurance" | "series-fare"
   >("flights");
@@ -54,7 +52,6 @@ export default function HomePage() {
   const [checkOut, setCheckOut] = useState("");
   const [rooms, setRooms] = useState("1");
 
-  // Popular data — ONE fetch, split to components
   const [popularFlights, setPopularFlights] = useState<any[]>([]);
   const [popularHotels, setPopularHotels] = useState<any[]>([]);
   const [popularCities, setPopularCities] = useState<any[]>([]);
@@ -62,7 +59,6 @@ export default function HomePage() {
   const [popularAirlines, setPopularAirlines] = useState<string[]>([]);
   const [dataReady, setDataReady] = useState(false);
 
-  // Set default dates
   useEffect(() => {
     const tmr = new Date();
     tmr.setDate(tmr.getDate() + 1);
@@ -74,13 +70,11 @@ export default function HomePage() {
     setCheckOut(nxt.toISOString().split("T")[0]);
   }, []);
 
-  // Fetch ALL popular data ONCE — no auth needed (publicApiClient)
   const fetchPopular = useCallback(async () => {
     try {
       const res = await publicApiClient.get("/popular/homepage");
       const body = res.data;
       const data = body?.data ?? body ?? {};
-
       const flights = Array.isArray(data.flights)
         ? data.flights.filter((f: any) => f.isActive !== false)
         : [];
@@ -93,12 +87,10 @@ export default function HomePage() {
       const countries = Array.isArray(data.countries)
         ? data.countries.filter((c: any) => c.isActive !== false)
         : [];
-
       setPopularFlights(flights);
       setPopularHotels(hotels);
       setPopularCities(cities);
       setPopularCountries(countries);
-
       const STATIC = [
         "IndiGo",
         "Air India",
@@ -116,15 +108,14 @@ export default function HomePage() {
       );
       setPopularAirlines(dynamic.length > 0 ? dynamic : STATIC);
     } catch {
-      const STATIC = [
+      setPopularAirlines([
         "IndiGo",
         "Air India",
         "SpiceJet",
         "Vistara",
         "GoFirst",
         "AirAsia",
-      ];
-      setPopularAirlines(STATIC);
+      ]);
     } finally {
       setDataReady(true);
     }
@@ -172,12 +163,25 @@ export default function HomePage() {
     );
   };
 
+  // Shared input field style — used inline so Tailwind JIT doesn't strip it
+  const fieldStyle = {
+    height: "52px",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    padding: "0 14px",
+    border: "1px solid hsl(var(--input))",
+    borderRadius: "12px",
+    background: "hsl(var(--card))",
+    transition: "border-color 0.15s, box-shadow 0.15s",
+  } as React.CSSProperties;
+
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <CommonHeader variant="home" />
 
       {/* ── HERO ── */}
-      <section className="relative flex items-center justify-center px-4 sm:px-6 pt-20 sm:pt-24 pb-6 sm:pb-10 overflow-hidden">
+      <section className="relative flex items-center justify-center px-4 sm:px-6 pt-20 sm:pt-24 pb-12 sm:pb-16 overflow-hidden">
         <div
           className="absolute inset-0 w-full h-full"
           style={{
@@ -193,7 +197,7 @@ export default function HomePage() {
         <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-primary/4 rounded-full blur-[120px] pointer-events-none" />
 
         <div className="relative max-w-5xl mx-auto w-full text-center space-y-5">
-          <div className="space-y-6 animate-in stagger-1">
+          <div className="space-y-3 animate-in stagger-1">
             <h1 className="text-4xl sm:text-5xl lg:text-[4.5rem] font-bold font-display tracking-tight leading-[1.08]">
               Tramps Aviation Smarter,
               <br className="hidden sm:block" />
@@ -205,11 +209,12 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Search Card */}
-          <div className="bg-card/85 glass border border-border/80 rounded-2xl p-5 sm:p-6 shadow-2xl shadow-black/10 max-w-3xl mx-auto text-left animate-in stagger-2">
-            {/* Search Tabs */}
+          {/* ── Search Card ── */}
+          {/* ── Search Card ── */}
+          <div className="bg-card/92 glass border border-border/80 rounded-2xl shadow-2xl shadow-black/10 max-w-4xl mx-auto text-left animate-in stagger-2 px-6 sm:px-8 pt-6 sm:pt-8 pb-8 sm:pb-10">
+            {/* Tabs */}
             <div
-              className="flex gap-1 mb-5 bg-muted/40 border border-border/60 rounded-xl p-1 w-full sm:w-fit overflow-x-auto"
+              className="flex gap-1 mb-6 bg-muted/40 border border-border/60 rounded-xl p-1 overflow-x-auto"
               style={{ scrollbarWidth: "none" }}
             >
               {(
@@ -224,208 +229,243 @@ export default function HomePage() {
                   key={key}
                   onClick={() => setActiveTab(key)}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap flex-shrink-0",
+                    "flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex-1 justify-center",
                     activeTab === key
                       ? "bg-primary text-white shadow-md shadow-primary/20"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
                   )}
                 >
-                  <span className="text-sm leading-none">{icon}</span>
+                  <span className="text-base leading-none">{icon}</span>
                   {label}
                 </button>
               ))}
             </div>
 
-            {/* Flights */}
-            {activeTab === "flights" && (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <SearchField
-                  label="From"
-                  icon={MapPin}
-                  placeholder="Delhi (DEL)"
-                  value={from}
-                  onChange={setFrom}
-                />
-                <SearchField
-                  label="To"
-                  icon={MapPin}
-                  placeholder="Mumbai (BOM)"
-                  value={to}
-                  onChange={setTo}
-                />
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Departure Date
-                  </label>
-                  <div className="field-wrapper">
-                    <input
-                      type="date"
-                      className="flex-1 bg-transparent text-sm outline-none text-foreground"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      min={new Date().toISOString().split("T")[0]}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Adults
-                  </label>
-                  <div className="field-wrapper">
-                    <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <input
-                      type="number"
-                      min="1"
-                      max="9"
-                      className="flex-1 bg-transparent text-sm outline-none text-foreground"
-                      value={adults}
-                      onChange={(e) => setAdults(e.target.value)}
-                      placeholder="1"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Hotels */}
-            {activeTab === "hotels" && (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <SearchField
-                  label="City / Destination"
-                  icon={MapPin}
-                  placeholder="Mumbai, Goa..."
-                  value={hotelCity}
-                  onChange={setHotelCity}
-                />
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Check-in
-                  </label>
-                  <div className="field-wrapper">
-                    <input
-                      type="date"
-                      className="flex-1 bg-transparent text-sm outline-none text-foreground"
-                      value={checkIn}
-                      onChange={(e) => setCheckIn(e.target.value)}
-                      min={new Date().toISOString().split("T")[0]}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Check-out
-                  </label>
-                  <div className="field-wrapper">
-                    <input
-                      type="date"
-                      className="flex-1 bg-transparent text-sm outline-none text-foreground"
-                      value={checkOut}
-                      onChange={(e) => setCheckOut(e.target.value)}
-                      min={checkIn || new Date().toISOString().split("T")[0]}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Rooms
-                  </label>
-                  <div className="field-wrapper">
-                    <Hotel className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <input
-                      type="number"
-                      min="1"
-                      max="9"
-                      className="flex-1 bg-transparent text-sm outline-none text-foreground"
-                      value={rooms}
-                      onChange={(e) => setRooms(e.target.value)}
-                      placeholder="1"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Insurance */}
-            {activeTab === "insurance" && (
-              <div className="py-4 text-center space-y-3">
-                <p className="text-muted-foreground text-sm">
-                  Get travel insurance for flights, trips and medical
-                  emergencies
-                </p>
-                <div className="flex flex-wrap justify-center gap-3 text-xs text-muted-foreground">
-                  {[
-                    "Medical Emergency Cover",
-                    "Trip Cancellation",
-                    "Baggage Loss",
-                    "Flight Delay",
-                  ].map((f) => (
-                    <span
-                      key={f}
-                      className="flex items-center gap-1 bg-muted/50 px-3 py-1.5 rounded-full"
+            {/* ── Tab content — fixed min height so card doesn't jump ── */}
+            <div
+              style={{ minHeight: "90px" }}
+              className="flex flex-col justify-center"
+            >
+              {/* ── Flights ── */}
+              {activeTab === "flights" && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <SearchField
+                    label="From"
+                    icon={MapPin}
+                    placeholder="Delhi (DEL)"
+                    value={from}
+                    onChange={setFrom}
+                    fieldStyle={fieldStyle}
+                  />
+                  <SearchField
+                    label="To"
+                    icon={MapPin}
+                    placeholder="Mumbai (BOM)"
+                    value={to}
+                    onChange={setTo}
+                    fieldStyle={fieldStyle}
+                  />
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      Departure Date
+                    </label>
+                    <div
+                      style={fieldStyle}
+                      className="hover:border-primary/50 focus-within:border-primary focus-within:[box-shadow:0_0_0_3px_hsl(var(--primary)/.12)]"
                     >
-                      ✓ {f}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Series Fare */}
-            {activeTab === "series-fare" && (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <SearchField
-                  label="From"
-                  icon={MapPin}
-                  placeholder="Delhi (DEL)"
-                  value={from}
-                  onChange={setFrom}
-                />
-                <SearchField
-                  label="To"
-                  icon={MapPin}
-                  placeholder="Mumbai (BOM)"
-                  value={to}
-                  onChange={setTo}
-                />
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Departure Date
-                  </label>
-                  <div className="field-wrapper">
-                    <input
-                      type="date"
-                      className="flex-1 bg-transparent text-sm outline-none text-foreground"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      min={new Date().toISOString().split("T")[0]}
-                    />
+                      <input
+                        type="date"
+                        className="flex-1 bg-transparent text-sm outline-none text-foreground"
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                        min={new Date().toISOString().split("T")[0]}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      Adults
+                    </label>
+                    <div
+                      style={fieldStyle}
+                      className="hover:border-primary/50 focus-within:border-primary focus-within:[box-shadow:0_0_0_3px_hsl(var(--primary)/.12)]"
+                    >
+                      <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <input
+                        type="number"
+                        min="1"
+                        max="9"
+                        className="flex-1 bg-transparent text-sm outline-none text-foreground"
+                        value={adults}
+                        onChange={(e) => setAdults(e.target.value)}
+                        placeholder="1"
+                      />
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Adults
-                  </label>
-                  <div className="field-wrapper">
-                    <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <input
-                      type="number"
-                      min="1"
-                      max="9"
-                      className="flex-1 bg-transparent text-sm outline-none text-foreground"
-                      value={adults}
-                      onChange={(e) => setAdults(e.target.value)}
-                      placeholder="1"
-                    />
+              )}
+
+              {/* ── Hotels ── */}
+              {activeTab === "hotels" && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <SearchField
+                    label="City / Destination"
+                    icon={MapPin}
+                    placeholder="Mumbai, Goa..."
+                    value={hotelCity}
+                    onChange={setHotelCity}
+                    fieldStyle={fieldStyle}
+                  />
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      Check-in
+                    </label>
+                    <div
+                      style={fieldStyle}
+                      className="hover:border-primary/50 focus-within:border-primary"
+                    >
+                      <input
+                        type="date"
+                        className="flex-1 bg-transparent text-sm outline-none text-foreground"
+                        value={checkIn}
+                        onChange={(e) => setCheckIn(e.target.value)}
+                        min={new Date().toISOString().split("T")[0]}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      Check-out
+                    </label>
+                    <div
+                      style={fieldStyle}
+                      className="hover:border-primary/50 focus-within:border-primary"
+                    >
+                      <input
+                        type="date"
+                        className="flex-1 bg-transparent text-sm outline-none text-foreground"
+                        value={checkOut}
+                        onChange={(e) => setCheckOut(e.target.value)}
+                        min={checkIn || new Date().toISOString().split("T")[0]}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      Rooms
+                    </label>
+                    <div
+                      style={fieldStyle}
+                      className="hover:border-primary/50 focus-within:border-primary"
+                    >
+                      <Hotel className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <input
+                        type="number"
+                        min="1"
+                        max="9"
+                        className="flex-1 bg-transparent text-sm outline-none text-foreground"
+                        value={rooms}
+                        onChange={(e) => setRooms(e.target.value)}
+                        placeholder="1"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
+              {/* ── Insurance ── */}
+              {activeTab === "insurance" && (
+                <div className="text-center space-y-4">
+                  <p className="text-muted-foreground text-sm">
+                    Get travel insurance for flights, trips and medical
+                    emergencies
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-2 text-xs text-muted-foreground">
+                    {[
+                      "Medical Emergency Cover",
+                      "Trip Cancellation",
+                      "Baggage Loss",
+                      "Flight Delay",
+                    ].map((f) => (
+                      <span
+                        key={f}
+                        className="flex items-center gap-1 bg-muted/50 px-3 py-1.5 rounded-full"
+                      >
+                        ✓ {f}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Series Fare ── */}
+              {activeTab === "series-fare" && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <SearchField
+                    label="From"
+                    icon={MapPin}
+                    placeholder="Delhi (DEL)"
+                    value={from}
+                    onChange={setFrom}
+                    fieldStyle={fieldStyle}
+                  />
+                  <SearchField
+                    label="To"
+                    icon={MapPin}
+                    placeholder="Mumbai (BOM)"
+                    value={to}
+                    onChange={setTo}
+                    fieldStyle={fieldStyle}
+                  />
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      Departure Date
+                    </label>
+                    <div
+                      style={fieldStyle}
+                      className="hover:border-primary/50 focus-within:border-primary"
+                    >
+                      <input
+                        type="date"
+                        className="flex-1 bg-transparent text-sm outline-none text-foreground"
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                        min={new Date().toISOString().split("T")[0]}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      Adults
+                    </label>
+                    <div
+                      style={fieldStyle}
+                      className="hover:border-primary/50 focus-within:border-primary"
+                    >
+                      <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <input
+                        type="number"
+                        min="1"
+                        max="9"
+                        className="flex-1 bg-transparent text-sm outline-none text-foreground"
+                        value={adults}
+                        onChange={(e) => setAdults(e.target.value)}
+                        placeholder="1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* end tab content */}
+
+            {/* ── Search Button ── */}
             <button
               onClick={handleSearch}
-              className="w-full mt-4 h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-all hover:shadow-lg hover:shadow-primary/25 active:scale-[0.99]"
+              style={{ height: "52px", fontSize: "15px" }}
+              className="w-full mt-5 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2.5 hover:opacity-90 transition-all hover:shadow-lg hover:shadow-primary/25 active:scale-[0.99]"
             >
-              <Search className="h-4 w-4" />
+              <Search className="h-5 w-5" />
               {activeTab === "flights"
                 ? "Search Flights"
                 : activeTab === "hotels"
@@ -435,13 +475,15 @@ export default function HomePage() {
                     : "Get Insurance Plans"}
             </button>
           </div>
-
-          <div className="div-spacing">
-            <PopularRoutes routes={popularFlights} date={date} />
-          </div>
+          {/* Popular Routes */}
+          {popularFlights.length > 0 && (
+            <div className="my-4 py-4">
+              <PopularRoutes routes={popularFlights} date={date} />
+            </div>
+          )}
 
           {/* Stats */}
-          <div className="flex items-center justify-center gap-8 sm:gap-14 flex-wrap animate-in stagger-4 pt-2">
+          <div className="flex items-center justify-center gap-8 sm:gap-16 flex-wrap animate-in stagger-4 pt-2">
             {[
               { value: "2L+", label: "Happy Travelers", color: "text-primary" },
               {
@@ -467,14 +509,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Airlines */}
+      {/* ── AIRLINES ── */}
       {popularAirlines.length > 0 && (
-        <div className="px-4 sm:px-6 mt-6 mb-2 relative z-10">
-          <div className="max-w-4xl mx-auto bg-white dark:bg-card rounded-2xl shadow-sm border border-border/50 py-4 px-6">
+        <section className="px-4 sm:px-6 py-6">
+          <div className="max-w-4xl mx-auto bg-white dark:bg-card rounded-2xl shadow-sm border border-border/50 py-5 px-8">
             <p className="text-center text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
               We cover all major airlines
             </p>
-            <div className="flex items-center justify-center gap-8 flex-wrap">
+            <div className="flex items-center justify-center gap-6 sm:gap-10 flex-wrap">
               {popularAirlines.map((name) => (
                 <div
                   key={name}
@@ -486,32 +528,34 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-        </div>
+        </section>
       )}
 
-      <div className="mt-16"></div>
+      {/* ── CAROUSEL SECTIONS ── */}
+      {dataReady &&
+        (popularFlights.length > 0 ||
+          popularHotels.length > 0 ||
+          popularCities.length > 0 ||
+          popularCountries.length > 0) && (
+          <div className="py-6 flex flex-col gap-10">
+            {popularFlights.length > 0 && (
+              <PopularFlights preloaded={popularFlights} />
+            )}
+            {popularHotels.length > 0 && (
+              <PopularHotels preloaded={popularHotels} />
+            )}
+            {popularCities.length > 0 && (
+              <PopularCities preloaded={popularCities} />
+            )}
+            {popularCountries.length > 0 && (
+              <PopularCountries preloaded={popularCountries} />
+            )}
+          </div>
+        )}
 
-      {/* ── POPULAR FLIGHTS CAROUSEL ── */}
-      <div className="div-spacing">
-        {dataReady && <PopularFlights preloaded={popularFlights} />}
-      </div>
-
-      {/* ── POPULAR HOTELS CAROUSEL ── */}
-      <div className="div-spacing">
-        {dataReady && <PopularHotels preloaded={popularHotels} />}
-      </div>
-
-      {/* ── POPULAR CITIES + COUNTRIES ── */}
-      <div className="div-spacing">
-        {dataReady && <PopularCities preloaded={popularCities} />}
-      </div>
-      <div className="div-spacing">
-        {dataReady && <PopularCountries preloaded={popularCountries} />}
-      </div>
-
-      {/* FEATURES */}
+      {/* ── FEATURES ── */}
       <section id="features" className="py-16 px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto px-6">
+        <div className="max-w-6xl mx-auto">
           <div className="text-center mb-10 animate-in">
             <span className="text-xs font-bold text-primary uppercase tracking-[0.2em] px-3 py-1.5 rounded-full bg-primary/8 border border-primary/20">
               Why Tramps Aviation
@@ -596,8 +640,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* STATS BAND */}
-      <section className="py-12 px-4 sm:px-6 relative overflow-hidden">
+      {/* ── STATS BAND ── */}
+      <section className="py-10 px-4 sm:px-6 relative overflow-hidden">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
         <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
         <div className="relative max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
@@ -620,11 +664,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* B2B SECTION */}
+      {/* ── B2B SECTION ── */}
       <section id="agents" className="py-16 px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-8 items-center">
-            <div className="space-y-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-10 items-center">
+            <div className="space-y-5">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/8 text-xs font-semibold text-primary">
                 <Building2 className="h-3.5 w-3.5" /> For Travel Professionals
               </div>
@@ -750,14 +794,13 @@ export default function HomePage() {
 
       <UserReviews />
 
-      {/* CTA */}
+      {/* ── CTA ── */}
       <section className="py-16 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto">
-          <div className="relative rounded-3xl bg-card border border-border overflow-hidden p-8 sm:p-10">
+          <div className="relative rounded-3xl bg-card border border-border overflow-hidden p-8 sm:p-12">
             <div className="absolute inset-0 mesh-bg opacity-60" />
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-48 bg-primary/10 rounded-full blur-[80px]" />
             <div className="relative">
-              {/* Heading — center */}
               <div className="text-center mb-8">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/8 text-xs font-semibold text-primary mb-4">
                   <Zap className="h-3.5 w-3.5 fill-current" /> We are here to
@@ -772,10 +815,7 @@ export default function HomePage() {
                   anything else.
                 </p>
               </div>
-
-              {/* 2 contact cards — equal */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
-                {/* WhatsApp */}
                 <a
                   href="https://wa.me/919115500112"
                   target="_blank"
@@ -797,8 +837,6 @@ export default function HomePage() {
                     </p>
                   </div>
                 </a>
-
-                {/* Contact Us */}
                 <Link
                   href="/contact"
                   className="flex items-center gap-4 p-5 rounded-2xl bg-primary/8 border border-primary/25 hover:bg-primary/15 hover:border-primary/50 transition-all group"
@@ -819,14 +857,12 @@ export default function HomePage() {
                   </div>
                 </Link>
               </div>
-
-              {/* Bottom link */}
               <div className="flex items-center justify-center mt-8 pt-6 border-t border-border">
-                <Link
-                  href="/flights"
-                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl border border-border hover:border-primary/50 hover:bg-muted/50 text-sm font-semibold transition-all"
-                >
-                  Search Flights <Search className="h-3.5 w-3.5" />
+                <Link href="/flights">
+                  <button className="flex items-center justify-center gap-2 px-10 py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-all shadow-lg shadow-primary/20">
+                    <Search className="h-4 w-4" />
+                    Search Flights Now
+                  </button>
                 </Link>
               </div>
             </div>
@@ -845,22 +881,27 @@ function SearchField({
   placeholder,
   value,
   onChange,
+  fieldStyle,
 }: {
   label: string;
   icon: any;
   placeholder: string;
   value: string;
   onChange: (v: string) => void;
+  fieldStyle: React.CSSProperties;
 }) {
   return (
     <div className="space-y-1.5">
       <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
         {label}
       </label>
-      <div className="field-wrapper">
+      <div
+        style={fieldStyle}
+        className="hover:border-primary/50 focus-within:border-primary focus-within:[box-shadow:0_0_0_3px_hsl(var(--primary)/.12)]"
+      >
         <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
         <input
-          className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground min-w-0 truncate"
+          className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground min-w-0 truncate text-foreground"
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
