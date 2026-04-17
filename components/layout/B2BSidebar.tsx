@@ -14,11 +14,12 @@ import { agentApi, unwrap } from "@/lib/api/services";
 export function B2BSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { sidebarOpen, toggleSidebar } = useSettingsStore();
+  const { sidebarOpen, toggleSidebar, setSidebarOpen } = useSettingsStore();
   const { ps, fetchIfStale } = usePlatformStore();
   useEffect(() => { fetchIfStale(); }, []);
   const platformName = ps.platformName || APP_NAME;
   const { user, clearAuth } = useAuthStore();
+  const [isMobile, setIsMobile] = useState(false);
 
   // ── Live wallet balance — fetch fresh from API, not from stale store ──
   const [liveBalance, setLiveBalance] = useState<number | null>(null);
@@ -43,19 +44,48 @@ export function B2BSidebar() {
     if (user) fetchBalance();
   }, [user]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) setSidebarOpen(false);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [setSidebarOpen]);
+
   const displayBalance = liveBalance !== null ? liveBalance : (user?.walletBalance ?? 0);
+  const showLabels = isMobile ? true : sidebarOpen;
+
+  const handleNavClick = () => {
+    if (isMobile) setSidebarOpen(false);
+  };
 
   const handleLogout = () => {
     clearAuth();
+    setSidebarOpen(false);
     router.push("/b2b/login");
   };
 
   return (
     <TooltipProvider delayDuration={0}>
+      {isMobile && sidebarOpen && (
+        <button
+          type="button"
+          aria-label="Close sidebar overlay"
+          className="fixed inset-0 z-30 bg-foreground/35 backdrop-blur-[1px] md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       <aside
         className={cn(
           "fixed left-0 top-0 z-40 h-screen bg-card border-r border-border transition-all duration-300 flex flex-col",
-          sidebarOpen ? "w-64" : "w-[70px]"
+          "w-72 md:w-64",
+          isMobile ? (sidebarOpen ? "translate-x-0" : "-translate-x-full") : "translate-x-0",
+          !isMobile && !sidebarOpen && "md:w-[70px]"
         )}
       >
         {/* Logo */}
@@ -64,7 +94,7 @@ export function B2BSidebar() {
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl overflow-hidden bg-white border border-border">
               <Image src="/logo.jpg" alt={platformName} width={36} height={36} className="h-9 w-9 object-contain" />
             </div>
-            {sidebarOpen && (
+            {showLabels && (
               <div>
                 <p className="font-bold text-sm leading-none">{platformName}</p>
                 <p className="text-[10px] text-muted-foreground leading-none mt-0.5">Agent Portal</p>
@@ -89,6 +119,7 @@ export function B2BSidebar() {
                 <TooltipTrigger asChild>
                   <Link
                     href={item.href}
+                    onClick={handleNavClick}
                     className={cn(
                       "flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all font-medium text-sm",
                       isActive
@@ -97,10 +128,10 @@ export function B2BSidebar() {
                     )}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
-                    {sidebarOpen && <span className="flex-1 truncate">{item.label}</span>}
+                    {showLabels && <span className="flex-1 truncate">{item.label}</span>}
                   </Link>
                 </TooltipTrigger>
-                {!sidebarOpen && (
+                {!showLabels && (
                   <TooltipContent side="right">{item.label}</TooltipContent>
                 )}
               </Tooltip>
@@ -109,7 +140,7 @@ export function B2BSidebar() {
         </nav>
 
         {/* Wallet Balance — live from API */}
-        {sidebarOpen && (
+        {showLabels && (
           <div className="mx-3 mb-2 p-3 bg-primary/8 rounded-xl border border-primary/20">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2 text-primary">
@@ -146,6 +177,7 @@ export function B2BSidebar() {
                 <TooltipTrigger asChild>
                   <Link
                     href={item.href}
+                    onClick={handleNavClick}
                     className={cn(
                       "flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all font-medium text-sm",
                       isActive
@@ -154,10 +186,10 @@ export function B2BSidebar() {
                     )}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
-                    {sidebarOpen && <span className="truncate">{item.label}</span>}
+                    {showLabels && <span className="truncate">{item.label}</span>}
                   </Link>
                 </TooltipTrigger>
-                {!sidebarOpen && <TooltipContent side="right">{item.label}</TooltipContent>}
+                {!showLabels && <TooltipContent side="right">{item.label}</TooltipContent>}
               </Tooltip>
             );
           })}
@@ -170,14 +202,14 @@ export function B2BSidebar() {
                 className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all font-medium text-sm text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
               >
                 <LogOut className="h-4 w-4 shrink-0" />
-                {sidebarOpen && <span className="truncate">Logout</span>}
+                {showLabels && <span className="truncate">Logout</span>}
               </button>
             </TooltipTrigger>
-            {!sidebarOpen && <TooltipContent side="right">Logout</TooltipContent>}
+            {!showLabels && <TooltipContent side="right">Logout</TooltipContent>}
           </Tooltip>
 
           {/* Agent info */}
-          {sidebarOpen && user && (
+          {showLabels && user && (
             <div className="mt-2 px-3 py-2 rounded-xl bg-muted/50">
               <p className="text-xs font-semibold truncate">{user.name || user.agencyName || "Agent"}</p>
               <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>

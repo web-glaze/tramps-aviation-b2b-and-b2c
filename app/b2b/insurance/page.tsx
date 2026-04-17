@@ -1,38 +1,28 @@
-'use client'
-/**
- * /b2b/insurance — Redirects to common /insurance page.
- */
-import { useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
-import { RefreshCcw } from 'lucide-react'
+"use client";
 
-function B2BInsuranceRedirect() {
-  const router = useRouter()
-  const params = useSearchParams()
+import { Suspense } from "react";
+import dynamic from "next/dynamic";
+import { Loader2 } from "lucide-react";
 
-  useEffect(() => {
-    const planId = params.get('planId') || ''
-    const qs = new URLSearchParams()
-    if (planId) qs.set('planId', planId)
-    router.replace(`/insurance${qs.toString() ? '?' + qs.toString() : ''}`)
-  }, [])
-
-  return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <RefreshCcw className="h-5 w-5 animate-spin text-muted-foreground" />
+const InsurancePage = dynamic(() => import("../../insurance/page"), {
+  loading: () => (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
     </div>
-  )
-}
+  ),
+  ssr: false,
+});
 
 export default function B2BInsurancePage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <RefreshCcw className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    }>
-      <B2BInsuranceRedirect />
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <InsurancePage />
     </Suspense>
-  )
+  );
 }

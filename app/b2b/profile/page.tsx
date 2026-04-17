@@ -175,7 +175,7 @@ export default function B2BProfilePage() {
     "flex items-center gap-2.5 h-11 px-4 rounded-xl border border-border bg-muted/30 text-sm text-foreground";
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="mx-auto w-full max-w-6xl space-y-6">
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
@@ -193,13 +193,13 @@ export default function B2BProfilePage() {
       </div>
 
       {/* ── Hero card — Agent ID + avatar ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-primary p-6 text-primary-foreground">
+      <div className="relative overflow-hidden rounded-2xl bg-primary p-6 text-primary-foreground shadow-sm">
         {/* Decorative blobs */}
         <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10 pointer-events-none" />
         <div className="absolute -right-2 bottom-0 h-20 w-20 rounded-full bg-white/5 pointer-events-none" />
         <div className="absolute left-1/2 -bottom-10 h-28 w-28 rounded-full bg-white/5 pointer-events-none" />
 
-        <div className="relative flex items-center gap-5">
+        <div className="relative flex flex-col gap-5 md:flex-row md:items-center">
           {/* Avatar */}
           <div className="h-16 w-16 rounded-2xl bg-white/20 flex items-center justify-center text-3xl font-black flex-shrink-0">
             {(data.agencyName || data.name || "A")[0].toUpperCase()}
@@ -296,7 +296,7 @@ export default function B2BProfilePage() {
       </div>
 
       {/* ── Quick stats ── */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {[
           {
             label: "Wallet Balance",
@@ -381,7 +381,7 @@ export default function B2BProfilePage() {
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">
                   Account Information
                 </p>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-4 md:grid-cols-2">
                   <div>
                     <label className={lbl}>Agency Name</label>
                     <div className={readonlyField}>

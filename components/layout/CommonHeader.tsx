@@ -60,6 +60,7 @@ export function CommonHeader({ variant = "home" }: { variant?: HeaderVariant }) 
 
   const toggleTheme  = () => setTheme(theme === "dark" ? "light" : "dark");
   const dashboardLink = role === "agent" ? "/b2b/dashboard" : "/b2c/my-trips";
+  const b2cNavBase = role === "customer" ? "/b2c" : "";
   const isHome        = variant === "home";
   const isB2C         = variant === "b2c";
   const isTransparent = isHome && !scrolled;
@@ -105,9 +106,10 @@ export function CommonHeader({ variant = "home" }: { variant?: HeaderVariant }) 
             );
           })}
           {isB2C && B2C_NAV.map(({ href, label, icon: Icon }) => {
-            const active = pathname.startsWith(href);
+            const resolvedHref = `${b2cNavBase}${href}`;
+            const active = pathname.startsWith(href) || pathname.startsWith(resolvedHref);
             return (
-              <Link key={href} href={href} className={cn(
+              <Link key={href} href={resolvedHref} className={cn(
                 "flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap",
                 active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
               )}>
@@ -201,7 +203,7 @@ export function CommonHeader({ variant = "home" }: { variant?: HeaderVariant }) 
         <div className="lg:hidden absolute top-full left-0 right-0 bg-background/98 dark:bg-card/98 backdrop-blur-xl border-b border-border shadow-2xl max-h-[calc(100vh-4rem)] overflow-y-auto">
           <div className="px-4 py-3 space-y-1">
             {(isHome ? HOME_NAV.map(n => ({ href: n.href, label: n.label }))
-              : isB2C ? B2C_NAV.map(n => ({ href: n.href, label: n.label }))
+              : isB2C ? B2C_NAV.map(n => ({ href: `${b2cNavBase}${n.href}`, label: n.label }))
               : [{ href: "/", label: "🏠 Home" }]
             ).map(({ href, label }) => (
               <Link key={href} href={href} onClick={() => setMobileOpen(false)}
@@ -253,3 +255,4 @@ export function CommonHeader({ variant = "home" }: { variant?: HeaderVariant }) 
     </header>
   );
 }
+

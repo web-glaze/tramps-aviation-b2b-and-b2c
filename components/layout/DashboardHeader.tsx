@@ -1,14 +1,16 @@
 "use client";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuthStore, useSettingsStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
-import { Bell, Sun, Moon } from "lucide-react";
+import { Bell, Sun, Moon, Home, Menu } from "lucide-react";
 
 const PAGE_TITLES: Record<string, string> = {
   "/b2b/dashboard": "Dashboard",
   "/b2b/flights": "Book Flights",
   "/b2b/hotels": "Book Hotels",
   "/b2b/insurance": "Travel Insurance",
+  "/b2b/series-fare": "Series Fare",
   "/b2b/bookings": "My Bookings",
   "/b2b/wallet": "Wallet",
   "/b2b/commission": "Commission",
@@ -20,7 +22,7 @@ const PAGE_TITLES: Record<string, string> = {
 export function DashboardHeader({ title }: { title?: string }) {
   const pathname = usePathname();
   const { user } = useAuthStore();
-  const { sidebarOpen, theme, setTheme } = useSettingsStore();
+  const { sidebarOpen, theme, setTheme, toggleSidebar } = useSettingsStore();
   const pageTitle = title || PAGE_TITLES[pathname] || "Tramps Aviation";
 
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
@@ -28,16 +30,32 @@ export function DashboardHeader({ title }: { title?: string }) {
   return (
     <header
       className={cn(
-        "fixed top-0 right-0 z-20 h-16 bg-background/95 dark:bg-card/95 backdrop-blur-xl border-b border-border flex items-center px-6 gap-4 transition-all duration-300",
-        sidebarOpen ? "left-64" : "left-[70px]",
+        "fixed top-0 right-0 z-20 h-16 bg-background/95 dark:bg-card/95 backdrop-blur-xl border-b border-border flex items-center px-4 sm:px-6 gap-3 sm:gap-4 transition-all duration-300 left-0",
+        sidebarOpen ? "md:left-64" : "md:left-[70px]",
       )}
     >
+      <button
+        onClick={toggleSidebar}
+        className="h-9 w-9 rounded-xl border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all md:hidden"
+        title="Open menu"
+      >
+        <Menu className="h-4 w-4" />
+      </button>
+
       {/* Page title */}
       <div className="flex-1">
         <h1 className="font-bold text-base font-display text-foreground">{pageTitle}</h1>
       </div>
 
       <div className="flex items-center gap-2">
+        <Link
+          href="/"
+          className="h-9 w-9 rounded-xl border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+          title="Go to Home"
+        >
+          <Home className="h-4 w-4" />
+        </Link>
+
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
@@ -63,7 +81,7 @@ export function DashboardHeader({ title }: { title?: string }) {
             <div className="h-8 w-8 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-sm">
               {(user.name || user.agencyName || "A")[0].toUpperCase()}
             </div>
-            <div className="hidden sm:block">
+            <div className="hidden lg:block">
               <p className="text-xs font-semibold leading-none">
                 {user.name || user.agencyName || "Agent"}
               </p>
@@ -75,4 +93,3 @@ export function DashboardHeader({ title }: { title?: string }) {
     </header>
   );
 }
-

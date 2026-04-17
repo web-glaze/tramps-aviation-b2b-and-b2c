@@ -21,7 +21,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { APP_NAME } from "@/config/app";
-import { usePlatformStore } from "@/lib/store";
+import { useAuthStore, usePlatformStore } from "@/lib/store";
 
 const FOOTER_LINKS = [
   {
@@ -72,10 +72,19 @@ const SOCIAL_ICONS: Record<string, { Icon: any; label: string }> = {
 };
 
 export function CommonFooter() {
+  const { role } = useAuthStore();
   const { ps, fetchIfStale } = usePlatformStore();
   useEffect(() => {
     fetchIfStale();
   }, []);
+
+  const routeForContext = (href: string) => {
+    if (href === "/flights" || href === "/hotels" || href === "/insurance" || href === "/series-fare") {
+      if (role === "agent") return `/b2b${href}`;
+      if (role === "customer") return `/b2c${href}`;
+    }
+    return href;
+  };
 
   const name = ps.platformName || APP_NAME;
   const tagline = ps.platformTagline || "B2B & B2C Travel Platform";
@@ -179,7 +188,7 @@ export function CommonFooter() {
                     {links.map(({ href, label }) => (
                       <li key={label}>
                         <Link
-                          href={href}
+                          href={routeForContext(href)}
                           className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5 group"
                         >
                           <span className="w-1 h-1 rounded-full bg-muted-foreground/30 group-hover:bg-primary transition-colors shrink-0" />
@@ -373,3 +382,5 @@ export function CommonFooter() {
     </footer>
   );
 }
+
+

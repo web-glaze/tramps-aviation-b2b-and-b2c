@@ -125,7 +125,7 @@ export default function B2BLoginPage() {
             Agent Sign In
           </h2>
           <p className="text-sm text-muted-foreground mb-6">
-            Use Agent ID (TAHP00001) or Phone number
+            Use Agent ID or Phone number
           </p>
 
           <form onSubmit={handleLogin} className="space-y-4">

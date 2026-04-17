@@ -5,6 +5,7 @@ import { useAuthStore, useSettingsStore } from "@/lib/store";
 import { agentApi, unwrap } from "@/lib/api/services";
 import { B2BSidebar } from "@/components/layout/B2BSidebar";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
+import { CommonFooter } from "@/components/layout/CommonFooter";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 
@@ -99,11 +100,12 @@ export default function B2BLayout({ children }: { children: React.ReactNode }) {
       <DashboardHeader />
       <main
         className={cn(
-          "transition-all duration-300 pt-16 min-h-screen",
-          sidebarOpen ? "ml-64" : "ml-[70px]",
+          "transition-all duration-300 pt-16 min-h-screen flex flex-col ml-0",
+          sidebarOpen ? "md:ml-64" : "md:ml-[70px]",
         )}
       >
-        <div className="p-6">{children}</div>
+        <div className="flex-1 p-4 sm:p-6">{children}</div>
+        <CommonFooter />
       </main>
     </div>
   );
