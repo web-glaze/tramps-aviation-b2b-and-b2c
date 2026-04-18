@@ -45,11 +45,12 @@ export function FlightSearchBar({
         )}
 
         {/* Inputs */}
-        <div className={cn("grid gap-3",
-          tripType==="roundtrip"
-            ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"
-            : "grid-cols-2 sm:grid-cols-4 lg:grid-cols-5"
-        )}>
+        <div className="search-panel p-3 sm:p-4">
+          <div className={cn("grid gap-3",
+            tripType==="roundtrip"
+              ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-6"
+              : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-5"
+          )}>
           {/* From */}
           <div>
             <label className="search-label">From</label>
@@ -88,17 +89,18 @@ export function FlightSearchBar({
           <div>
             <label className="search-label">Adults</label>
             <input type="number" value={adults} min={1} max={9}
-              onChange={e=>setAdults(parseInt(e.target.value)||1)}
+              onChange={e=>setAdults(Math.min(9, Math.max(1, parseInt(e.target.value)||1)))}
               className="search-input w-full font-bold text-xl text-center"/>
           </div>
           {/* Button */}
           <div className={cn("flex items-end", tripType==="roundtrip"?"col-span-2 sm:col-span-3 lg:col-span-1":"")}>
             <button onClick={onSearch} disabled={loading}
-              className="w-full h-[54px] bg-white text-primary hover:bg-white/90 disabled:opacity-60 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-sm active:scale-[.98]">
+              className="search-button w-full h-[54px] disabled:opacity-60 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[.98]">
               {loading ? <RefreshCcw className="h-4 w-4 animate-spin"/> : <Search className="h-4 w-4"/>}
               {loading ? "Searching…" : "Search Flights"}
             </button>
           </div>
+        </div>
         </div>
       </div>
     </div>

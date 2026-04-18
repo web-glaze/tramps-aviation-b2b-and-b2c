@@ -52,15 +52,21 @@ export default function B2BLayout({ children }: { children: React.ReactNode }) {
     if (!kycApproved && !isOnKycPage) {
       // FIX: before redirecting, fetch fresh KYC status from API
       // (store might have stale "submitted" status even after admin approved)
-      agentApi.getKycStatus()
+      agentApi
+        .getKycStatus()
         .then((res: any) => {
           const data = unwrap(res) as any;
-          const raw = data?.kycStatus || data?.kyc?.status || data?.agentStatus || "";
+          const raw =
+            data?.kycStatus || data?.kyc?.status || data?.agentStatus || "";
           const freshApproved = raw === "approved" || raw === "active";
           if (freshApproved) {
             // Update store with fresh status
             const { setAuth, token } = useAuthStore.getState();
-            if (user && token) setAuth({ ...user, kycStatus: "approved", status: "active" }, token);
+            if (user && token)
+              setAuth(
+                { ...user, kycStatus: "approved", status: "active" },
+                token,
+              );
             setChecked(true);
           } else {
             router.replace("/b2b/kyc");
@@ -88,14 +94,19 @@ export default function B2BLayout({ children }: { children: React.ReactNode }) {
   if (isPublicPage) return <>{children}</>;
 
   // Not authenticated after check
-  if (!isAuthenticated && typeof window !== "undefined" && !localStorage.getItem("auth_token")) return null;
+  if (
+    !isAuthenticated &&
+    typeof window !== "undefined" &&
+    !localStorage.getItem("auth_token")
+  )
+    return null;
 
   // KYC page — full-screen (no sidebar)
   if (pathname.startsWith("/b2b/kyc")) return <>{children}</>;
 
   // Full agent dashboard layout
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <B2BSidebar />
       <DashboardHeader />
       <main

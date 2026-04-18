@@ -213,7 +213,8 @@ function HotelsContent() {
       {/* Search bar */}
       <div className="search-hero">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6">
-          <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="search-panel p-3 sm:p-4">
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-6">
             <div className="col-span-2 sm:col-span-2 lg:col-span-2">
               <label className="search-label">City / Destination</label>
               <div className="relative">
@@ -234,17 +235,18 @@ function HotelsContent() {
             </div>
             <div>
               <label className="search-label">Rooms</label>
-              <input type="number" value={rooms} min={1} max={9} onChange={e=>setRooms(parseInt(e.target.value)||1)}
+              <input type="number" value={rooms} min={1} max={9} onChange={e=>setRooms(Math.min(9, Math.max(1, parseInt(e.target.value)||1)))}
                 className="search-input w-full font-bold text-xl text-center"/>
             </div>
             <div className="flex flex-col">
               <label className="search-label">&nbsp;</label>
               <button onClick={()=>doSearch()} disabled={loading}
-                className="w-full h-[50px] bg-white text-primary hover:bg-white/90 disabled:opacity-60 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-sm">
+                className="search-button w-full h-[50px] disabled:opacity-60 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-sm">
                 {loading?<RefreshCcw className="h-4 w-4 animate-spin"/>:<Search className="h-4 w-4"/>}
                 {loading?"Searching…":"Search"}
               </button>
             </div>
+          </div>
           </div>
         </div>
       </div>

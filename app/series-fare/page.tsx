@@ -33,14 +33,19 @@ function SeriesFareCard({
     ? flight.price
     : flight.fare?.totalFare || flight.fare?.total || 0;
   const totalPrice = price * adults;
+  const taxes = Number(flight?.fare?.taxes || flight?.taxes || 0);
   const refundable = flight.isRefundable !== false;
   const code = (flight.airlineCode || (flight.airline || "?").slice(0, 2)).toUpperCase();
+  const seatsAvailable =
+    typeof flight.seatsAvailable === "number" && flight.seatsAvailable > 0
+      ? flight.seatsAvailable
+      : 9;
 
   return (
     <div className={cn(
       "rounded-2xl overflow-hidden border transition-all duration-200",
-      "bg-card/90 backdrop-blur-sm shadow-sm hover:shadow-md hover:-translate-y-0.5",
-      "border-border/60 hover:border-primary/30"
+      "bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(248,251,255,0.86))] backdrop-blur-xl shadow-[0_18px_48px_rgba(10,37,64,0.10)] hover:shadow-[0_24px_60px_rgba(10,37,64,0.14)] hover:-translate-y-0.5",
+      "border-white/70 dark:border-border/60 hover:border-primary/30"
     )}>
       {/* Exclusive badge */}
       <div className="bg-gradient-to-r from-primary/8 to-primary/4 border-b border-border/50 px-4 py-1.5 flex items-center gap-2">
@@ -60,9 +65,9 @@ function SeriesFareCard({
       </div>
 
       <div className="p-4 sm:p-5">
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center sm:gap-4">
           {/* Airline */}
-          <div className="flex flex-col items-center gap-1 w-14 flex-shrink-0">
+          <div className="flex flex-col items-center gap-1 w-14 flex-shrink-0 mx-auto lg:mx-0">
             <div className={cn(airlineColor(flight.airline), "w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-sm")}>
               {code}
             </div>
@@ -99,7 +104,7 @@ function SeriesFareCard({
           </div>
 
           {/* Price + Book */}
-          <div className="text-right flex-shrink-0">
+          <div className="w-full text-center lg:w-auto lg:text-right flex-shrink-0 border-t border-border/60 pt-3 lg:border-t-0 lg:pt-0">
             <p className="text-[10px] text-muted-foreground">per person</p>
             <p className="text-2xl font-black leading-tight" style={{ color: "hsl(var(--brand-orange))" }}>
               ₹{Number(price).toLocaleString("en-IN")}
@@ -114,6 +119,16 @@ function SeriesFareCard({
                 </span>
               </p>
             )}
+            <p className={cn(
+              "text-[10px] font-semibold mt-1",
+              seatsAvailable <= adults
+                ? "text-amber-600 dark:text-amber-400"
+                : seatsAvailable <= 4
+                  ? "text-rose-500"
+                  : "text-emerald-600 dark:text-emerald-400"
+            )}>
+              {seatsAvailable} seat{seatsAvailable === 1 ? "" : "s"} available
+            </p>
             <button
               onClick={() => onBook(flight)}
               className="mt-2 px-5 py-2 rounded-xl text-sm font-bold text-white transition-all active:scale-95 shadow-sm"
@@ -167,7 +182,9 @@ function SeriesFareCard({
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Taxes & Fees</span>
-                    <span className="font-medium">₹{Number(flight.fare?.taxes || 0).toLocaleString("en-IN")}</span>
+                    <span className="font-medium">
+                      {taxes > 0 ? `₹${taxes.toLocaleString("en-IN")}` : "Included in fare"}
+                    </span>
                   </div>
                   <div className="flex justify-between font-bold border-t border-border pt-1.5 mt-1.5">
                     <span>Total ({adults} pax)</span>
@@ -200,8 +217,8 @@ function SeriesFareCard({
                   </div>
                   <div className="flex justify-between">
                     <span>Seats Left</span>
-                    <span className={cn("font-medium", (flight.seatsAvailable || 9) <= 5 ? "text-rose-500" : "text-emerald-600 dark:text-emerald-400")}>
-                      {flight.seatsAvailable || 9} seats
+                    <span className={cn("font-medium", seatsAvailable <= 5 ? "text-rose-500" : "text-emerald-600 dark:text-emerald-400")}>
+                      {seatsAvailable} seats
                     </span>
                   </div>
                 </div>
@@ -657,6 +674,11 @@ function SeriesFarePage() {
   const hasFilters = filterStop !== "all" || filterRef !== "all" || filterCabin !== "all" || filterAirline !== "all" || (maxPrice > 0 && maxPrice < maxPriceAll);
 
   const filtered = flights.filter(f => {
+    const seatsAvailable =
+      typeof f.seatsAvailable === "number" && f.seatsAvailable > 0
+        ? f.seatsAvailable
+        : null;
+    if (seatsAvailable !== null && seatsAvailable < adults) return false;
     if (filterStop === "0" && f.stops !== 0) return false;
     if (filterStop === "1" && f.stops === 0) return false;
     if (filterRef === "yes" && f.isRefundable === false) return false;
@@ -696,7 +718,8 @@ function SeriesFarePage() {
       {/* Search Bar */}
       <div className="search-hero">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6">
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 items-end">
+          <div className="search-panel p-3 sm:p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
             <div>
               <label className="search-label">From</label>
               <div className="relative">
@@ -736,22 +759,23 @@ function SeriesFarePage() {
               <label className="search-label">Adults</label>
               <input
                 type="number" value={adults} min={1} max={9}
-                onChange={e => setAdults(Math.max(1, parseInt(e.target.value) || 1))}
+                onChange={e => setAdults(Math.min(9, Math.max(1, parseInt(e.target.value) || 1)))}
                 className="search-input w-full font-bold text-xl text-center"
               />
             </div>
             <div className="flex items-end">
               <button
                 onClick={() => doSearch()} disabled={loading}
-                className="w-full h-[50px] bg-white text-primary hover:bg-white/90 disabled:opacity-60 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-sm"
+                className="search-button w-full h-[50px] disabled:opacity-60 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-sm"
               >
                 {loading ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                 {loading ? "Searching…" : "Search"}
               </button>
             </div>
           </div>
+          </div>
 
-          <div className="mt-3 flex items-start gap-2 text-xs text-white/70 bg-white/10 rounded-xl px-4 py-2.5 border border-white/15 backdrop-blur-sm">
+          <div className="search-note mt-3 flex items-start gap-2 text-xs text-white/70 rounded-xl px-4 py-2.5">
             <Info className="h-3.5 w-3.5 text-white/60 flex-shrink-0 mt-0.5" />
             <p>
               <span className="font-semibold text-white">Series Fares</span> are Tramps Aviation's exclusive bulk inventory —
@@ -811,7 +835,7 @@ function SeriesFarePage() {
               {filtered.length === 0 ? (
                 <div className="text-center py-12 bg-card border border-border rounded-2xl shadow-sm">
                   <Filter className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-                  <p className="font-semibold text-foreground mb-1">No fares match your filters</p>
+                  <p className="font-semibold text-foreground mb-1">No fares match your filters or available seat count</p>
                   <button
                     onClick={() => { setFilterStop("all"); setFilterRef("all"); setFilterCabin("all"); setFilterAirline("all"); setMaxPrice(0); }}
                     className="text-primary hover:underline text-sm mt-2"

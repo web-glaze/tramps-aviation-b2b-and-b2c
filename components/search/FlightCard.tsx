@@ -36,6 +36,11 @@ export function FlightCard({ flight, adults, onBook, bookLabel = "Book Now" }: P
   const price = getPrice(flight);
   const code  = flight.airlineCode || (flight.airline || "?")[0];
   const color = getAirlineColor(flight.airline);
+  const seatsAvailable =
+    typeof flight.seatsAvailable === "number" && flight.seatsAvailable > 0
+      ? flight.seatsAvailable
+      : null;
+  const hasEnoughSeats = seatsAvailable === null || seatsAvailable >= adults;
 
   return (
     <div className={cn(
@@ -55,9 +60,9 @@ export function FlightCard({ flight, adults, onBook, bookLabel = "Book Now" }: P
       )}
 
       <div className="p-4 sm:p-5">
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center sm:gap-4">
           {/* Airline */}
-          <div className="flex flex-col items-center gap-1 w-14 flex-shrink-0">
+          <div className="flex flex-col items-center gap-1 w-14 flex-shrink-0 mx-auto lg:mx-0">
             <div className={cn(color, "w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-sm")}>
               {code}
             </div>
@@ -88,7 +93,7 @@ export function FlightCard({ flight, adults, onBook, bookLabel = "Book Now" }: P
           </div>
 
           {/* Price + Book */}
-          <div className="flex-shrink-0 text-right pl-3 border-l border-border">
+          <div className="flex w-full flex-col gap-2 border-t border-border pt-3 text-center lg:w-auto lg:flex-shrink-0 lg:border-l lg:border-t-0 lg:pl-3 lg:pt-0 lg:text-right">
             <p className="text-[10px] text-muted-foreground">per person</p>
             <p className="text-2xl font-black leading-tight" style={{color:"hsl(var(--brand-orange))"}}>
               ₹{price.toLocaleString("en-IN")}
@@ -96,6 +101,18 @@ export function FlightCard({ flight, adults, onBook, bookLabel = "Book Now" }: P
             {adults > 1 && (
               <p className="text-[10px] text-primary font-medium">
                 ₹{(price * adults).toLocaleString("en-IN")} total
+              </p>
+            )}
+            {seatsAvailable !== null && (
+              <p className={cn(
+                "text-[10px] font-semibold",
+                hasEnoughSeats
+                  ? seatsAvailable <= 4
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-emerald-600 dark:text-emerald-400"
+                  : "text-rose-600 dark:text-rose-400"
+              )}>
+                {hasEnoughSeats ? `${seatsAvailable} seat${seatsAvailable === 1 ? "" : "s"} left` : `Only ${seatsAvailable} seat${seatsAvailable === 1 ? "" : "s"} left`}
               </p>
             )}
             <p className={cn("text-[10px] mt-0.5",
@@ -112,7 +129,7 @@ export function FlightCard({ flight, adults, onBook, bookLabel = "Book Now" }: P
         </div>
 
         {/* Info strip */}
-        <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border">
+        <div className="flex flex-wrap items-center gap-3 mt-3 pt-3 border-t border-border">
           <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
             <Luggage className="h-3 w-3"/>{flight.checkinBaggage || "15 KG"} check-in
           </span>
@@ -131,13 +148,14 @@ export function FlightCard({ flight, adults, onBook, bookLabel = "Book Now" }: P
         </div>
 
         {/* Expanded */}
-        {expanded && (
+          {expanded && (
           <div className="mt-3 pt-3 border-t border-border grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
               ["Flight",  flight.flightNo],
               ["Class",   flight.cabinClass || "Economy"],
               ["Stops",   flight.stops === 0 ? "Non-stop" : `${flight.stops} stop`],
               ["Refund",  flight.refundable ? "Refundable" : "Non-refundable"],
+              ...(seatsAvailable !== null ? [["Seats", `${seatsAvailable} available`]] : []),
             ].map(([k, v]) => (
               <div key={k} className="bg-muted/60 rounded-xl p-3">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{k}</p>

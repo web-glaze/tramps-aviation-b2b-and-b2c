@@ -28,6 +28,7 @@ function AgentBookingDialog({ flight, adults, from, to, date, onClose }: {
   flight:any; adults:number; from:string; to:string; date:string; onClose:()=>void;
 }) {
   const { agentId } = useAuthStore();
+  const taxes = Number(flight?.fare?.taxes || flight?.taxes || 0);
   const [passengers, setPassengers] = useState(
     Array.from({length:adults}, ()=>({firstName:"",lastName:"",dob:"",gender:"M",passport:""}))
   );
@@ -114,7 +115,9 @@ function AgentBookingDialog({ flight, adults, from, to, date, onClose }: {
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Taxes & fees</span>
-              <span className="font-medium">Included</span>
+              <span className="font-medium">
+                {taxes > 0 ? `₹${taxes.toLocaleString("en-IN")}` : "Included in fare"}
+              </span>
             </div>
             <div className="flex justify-between font-bold border-t border-amber-200 dark:border-amber-700/30 pt-2">
               <span>Wallet Deduction</span>
@@ -177,6 +180,7 @@ function BookingDialog({ flight, adults, from, to, date, onClose }: {
   flight:any; adults:number; from:string; to:string; date:string; onClose:()=>void;
 }) {
   const router = useRouter();
+  const taxes = Number(flight?.fare?.taxes || flight?.taxes || 0);
   const [passengers, setPassengers] = useState(
     Array.from({length:adults}, ()=>({firstName:"",lastName:"",dob:"",gender:"M",passport:""}))
   );
@@ -263,7 +267,9 @@ function BookingDialog({ flight, adults, from, to, date, onClose }: {
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Taxes & fees</span>
-              <span className="text-foreground font-medium">Included</span>
+              <span className="text-foreground font-medium">
+                {taxes > 0 ? `₹${taxes.toLocaleString("en-IN")}` : "Included in fare"}
+              </span>
             </div>
             <div className="flex justify-between font-bold border-t border-border pt-2">
               <span className="text-foreground">Total</span>
@@ -422,6 +428,11 @@ function FlightsContent() {
 
   const filtered = flights
     .filter(f => {
+      const seatsAvailable =
+        typeof f.seatsAvailable === "number" && f.seatsAvailable > 0
+          ? f.seatsAvailable
+          : null;
+      if (seatsAvailable !== null && seatsAvailable < adults) return false;
       if (filterStop==="0" && f.stops!==0) return false;
       if (filterStop==="1" && f.stops===0) return false;
       if (filterRef==="yes" && !f.refundable) return false;
@@ -538,7 +549,7 @@ function FlightsContent() {
               {filtered.length===0 && (
                 <div className="text-center py-12 bg-card border border-border rounded-2xl shadow-sm">
                   <Filter className="h-8 w-8 text-muted-foreground mx-auto mb-3"/>
-                  <p className="font-semibold text-foreground mb-1">No flights match your filters</p>
+                  <p className="font-semibold text-foreground mb-1">No flights match your filters or seat requirement</p>
                   <button onClick={()=>{setFilterStop("all");setFilterRef("all");}} className="text-primary hover:underline text-sm mt-2">Clear filters</button>
                 </div>
               )}
