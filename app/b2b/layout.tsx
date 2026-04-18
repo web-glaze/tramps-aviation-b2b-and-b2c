@@ -104,7 +104,7 @@ export default function B2BLayout({ children }: { children: React.ReactNode }) {
   // Full agent dashboard layout — top navbar only, no left sidebar
   // pt-16 on mobile (single row), md:pt-[104px] accounts for secondary nav (md to <xl), xl:pt-16 (no secondary)
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background">
       <B2BTopNavbar />
       <main className="pt-[88px] md:pt-[104px] xl:pt-16 min-h-screen flex flex-col">
         <div className="flex-1 p-4 sm:p-6">{children}</div>

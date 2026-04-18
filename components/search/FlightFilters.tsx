@@ -53,7 +53,7 @@ export function FlightFilters({
   const airlines = Array.from(new Set<string>(flights.map(f=>f.airline).filter(Boolean)));
 
   return (
-    <div className="bg-card border border-border rounded-2xl shadow-sm sticky top-20 overflow-hidden">
+    <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
         <p className="text-sm font-bold text-foreground flex items-center gap-2">
           <SlidersHorizontal className="h-3.5 w-3.5 text-primary"/>Filters
@@ -121,16 +121,14 @@ export function FlightFilters({
               const minFare = Math.min(...flights.filter(f=>f.airline===airline).map(getPrice).filter(Boolean));
               return (
                 <button key={airline} onClick={()=>setFilterAirline?.(airline)}
-                  className={cn("w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all",
+                  className={cn("w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all",
                     filterAirline===airline ? "bg-primary/10 border border-primary/20" : "hover:bg-muted"
                   )}>
-                  <div className="flex items-center gap-2">
-                    <div className={cn(getAirlineColor(airline),"w-5 h-5 rounded text-white font-black text-[9px] flex items-center justify-center flex-shrink-0")}>
-                      {(airline||"?")[0]}
-                    </div>
-                    <p className="text-xs text-foreground font-medium">{airline}</p>
+                  <div className={cn(getAirlineColor(airline),"w-5 h-5 rounded text-white font-black text-[9px] flex items-center justify-center flex-shrink-0")}>
+                    {(airline||"?")[0]}
                   </div>
-                  <div className="text-right">
+                  <p className="text-xs text-foreground font-medium truncate flex-1 text-left">{airline}</p>
+                  <div className="text-right flex-shrink-0">
                     <p className="text-[10px] font-semibold" style={{color:"hsl(var(--brand-orange))"}}>
                       ₹{minFare.toLocaleString("en-IN")}
                     </p>

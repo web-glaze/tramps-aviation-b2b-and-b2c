@@ -3,57 +3,92 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
-  Plane, ArrowRight, Luggage, Search, RefreshCcw, X,
-  AlertCircle, Shield, Zap, CheckCircle, Filter,
-  Star, Info, Sparkles, ArrowLeftRight, Users, CheckCircle2,
+  Plane,
+  ArrowRight,
+  Luggage,
+  Search,
+  RefreshCcw,
+  X,
+  AlertCircle,
+  Shield,
+  Zap,
+  CheckCircle,
+  Filter,
+  Star,
+  Info,
+  Sparkles,
+  ArrowLeftRight,
+  Users,
+  CheckCircle2,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { FlightFilters } from "@/components/search/FlightFilters";
-import { AgentCommissionBreakdown, AgentEarnBadge } from "@/components/shared/AgentCommissionBreakdown";
+import {
+  AgentCommissionBreakdown,
+  AgentEarnBadge,
+} from "@/components/shared/AgentCommissionBreakdown";
 import apiClient from "@/lib/api/client";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 
 const AIRLINE_COLOR: Record<string, string> = {
-  "IndiGo": "bg-indigo-600", "Air India": "bg-red-600", "SpiceJet": "bg-orange-500",
-  "Vistara": "bg-purple-600", "Akasa Air": "bg-yellow-500", "Go First": "bg-sky-500",
-  "Air India Express": "bg-red-500", "AirAsia": "bg-red-700", "GoAir": "bg-sky-600",
+  IndiGo: "bg-indigo-600",
+  "Air India": "bg-red-600",
+  SpiceJet: "bg-orange-500",
+  Vistara: "bg-purple-600",
+  "Akasa Air": "bg-yellow-500",
+  "Go First": "bg-sky-500",
+  "Air India Express": "bg-red-500",
+  AirAsia: "bg-red-700",
+  GoAir: "bg-sky-600",
 };
 const airlineColor = (n: string) => AIRLINE_COLOR[n] || "bg-primary";
 
 // ─── Series Fare Card ─────────────────────────────────────────────────────────
 function SeriesFareCard({
-  flight, adults, onBook,
+  flight,
+  adults,
+  onBook,
 }: {
-  flight: any; adults: number; onBook: (f: any) => void;
+  flight: any;
+  adults: number;
+  onBook: (f: any) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const { role } = useAuthStore();
 
-  const price = typeof flight.price === "number"
-    ? flight.price
-    : flight.fare?.totalFare || flight.fare?.total || 0;
+  const price =
+    typeof flight.price === "number"
+      ? flight.price
+      : flight.fare?.totalFare || flight.fare?.total || 0;
   const totalPrice = price * adults;
   const taxes = Number(flight?.fare?.taxes || flight?.taxes || 0);
   const refundable = flight.isRefundable !== false;
-  const code = (flight.airlineCode || (flight.airline || "?").slice(0, 2)).toUpperCase();
+  const code = (
+    flight.airlineCode || (flight.airline || "?").slice(0, 2)
+  ).toUpperCase();
   const seatsAvailable =
     typeof flight.seatsAvailable === "number" && flight.seatsAvailable > 0
       ? flight.seatsAvailable
       : 9;
 
   // Commission data from backend (if available) — component falls back to 5% default
-  const commissionPercent = Number(flight?.fare?.commissionPercent ?? flight?.commissionPercent ?? 5);
-  const commissionAmount = flight?.fare?.commissionAmount ?? flight?.commissionAmount;
+  const commissionPercent = Number(
+    flight?.fare?.commissionPercent ?? flight?.commissionPercent ?? 5,
+  );
+  const commissionAmount =
+    flight?.fare?.commissionAmount ?? flight?.commissionAmount;
 
   return (
-    <div className={cn(
-      "rounded-2xl overflow-hidden border transition-all duration-200",
-      "bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(248,251,255,0.86))] backdrop-blur-xl shadow-[0_18px_48px_rgba(10,37,64,0.10)] hover:shadow-[0_24px_60px_rgba(10,37,64,0.14)] hover:-translate-y-0.5",
-      "border-white/70 dark:border-border/60 hover:border-primary/30"
-    )}>
+    <div
+      className={cn(
+        "rounded-2xl overflow-hidden border transition-all duration-200",
+        "bg-card backdrop-blur-xl shadow-[0_18px_48px_rgba(10,37,64,0.10)] dark:shadow-[0_18px_48px_rgba(0,0,0,0.30)] hover:shadow-[0_24px_60px_rgba(10,37,64,0.14)] dark:hover:shadow-[0_24px_60px_rgba(0,0,0,0.40)] hover:-translate-y-0.5",
+        "border-border/60 hover:border-primary/30",
+      )}
+    >
       {/* Exclusive badge */}
       <div className="bg-gradient-to-r from-primary/8 to-primary/4 border-b border-border/50 px-4 py-1.5 flex items-center gap-2">
         <Sparkles className="h-3 w-3 text-primary flex-shrink-0" />
@@ -75,7 +110,12 @@ function SeriesFareCard({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center sm:gap-4">
           {/* Airline */}
           <div className="flex flex-col items-center gap-1 w-14 flex-shrink-0 mx-auto lg:mx-0">
-            <div className={cn(airlineColor(flight.airline), "w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-sm")}>
+            <div
+              className={cn(
+                airlineColor(flight.airline),
+                "w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-sm",
+              )}
+            >
               {code}
             </div>
             <p className="text-[10px] text-muted-foreground font-mono text-center leading-tight">
@@ -89,10 +129,14 @@ function SeriesFareCard({
               <p className="text-2xl font-black text-foreground leading-none">
                 {flight.departureTime || flight.origin || "—"}
               </p>
-              <p className="text-xs font-semibold text-muted-foreground mt-0.5">{flight.origin}</p>
+              <p className="text-xs font-semibold text-muted-foreground mt-0.5">
+                {flight.origin}
+              </p>
             </div>
             <div className="flex-1 flex flex-col items-center gap-0.5">
-              <p className="text-[10px] text-muted-foreground">{flight.duration || "—"}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {flight.duration || "—"}
+              </p>
               <div className="flex items-center w-full gap-1">
                 <div className="flex-1 h-px bg-border" />
                 <Plane className="h-3 w-3 text-primary" />
@@ -106,14 +150,19 @@ function SeriesFareCard({
               <p className="text-2xl font-black text-foreground leading-none">
                 {flight.arrivalTime || flight.destination || "—"}
               </p>
-              <p className="text-xs font-semibold text-muted-foreground mt-0.5">{flight.destination}</p>
+              <p className="text-xs font-semibold text-muted-foreground mt-0.5">
+                {flight.destination}
+              </p>
             </div>
           </div>
 
           {/* Price + Book */}
           <div className="w-full text-center lg:w-auto lg:text-right flex-shrink-0 border-t border-border/60 pt-3 lg:border-t-0 lg:pt-0">
             <p className="text-[10px] text-muted-foreground">per person</p>
-            <p className="text-2xl font-black leading-tight" style={{ color: "hsl(var(--brand-orange))" }}>
+            <p
+              className="text-2xl font-black leading-tight"
+              style={{ color: "hsl(var(--brand-orange))" }}
+            >
               ₹{Number(price).toLocaleString("en-IN")}
             </p>
             {/* Total price when adults > 1 */}
@@ -126,14 +175,16 @@ function SeriesFareCard({
                 </span>
               </p>
             )}
-            <p className={cn(
-              "text-[10px] font-semibold mt-1",
-              seatsAvailable <= adults
-                ? "text-amber-600 dark:text-amber-400"
-                : seatsAvailable <= 4
-                  ? "text-rose-500"
-                  : "text-emerald-600 dark:text-emerald-400"
-            )}>
+            <p
+              className={cn(
+                "text-[10px] font-semibold mt-1",
+                seatsAvailable <= adults
+                  ? "text-amber-600 dark:text-amber-400"
+                  : seatsAvailable <= 4
+                    ? "text-rose-500"
+                    : "text-emerald-600 dark:text-emerald-400",
+              )}
+            >
               {seatsAvailable} seat{seatsAvailable === 1 ? "" : "s"} available
             </p>
 
@@ -164,7 +215,14 @@ function SeriesFareCard({
             <Luggage className="h-3 w-3" />
             {flight.cabinBaggage || "7KG"} cabin
           </span>
-          <span className={cn("flex items-center gap-1 font-medium", refundable ? "text-emerald-600 dark:text-emerald-400" : "text-rose-500")}>
+          <span
+            className={cn(
+              "flex items-center gap-1 font-medium",
+              refundable
+                ? "text-emerald-600 dark:text-emerald-400"
+                : "text-rose-500",
+            )}
+          >
             <Shield className="h-3 w-3" />
             {refundable ? "Refundable" : "Non-Refundable"}
           </span>
@@ -174,10 +232,12 @@ function SeriesFareCard({
             </span>
           )}
           {flight.airline && (
-            <span className="font-semibold text-foreground ml-auto">{flight.airline}</span>
+            <span className="font-semibold text-foreground ml-auto">
+              {flight.airline}
+            </span>
           )}
           <button
-            onClick={() => setExpanded(e => !e)}
+            onClick={() => setExpanded((e) => !e)}
             className="text-primary hover:text-primary/80 transition-colors ml-2"
           >
             {expanded ? "Hide ▴" : "Details ▾"}
@@ -206,13 +266,21 @@ function SeriesFareCard({
                 {role !== "agent" && (
                   <div className="space-y-1.5 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Base Fare × {adults}</span>
-                      <span className="font-medium">₹{Number(price * adults).toLocaleString("en-IN")}</span>
+                      <span className="text-muted-foreground">
+                        Base Fare × {adults}
+                      </span>
+                      <span className="font-medium">
+                        ₹{Number(price * adults).toLocaleString("en-IN")}
+                      </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Taxes & Fees</span>
+                      <span className="text-muted-foreground">
+                        Taxes & Fees
+                      </span>
                       <span className="font-medium">
-                        {taxes > 0 ? `₹${taxes.toLocaleString("en-IN")}` : "Included in fare"}
+                        {taxes > 0
+                          ? `₹${taxes.toLocaleString("en-IN")}`
+                          : "Included in fare"}
                       </span>
                     </div>
                     <div className="flex justify-between font-bold border-t border-border pt-1.5 mt-1.5">
@@ -225,29 +293,47 @@ function SeriesFareCard({
                 )}
               </div>
               <div className="bg-muted/40 rounded-xl p-4 border border-border/40">
-                <p className="text-xs font-bold text-foreground uppercase tracking-wider mb-3">Policies</p>
+                <p className="text-xs font-bold text-foreground uppercase tracking-wider mb-3">
+                  Policies
+                </p>
                 <div className="space-y-1.5 text-sm text-muted-foreground">
                   <div className="flex justify-between">
                     <span>Cancellation</span>
-                    <span className={refundable ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-rose-500 font-medium"}>
+                    <span
+                      className={
+                        refundable
+                          ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                          : "text-rose-500 font-medium"
+                      }
+                    >
                       {refundable ? "Charges apply" : "Not allowed"}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Date Change</span>
                     <span className="text-amber-600 dark:text-amber-400 font-medium">
-                      {flight.isChangeable === false ? "Not allowed" : "Charges apply"}
+                      {flight.isChangeable === false
+                        ? "Not allowed"
+                        : "Charges apply"}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Baggage</span>
                     <span className="text-foreground font-medium">
-                      {flight.baggage || "30KG"} + {flight.cabinBaggage || "7KG"} cabin
+                      {flight.baggage || "30KG"} +{" "}
+                      {flight.cabinBaggage || "7KG"} cabin
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Seats Left</span>
-                    <span className={cn("font-medium", seatsAvailable <= 5 ? "text-rose-500" : "text-emerald-600 dark:text-emerald-400")}>
+                    <span
+                      className={cn(
+                        "font-medium",
+                        seatsAvailable <= 5
+                          ? "text-rose-500"
+                          : "text-emerald-600 dark:text-emerald-400",
+                      )}
+                    >
                       {seatsAvailable} seats
                     </span>
                   </div>
@@ -271,20 +357,34 @@ function SeriesFareCard({
 
 // ─── Agent Booking Dialog — correct 2-step flow ───────────────────────────────
 function AgentBookingDialog({
-  flight, adults, from, to, date, onClose,
+  flight,
+  adults,
+  from,
+  to,
+  date,
+  onClose,
 }: {
-  flight: any; adults: number; from: string; to: string; date: string; onClose: () => void;
+  flight: any;
+  adults: number;
+  from: string;
+  to: string;
+  date: string;
+  onClose: () => void;
 }) {
   const { agentId } = useAuthStore();
-  const price = typeof flight.price === "number"
-    ? flight.price
-    : flight.fare?.totalFare || flight.fare?.total || 0;
+  const price =
+    typeof flight.price === "number"
+      ? flight.price
+      : flight.fare?.totalFare || flight.fare?.total || 0;
   const total = price * adults;
 
   const [passengers, setPassengers] = useState(
     Array.from({ length: adults }, () => ({
-      firstName: "", lastName: "", dob: "", gender: "M",
-    }))
+      firstName: "",
+      lastName: "",
+      dob: "",
+      gender: "M",
+    })),
   );
   const [step, setStep] = useState<"form" | "loading" | "done">("form");
   const [pnr, setPnr] = useState("");
@@ -297,8 +397,9 @@ function AgentBookingDialog({
     : `TRAMPS-${flight.id || flight._id || flight.resultToken}`;
 
   const confirm = async () => {
-    if (!passengers.every(p => p.firstName && p.lastName)) {
-      toast.error("Fill all passenger names"); return;
+    if (!passengers.every((p) => p.firstName && p.lastName)) {
+      toast.error("Fill all passenger names");
+      return;
     }
     setStep("loading");
 
@@ -309,7 +410,7 @@ function AgentBookingDialog({
         resultToken,
         tripType: "OneWay",
         adults,
-        passengers: passengers.map(p => ({
+        passengers: passengers.map((p) => ({
           title: p.gender === "F" ? "Ms" : "Mr",
           firstName: p.firstName.trim(),
           lastName: p.lastName.trim(),
@@ -332,7 +433,10 @@ function AgentBookingDialog({
 
       // ── Step 2: Confirm via wallet ─────────────────────────────────────────
       setStepLabel("Deducting from wallet…");
-      const confirmRes = await apiClient.post(`/bookings/${ref}/confirm-b2b`, {});
+      const confirmRes = await apiClient.post(
+        `/bookings/${ref}/confirm-b2b`,
+        {},
+      );
       const confirmData = confirmRes.data?.data || confirmRes.data;
 
       // PNR is CF{timestamp} for series fares — generated internally
@@ -341,7 +445,8 @@ function AgentBookingDialog({
       setStep("done");
       toast.success("Booking confirmed! Wallet debited.");
     } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || "Booking failed";
+      const msg =
+        err?.response?.data?.message || err?.message || "Booking failed";
       toast.error(msg);
       setStep("form");
       setStepLabel("");
@@ -349,60 +454,66 @@ function AgentBookingDialog({
   };
 
   // ── Success screen ────────────────────────────────────────────────────────
-  if (step === "done") return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-foreground/60 backdrop-blur-sm" />
-      <div className="relative bg-card border border-border rounded-2xl p-7 w-full max-w-sm text-center shadow-2xl animate-in">
-        <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle2 className="h-9 w-9 text-emerald-600 dark:text-emerald-400" />
-        </div>
-        <h3 className="font-bold text-2xl text-foreground mb-1">Booking Confirmed!</h3>
-        <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-1.5 mb-4 inline-block">
-          Wallet debited ₹{total.toLocaleString("en-IN")}
-        </p>
-
-        {/* PNR — CF prefix = Custom/Series Fare internal PNR */}
-        {pnr && (
-          <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-5 py-4 mb-2">
-            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-widest mb-1">
-              PNR Number
-            </p>
-            <p className="font-mono font-black text-2xl text-emerald-700 dark:text-emerald-300 tracking-widest">
-              {pnr}
-            </p>
-            <p className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70 mt-1">
-              Internal reference · Series Fare
-            </p>
+  if (step === "done")
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-foreground/60 backdrop-blur-sm" />
+        <div className="relative bg-card border border-border rounded-2xl p-7 w-full max-w-sm text-center shadow-2xl animate-in">
+          <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 className="h-9 w-9 text-emerald-600 dark:text-emerald-400" />
           </div>
-        )}
-
-        {bookingRef && (
-          <p className="text-xs text-muted-foreground mb-1">
-            Booking Ref: <span className="font-mono font-semibold">{bookingRef}</span>
+          <h3 className="font-bold text-2xl text-foreground mb-1">
+            Booking Confirmed!
+          </h3>
+          <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-1.5 mb-4 inline-block">
+            Wallet debited ₹{total.toLocaleString("en-IN")}
           </p>
-        )}
 
-        <p className="text-xs text-muted-foreground mb-5">
-          E-ticket sent to registered email
-        </p>
+          {/* PNR — CF prefix = Custom/Series Fare internal PNR */}
+          {pnr && (
+            <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-5 py-4 mb-2">
+              <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-widest mb-1">
+                PNR Number
+              </p>
+              <p className="font-mono font-black text-2xl text-emerald-700 dark:text-emerald-300 tracking-widest">
+                {pnr}
+              </p>
+              <p className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70 mt-1">
+                Internal reference · Series Fare
+              </p>
+            </div>
+          )}
 
-        <div className="flex gap-2">
-          <button
-            onClick={onClose}
-            className="flex-1 bg-muted hover:bg-muted/80 text-foreground rounded-xl py-2.5 text-sm font-medium transition-colors"
-          >
-            Close
-          </button>
-          <button
-            onClick={() => { window.location.href = "/b2b/bookings"; }}
-            className="flex-1 btn-primary py-2.5 text-sm"
-          >
-            My Bookings
-          </button>
+          {bookingRef && (
+            <p className="text-xs text-muted-foreground mb-1">
+              Booking Ref:{" "}
+              <span className="font-mono font-semibold">{bookingRef}</span>
+            </p>
+          )}
+
+          <p className="text-xs text-muted-foreground mb-5">
+            E-ticket sent to registered email
+          </p>
+
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="flex-1 bg-muted hover:bg-muted/80 text-foreground rounded-xl py-2.5 text-sm font-medium transition-colors"
+            >
+              Close
+            </button>
+            <button
+              onClick={() => {
+                window.location.href = "/b2b/bookings";
+              }}
+              className="flex-1 btn-primary py-2.5 text-sm"
+            >
+              My Bookings
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
 
   // ── Form ──────────────────────────────────────────────────────────────────
   return (
@@ -412,7 +523,6 @@ function AgentBookingDialog({
         onClick={step === "form" ? onClose : undefined}
       />
       <div className="relative bg-card border border-border rounded-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl">
-
         {/* Header */}
         <div className="sticky top-0 bg-card border-b border-border px-5 py-4 flex items-center justify-between z-10">
           <div>
@@ -437,18 +547,22 @@ function AgentBookingDialog({
         </div>
 
         <div className="p-5 space-y-5">
-
           {/* Fare summary */}
           <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 rounded-xl p-4 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">
-                ₹{price.toLocaleString("en-IN")} × {adults} passenger{adults > 1 ? "s" : ""}
+                ₹{price.toLocaleString("en-IN")} × {adults} passenger
+                {adults > 1 ? "s" : ""}
               </span>
-              <span className="font-medium">₹{total.toLocaleString("en-IN")}</span>
+              <span className="font-medium">
+                ₹{total.toLocaleString("en-IN")}
+              </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Taxes & Fees</span>
-              <span className="font-medium text-emerald-600 dark:text-emerald-400">Included</span>
+              <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                Included
+              </span>
             </div>
             <div className="flex justify-between font-bold border-t border-amber-200 dark:border-amber-700/30 pt-2 mt-1">
               <span>Wallet Deduction</span>
@@ -469,16 +583,23 @@ function AgentBookingDialog({
               <p className="text-sm font-semibold text-foreground border-b border-border pb-2">
                 Passenger {i + 1}
                 {i === 0 && (
-                  <span className="text-xs text-muted-foreground font-normal ml-1">(Primary)</span>
+                  <span className="text-xs text-muted-foreground font-normal ml-1">
+                    (Primary)
+                  </span>
                 )}
               </p>
               <div className="grid grid-cols-2 gap-3">
-                {[["First Name *", "firstName"], ["Last Name *", "lastName"]].map(([lbl, k]) => (
+                {[
+                  ["First Name *", "firstName"],
+                  ["Last Name *", "lastName"],
+                ].map(([lbl, k]) => (
                   <div key={k}>
-                    <label className="text-xs text-muted-foreground block mb-1">{lbl}</label>
+                    <label className="text-xs text-muted-foreground block mb-1">
+                      {lbl}
+                    </label>
                     <input
                       value={(p as any)[k]}
-                      onChange={e => {
+                      onChange={(e) => {
                         const n = [...passengers];
                         (n[i] as any)[k] = e.target.value;
                         setPassengers(n);
@@ -489,11 +610,13 @@ function AgentBookingDialog({
                   </div>
                 ))}
                 <div>
-                  <label className="text-xs text-muted-foreground block mb-1">Date of Birth</label>
+                  <label className="text-xs text-muted-foreground block mb-1">
+                    Date of Birth
+                  </label>
                   <input
                     type="date"
                     value={p.dob}
-                    onChange={e => {
+                    onChange={(e) => {
                       const n = [...passengers];
                       n[i].dob = e.target.value;
                       setPassengers(n);
@@ -502,10 +625,12 @@ function AgentBookingDialog({
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground block mb-1">Gender</label>
+                  <label className="text-xs text-muted-foreground block mb-1">
+                    Gender
+                  </label>
                   <select
                     value={p.gender}
-                    onChange={e => {
+                    onChange={(e) => {
                       const n = [...passengers];
                       n[i].gender = e.target.value;
                       setPassengers(n);
@@ -524,7 +649,8 @@ function AgentBookingDialog({
           <div className="bg-primary/5 border border-primary/15 rounded-xl px-4 py-3">
             <p className="text-xs text-muted-foreground flex items-start gap-2">
               <Info className="h-3.5 w-3.5 text-primary flex-shrink-0 mt-0.5" />
-              This is a Tramps Aviation exclusive series fare. A unique PNR will be generated internally upon confirmation.
+              This is a Tramps Aviation exclusive series fare. A unique PNR will
+              be generated internally upon confirmation.
             </p>
           </div>
 
@@ -543,9 +669,15 @@ function AgentBookingDialog({
             className="w-full h-12 bg-primary hover:opacity-90 text-primary-foreground disabled:opacity-60 text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm"
           >
             {step === "loading" ? (
-              <><RefreshCcw className="h-4 w-4 animate-spin" />Processing…</>
+              <>
+                <RefreshCcw className="h-4 w-4 animate-spin" />
+                Processing…
+              </>
             ) : (
-              <>Confirm & Deduct ₹{total.toLocaleString("en-IN")} <ArrowRight className="h-4 w-4" /></>
+              <>
+                Confirm & Deduct ₹{total.toLocaleString("en-IN")}{" "}
+                <ArrowRight className="h-4 w-4" />
+              </>
             )}
           </button>
         </div>
@@ -556,19 +688,37 @@ function AgentBookingDialog({
 
 // ─── Smart Book Modal — checks auth, shows right dialog ──────────────────────
 function BookModal({
-  flight, adults, from, to, date, onClose,
+  flight,
+  adults,
+  from,
+  to,
+  date,
+  onClose,
 }: {
-  flight: any; adults: number; from: string; to: string; date: string; onClose: () => void;
+  flight: any;
+  adults: number;
+  from: string;
+  to: string;
+  date: string;
+  onClose: () => void;
 }) {
   const router = useRouter();
   const { isAuthenticated, role } = useAuthStore();
-  const price = typeof flight.price === "number" ? flight.price : flight.fare?.totalFare || 0;
+  const price =
+    typeof flight.price === "number"
+      ? flight.price
+      : flight.fare?.totalFare || 0;
 
   // Logged in agent → show booking form directly
   if (isAuthenticated && role === "agent") {
     return (
       <AgentBookingDialog
-        flight={flight} adults={adults} from={from} to={to} date={date} onClose={onClose}
+        flight={flight}
+        adults={adults}
+        from={from}
+        to={to}
+        date={date}
+        onClose={onClose}
       />
     );
   }
@@ -576,7 +726,10 @@ function BookModal({
   // Guest / customer → show role picker
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-foreground/60 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-foreground/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
       <div className="relative bg-card border border-border rounded-2xl p-6 w-full max-w-sm shadow-2xl">
         <button
           onClick={onClose}
@@ -594,17 +747,24 @@ function BookModal({
 
         {/* Total price preview */}
         <div className="bg-muted/50 rounded-xl px-4 py-3 mb-5 flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">{adults} pax total</span>
-          <span className="font-black text-lg" style={{ color: "hsl(var(--brand-orange))" }}>
+          <span className="text-sm text-muted-foreground">
+            {adults} pax total
+          </span>
+          <span
+            className="font-black text-lg"
+            style={{ color: "hsl(var(--brand-orange))" }}
+          >
             ₹{(price * adults).toLocaleString("en-IN")}
           </span>
         </div>
 
         <div className="space-y-3">
           <button
-            onClick={() => router.push(
-              `/b2c/login?redirect=${encodeURIComponent(`/series-fare?from=${from}&to=${to}&date=${date}`)}`
-            )}
+            onClick={() =>
+              router.push(
+                `/b2c/login?redirect=${encodeURIComponent(`/series-fare?from=${from}&to=${to}&date=${date}`)}`,
+              )
+            }
             className="w-full flex items-center gap-3 p-4 rounded-xl border border-border hover:border-primary/40 hover:bg-primary/5 transition-all text-left group"
           >
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -612,15 +772,19 @@ function BookModal({
             </div>
             <div className="flex-1">
               <p className="font-semibold text-sm">Book as Customer</p>
-              <p className="text-xs text-muted-foreground">Sign in · UPI / Card payment</p>
+              <p className="text-xs text-muted-foreground">
+                Sign in · UPI / Card payment
+              </p>
             </div>
             <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
           </button>
 
           <button
-            onClick={() => router.push(
-              `/b2b/login?redirect=${encodeURIComponent(`/series-fare?from=${from}&to=${to}&date=${date}`)}`
-            )}
+            onClick={() =>
+              router.push(
+                `/b2b/login?redirect=${encodeURIComponent(`/series-fare?from=${from}&to=${to}&date=${date}`)}`,
+              )
+            }
             className="w-full flex items-center gap-3 p-4 rounded-xl border border-border hover:border-amber-500/40 hover:bg-amber-500/5 transition-all text-left group"
           >
             <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0">
@@ -628,7 +792,9 @@ function BookModal({
             </div>
             <div className="flex-1">
               <p className="font-semibold text-sm">Book as Agent (B2B)</p>
-              <p className="text-xs text-muted-foreground">Agent portal · Wallet · Best rates</p>
+              <p className="text-xs text-muted-foreground">
+                Agent portal · Wallet · Best rates
+              </p>
             </div>
             <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-amber-500" />
           </button>
@@ -642,26 +808,27 @@ function BookModal({
 function SeriesFarePage() {
   const params = useSearchParams();
 
-  const [from,   setFrom]   = useState(params.get("from")   || "DEL");
-  const [to,     setTo]     = useState(params.get("to")     || "BOM");
-  const [date,   setDate]   = useState(params.get("date")   || "");
+  const [from, setFrom] = useState(params.get("from") || "DEL");
+  const [to, setTo] = useState(params.get("to") || "BOM");
+  const [date, setDate] = useState(params.get("date") || "");
   const [adults, setAdults] = useState(Number(params.get("adults") || "1"));
 
-  const [flights,  setFlights]  = useState<any[]>([]);
-  const [loading,  setLoading]  = useState(false);
+  const [flights, setFlights] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [selectedFlight, setSelectedFlight] = useState<any>(null);
 
-  const [sortBy,        setSortBy]        = useState("price");
-  const [filterStop,    setFilterStop]    = useState("all");
-  const [filterRef,     setFilterRef]     = useState("all");
-  const [filterCabin,   setFilterCabin]   = useState("all");
+  const [sortBy, setSortBy] = useState("price");
+  const [filterStop, setFilterStop] = useState("all");
+  const [filterRef, setFilterRef] = useState("all");
+  const [filterCabin, setFilterCabin] = useState("all");
   const [filterAirline, setFilterAirline] = useState("all");
-  const [maxPrice,      setMaxPrice]      = useState(0);
+  const [maxPrice, setMaxPrice] = useState(0);
 
   useEffect(() => {
     if (!date) {
-      const tmr = new Date(); tmr.setDate(tmr.getDate() + 1);
+      const tmr = new Date();
+      tmr.setDate(tmr.getDate() + 1);
       setDate(tmr.toISOString().split("T")[0]);
     }
     if (params.get("from") && params.get("to") && params.get("date")) {
@@ -670,17 +837,27 @@ function SeriesFarePage() {
   }, []);
 
   const doSearch = async (f = from, t = to, d = date) => {
-    if (!f || !t) { toast.error("Enter origin and destination"); return; }
-    if (!d) {
-      const tmr = new Date(); tmr.setDate(tmr.getDate() + 1);
-      d = tmr.toISOString().split("T")[0]; setDate(d);
+    if (!f || !t) {
+      toast.error("Enter origin and destination");
+      return;
     }
-    setLoading(true); setSearched(true); setFlights([]);
-    setFilterStop("all"); setFilterRef("all"); setFilterCabin("all");
-    setFilterAirline("all"); setMaxPrice(0);
+    if (!d) {
+      const tmr = new Date();
+      tmr.setDate(tmr.getDate() + 1);
+      d = tmr.toISOString().split("T")[0];
+      setDate(d);
+    }
+    setLoading(true);
+    setSearched(true);
+    setFlights([]);
+    setFilterStop("all");
+    setFilterRef("all");
+    setFilterCabin("all");
+    setFilterAirline("all");
+    setMaxPrice(0);
     try {
       const res = await fetch(
-        `${API_BASE}/flights/series?origin=${encodeURIComponent(f.toUpperCase())}&destination=${encodeURIComponent(t.toUpperCase())}&departureDate=${d}&adults=${adults}`
+        `${API_BASE}/flights/series?origin=${encodeURIComponent(f.toUpperCase())}&destination=${encodeURIComponent(t.toUpperCase())}&departureDate=${d}&adults=${adults}`,
       );
       const json = await res.json();
       const list = json?.data?.data || json?.data || json?.results || [];
@@ -696,37 +873,60 @@ function SeriesFarePage() {
     }
   };
 
-  const swap = () => { setFrom(to); setTo(from); };
+  const swap = () => {
+    setFrom(to);
+    setTo(from);
+  };
 
-  const allPrices = flights.map(f => f.price || f.fare?.totalFare || 0).filter(Boolean);
+  const allPrices = flights
+    .map((f) => f.price || f.fare?.totalFare || 0)
+    .filter(Boolean);
   const maxPriceAll = allPrices.length ? Math.max(...allPrices) : 0;
   const effMax = maxPrice > 0 ? maxPrice : maxPriceAll;
-  const hasFilters = filterStop !== "all" || filterRef !== "all" || filterCabin !== "all" || filterAirline !== "all" || (maxPrice > 0 && maxPrice < maxPriceAll);
+  const hasFilters =
+    filterStop !== "all" ||
+    filterRef !== "all" ||
+    filterCabin !== "all" ||
+    filterAirline !== "all" ||
+    (maxPrice > 0 && maxPrice < maxPriceAll);
 
-  const filtered = flights.filter(f => {
-    const seatsAvailable =
-      typeof f.seatsAvailable === "number" && f.seatsAvailable > 0
-        ? f.seatsAvailable
-        : null;
-    if (seatsAvailable !== null && seatsAvailable < adults) return false;
-    if (filterStop === "0" && f.stops !== 0) return false;
-    if (filterStop === "1" && f.stops === 0) return false;
-    if (filterRef === "yes" && f.isRefundable === false) return false;
-    if (filterRef === "no" && f.isRefundable !== false) return false;
-    if (filterCabin && filterCabin !== "all" && (f.cabinClass || "ECONOMY") !== filterCabin) return false;
-    if (filterAirline && filterAirline !== "all" && f.airline !== filterAirline) return false;
-    const p = f.price || f.fare?.totalFare || 0;
-    if (effMax > 0 && p > effMax) return false;
-    return true;
-  }).sort((a, b) => {
-    const pa = a.price || a.fare?.totalFare || 0;
-    const pb = b.price || b.fare?.totalFare || 0;
-    if (sortBy === "price") return pa - pb;
-    if (sortBy === "departure") return (a.departureTime || "").localeCompare(b.departureTime || "");
-    return 0;
-  });
+  const filtered = flights
+    .filter((f) => {
+      const seatsAvailable =
+        typeof f.seatsAvailable === "number" && f.seatsAvailable > 0
+          ? f.seatsAvailable
+          : null;
+      if (seatsAvailable !== null && seatsAvailable < adults) return false;
+      if (filterStop === "0" && f.stops !== 0) return false;
+      if (filterStop === "1" && f.stops === 0) return false;
+      if (filterRef === "yes" && f.isRefundable === false) return false;
+      if (filterRef === "no" && f.isRefundable !== false) return false;
+      if (
+        filterCabin &&
+        filterCabin !== "all" &&
+        (f.cabinClass || "ECONOMY") !== filterCabin
+      )
+        return false;
+      if (
+        filterAirline &&
+        filterAirline !== "all" &&
+        f.airline !== filterAirline
+      )
+        return false;
+      const p = f.price || f.fare?.totalFare || 0;
+      if (effMax > 0 && p > effMax) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      const pa = a.price || a.fare?.totalFare || 0;
+      const pb = b.price || b.fare?.totalFare || 0;
+      if (sortBy === "price") return pa - pb;
+      if (sortBy === "departure")
+        return (a.departureTime || "").localeCompare(b.departureTime || "");
+      return 0;
+    });
 
-  const flightsForFilter = flights.map(f => ({
+  const flightsForFilter = flights.map((f) => ({
     ...f,
     price: f.price || f.fare?.totalFare || f.fare?.total || 0,
     airline: f.airline || "",
@@ -739,8 +939,11 @@ function SeriesFarePage() {
     <>
       {selectedFlight && (
         <BookModal
-          flight={selectedFlight} adults={adults}
-          from={from} to={to} date={date}
+          flight={selectedFlight}
+          adults={adults}
+          from={from}
+          to={to}
+          date={date}
           onClose={() => setSelectedFlight(null)}
         />
       )}
@@ -750,67 +953,85 @@ function SeriesFarePage() {
         <div className="search-hero">
           <div className="px-4 sm:px-6 py-6">
             <div className="search-panel p-3 sm:p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
-              <div>
-                <label className="search-label">From</label>
-                <div className="relative">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+                <div>
+                  <label className="search-label">From</label>
+                  <div className="relative">
+                    <input
+                      value={from}
+                      onChange={(e) => setFrom(e.target.value.toUpperCase())}
+                      maxLength={3}
+                      placeholder="DEL"
+                      className="search-input w-full font-black text-xl tracking-widest text-center uppercase"
+                    />
+                    <button
+                      onClick={swap}
+                      className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-7 h-7 bg-card border border-border rounded-full flex items-center justify-center shadow-sm hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-95 hidden sm:flex"
+                    >
+                      <ArrowLeftRight className="h-3 w-3 text-primary" />
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="search-label">To</label>
                   <input
-                    value={from}
-                    onChange={e => setFrom(e.target.value.toUpperCase())}
-                    maxLength={3} placeholder="DEL"
+                    value={to}
+                    onChange={(e) => setTo(e.target.value.toUpperCase())}
+                    maxLength={3}
+                    placeholder="BOM"
                     className="search-input w-full font-black text-xl tracking-widest text-center uppercase"
                   />
+                </div>
+                <div>
+                  <label className="search-label">Travel Date</label>
+                  <input
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    min={new Date().toISOString().split("T")[0]}
+                    className="search-input-date w-full text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="search-label">Adults</label>
+                  <input
+                    type="number"
+                    value={adults}
+                    min={1}
+                    max={9}
+                    onChange={(e) =>
+                      setAdults(
+                        Math.min(9, Math.max(1, parseInt(e.target.value) || 1)),
+                      )
+                    }
+                    className="search-input w-full font-bold text-xl text-center"
+                  />
+                </div>
+                <div className="flex items-end">
                   <button
-                    onClick={swap}
-                    className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-7 h-7 bg-card border border-border rounded-full flex items-center justify-center shadow-sm hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-95 hidden sm:flex"
+                    onClick={() => doSearch()}
+                    disabled={loading}
+                    className="search-button w-full h-[50px] disabled:opacity-60 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-sm"
                   >
-                    <ArrowLeftRight className="h-3 w-3 text-primary" />
+                    {loading ? (
+                      <RefreshCcw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Search className="h-4 w-4" />
+                    )}
+                    {loading ? "Searching…" : "Search"}
                   </button>
                 </div>
               </div>
-              <div>
-                <label className="search-label">To</label>
-                <input
-                  value={to}
-                  onChange={e => setTo(e.target.value.toUpperCase())}
-                  maxLength={3} placeholder="BOM"
-                  className="search-input w-full font-black text-xl tracking-widest text-center uppercase"
-                />
-              </div>
-              <div>
-                <label className="search-label">Travel Date</label>
-                <input
-                  type="date" value={date}
-                  onChange={e => setDate(e.target.value)}
-                  min={new Date().toISOString().split("T")[0]}
-                  className="search-input-date w-full text-sm"
-                />
-              </div>
-              <div>
-                <label className="search-label">Adults</label>
-                <input
-                  type="number" value={adults} min={1} max={9}
-                  onChange={e => setAdults(Math.min(9, Math.max(1, parseInt(e.target.value) || 1)))}
-                  className="search-input w-full font-bold text-xl text-center"
-                />
-              </div>
-              <div className="flex items-end">
-                <button
-                  onClick={() => doSearch()} disabled={loading}
-                  className="search-button w-full h-[50px] disabled:opacity-60 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-sm"
-                >
-                  {loading ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                  {loading ? "Searching…" : "Search"}
-                </button>
-              </div>
-            </div>
             </div>
 
             <div className="search-note mt-3 flex items-start gap-2 text-xs rounded-xl px-4 py-2.5">
               <Info className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
               <p>
-                <span className="font-semibold text-foreground">Series Fares</span> are Tramps Aviation's exclusive bulk inventory —
-                separate from regular TBO fares. PNR is generated internally upon booking.
+                <span className="font-semibold text-foreground">
+                  Series Fares
+                </span>{" "}
+                are Tramps Aviation's exclusive bulk inventory — separate from
+                regular TBO fares. PNR is generated internally upon booking.
               </p>
             </div>
           </div>
@@ -821,19 +1042,37 @@ function SeriesFarePage() {
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6">
         {searched && !loading && flights.length > 0 ? (
           <div className="flex gap-5">
-            <div className="w-56 flex-shrink-0 hidden lg:block self-start sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto custom-scrollbar">
+            <div
+              className="w-56 flex-shrink-0 hidden lg:block custom-scrollbar"
+              style={{
+                position: "sticky",
+                top: "72px",
+                alignSelf: "flex-start",
+                maxHeight: "calc(100vh - 80px)",
+                overflowY: "auto",
+              }}
+            >
               <FlightFilters
                 flights={flightsForFilter}
-                sortBy={sortBy}               setSortBy={setSortBy}
-                filterStop={filterStop}       setFilterStop={setFilterStop}
-                filterRef={filterRef}         setFilterRef={setFilterRef}
-                filterCabin={filterCabin}     setFilterCabin={setFilterCabin}
-                filterAirline={filterAirline} setFilterAirline={setFilterAirline}
-                maxPrice={maxPrice}           setMaxPrice={setMaxPrice}
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                filterStop={filterStop}
+                setFilterStop={setFilterStop}
+                filterRef={filterRef}
+                setFilterRef={setFilterRef}
+                filterCabin={filterCabin}
+                setFilterCabin={setFilterCabin}
+                filterAirline={filterAirline}
+                setFilterAirline={setFilterAirline}
+                maxPrice={maxPrice}
+                setMaxPrice={setMaxPrice}
                 hasFilters={hasFilters}
                 onClear={() => {
-                  setFilterStop("all"); setFilterRef("all");
-                  setFilterCabin("all"); setFilterAirline("all"); setMaxPrice(0);
+                  setFilterStop("all");
+                  setFilterRef("all");
+                  setFilterCabin("all");
+                  setFilterAirline("all");
+                  setMaxPrice(0);
                 }}
               />
             </div>
@@ -842,24 +1081,39 @@ function SeriesFarePage() {
               <div className="flex flex-wrap items-center gap-3 mb-4">
                 <div className="flex-1">
                   <p className="font-bold text-foreground">
-                    {filtered.length} Series Fare{filtered.length !== 1 ? "s" : ""} Found
+                    {filtered.length} Series Fare
+                    {filtered.length !== 1 ? "s" : ""} Found
                     {filtered.length !== flights.length && (
-                      <span className="text-sm font-normal text-muted-foreground ml-1">({flights.length} total)</span>
+                      <span className="text-sm font-normal text-muted-foreground ml-1">
+                        ({flights.length} total)
+                      </span>
                     )}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {from} → {to} · {date} · {adults} adult{adults > 1 ? "s" : ""}
+                    {from} → {to} · {date} · {adults} adult
+                    {adults > 1 ? "s" : ""}
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-primary bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-full">
                   <Sparkles className="h-3 w-3" /> Exclusive Fares
                 </div>
                 <div className="flex gap-1 bg-card border border-border p-1 rounded-xl shadow-sm lg:hidden">
-                  {[["price", "Cheapest"], ["departure", "Earliest"]].map(([v, l]) => (
-                    <button key={v} onClick={() => setSortBy(v)}
-                      className={cn("text-xs px-2.5 py-1.5 rounded-lg font-medium transition-all",
-                        sortBy === v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                      )}>{l}</button>
+                  {[
+                    ["price", "Cheapest"],
+                    ["departure", "Earliest"],
+                  ].map(([v, l]) => (
+                    <button
+                      key={v}
+                      onClick={() => setSortBy(v)}
+                      className={cn(
+                        "text-xs px-2.5 py-1.5 rounded-lg font-medium transition-all",
+                        sortBy === v
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                      )}
+                    >
+                      {l}
+                    </button>
                   ))}
                 </div>
               </div>
@@ -867,18 +1121,29 @@ function SeriesFarePage() {
               {filtered.length === 0 ? (
                 <div className="text-center py-12 bg-card border border-border rounded-2xl shadow-sm">
                   <Filter className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-                  <p className="font-semibold text-foreground mb-1">No fares match your filters or available seat count</p>
+                  <p className="font-semibold text-foreground mb-1">
+                    No fares match your filters or available seat count
+                  </p>
                   <button
-                    onClick={() => { setFilterStop("all"); setFilterRef("all"); setFilterCabin("all"); setFilterAirline("all"); setMaxPrice(0); }}
+                    onClick={() => {
+                      setFilterStop("all");
+                      setFilterRef("all");
+                      setFilterCabin("all");
+                      setFilterAirline("all");
+                      setMaxPrice(0);
+                    }}
                     className="text-primary hover:underline text-sm mt-2"
-                  >Clear filters</button>
+                  >
+                    Clear filters
+                  </button>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {filtered.map((flight, i) => (
                     <SeriesFareCard
                       key={flight.id || flight.resultToken || i}
-                      flight={flight} adults={adults}
+                      flight={flight}
+                      adults={adults}
                       onBook={setSelectedFlight}
                     />
                   ))}
@@ -892,9 +1157,14 @@ function SeriesFarePage() {
                     [Zap, "Internal PNR", "CF-prefix series fare"],
                     [CheckCircle, "24/7 Support", "Always here"],
                   ].map(([Icon, t, s]: any) => (
-                    <div key={t} className="bg-card border border-border rounded-xl p-3 text-center shadow-sm">
+                    <div
+                      key={t}
+                      className="bg-card border border-border rounded-xl p-3 text-center shadow-sm"
+                    >
                       <Icon className="h-5 w-5 text-primary mx-auto mb-1.5" />
-                      <p className="text-xs font-semibold text-foreground">{t}</p>
+                      <p className="text-xs font-semibold text-foreground">
+                        {t}
+                      </p>
                       <p className="text-[10px] text-muted-foreground">{s}</p>
                     </div>
                   ))}
@@ -906,11 +1176,15 @@ function SeriesFarePage() {
           <div className="max-w-4xl mx-auto">
             {loading && (
               <div className="space-y-3">
-                {[1, 2, 3, 4].map(n => (
-                  <div key={n} className="bg-card border border-border rounded-2xl p-5 animate-pulse shadow-sm h-28" />
+                {[1, 2, 3, 4].map((n) => (
+                  <div
+                    key={n}
+                    className="bg-card border border-border rounded-2xl p-5 animate-pulse shadow-sm h-28"
+                  />
                 ))}
                 <p className="text-center text-sm text-muted-foreground flex items-center justify-center gap-2 mt-3">
-                  <RefreshCcw className="h-3.5 w-3.5 animate-spin" />Searching exclusive fares…
+                  <RefreshCcw className="h-3.5 w-3.5 animate-spin" />
+                  Searching exclusive fares…
                 </p>
               </div>
             )}
@@ -919,17 +1193,24 @@ function SeriesFarePage() {
                 <div className="w-20 h-20 bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-sm">
                   <Sparkles className="h-10 w-10 text-primary" />
                 </div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">Series Fares</h2>
+                <h2 className="text-2xl font-bold text-foreground mb-2">
+                  Series Fares
+                </h2>
                 <p className="text-muted-foreground text-sm max-w-xs mx-auto">
-                  Exclusive group & bulk flight inventory — enter route and date to search
+                  Exclusive group & bulk flight inventory — enter route and date
+                  to search
                 </p>
               </div>
             )}
             {searched && !loading && flights.length === 0 && (
               <div className="text-center py-12 bg-card border border-border rounded-2xl shadow-sm">
                 <AlertCircle className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-                <p className="font-semibold text-foreground mb-1">No series fares found</p>
-                <p className="text-muted-foreground text-sm">Try different dates or routes</p>
+                <p className="font-semibold text-foreground mb-1">
+                  No series fares found
+                </p>
+                <p className="text-muted-foreground text-sm">
+                  Try different dates or routes
+                </p>
               </div>
             )}
           </div>
@@ -941,11 +1222,13 @@ function SeriesFarePage() {
 
 export default function SeriesFarePageWrapper() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center min-h-screen">
-        <RefreshCcw className="h-6 w-6 animate-spin text-primary" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <RefreshCcw className="h-6 w-6 animate-spin text-primary" />
+        </div>
+      }
+    >
       <SeriesFarePage />
     </Suspense>
   );

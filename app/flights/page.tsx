@@ -505,7 +505,10 @@ function FlightsContent() {
         {searched && !loading && flights.length > 0 ? (
           <div className="flex gap-5">
             {/* Filter sidebar — sticky so it stays visible while results scroll */}
-            <div className="w-56 flex-shrink-0 hidden lg:block self-start sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto custom-scrollbar">
+            <div
+              className="w-56 flex-shrink-0 hidden lg:block custom-scrollbar"
+              style={{ position: "sticky", top: "72px", alignSelf: "flex-start", maxHeight: "calc(100vh - 80px)", overflowY: "auto" }}
+            >
               <FlightFilters
                 flights={flights}
                 sortBy={sortBy}         setSortBy={setSortBy}
