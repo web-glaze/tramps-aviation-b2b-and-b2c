@@ -38,7 +38,7 @@ function timeAgo(dateStr: string) {
 export function NotificationBell() {
   const router = useRouter();
   const { notifications, markRead, markAllRead, clearAll, unreadCount } = useNotificationsStore();
-  const count = unreadCount();
+  const count = unreadCount;
 
   const handleClick = (n: Notification) => {
     markRead(n.id);
