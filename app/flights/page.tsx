@@ -21,6 +21,7 @@ import { FlightSearchBar  } from "@/components/search/FlightSearchBar";
 import { FlightCard, getPrice } from "@/components/search/FlightCard";
 import { FlightFilters    } from "@/components/search/FlightFilters";
 import { BookingRoleModal } from "@/components/search/BookingRoleModal";
+import { AgentCommissionBreakdown } from "@/components/shared/AgentCommissionBreakdown";
 
 
 // ─── Agent (B2B) Booking Dialog — wallet deduction ───────────────────────────
@@ -107,22 +108,17 @@ function AgentBookingDialog({ flight, adults, from, to, date, onClose }: {
         </div>
 
         <div className="p-5 space-y-5">
-          {/* Fare */}
+          {/* Fare — with agent commission breakdown */}
           <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 rounded-xl p-4 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Fare × {adults} pax</span>
-              <span className="font-medium">₹{(getPrice(flight)*adults).toLocaleString("en-IN")}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Taxes & fees</span>
-              <span className="font-medium">
-                {taxes > 0 ? `₹${taxes.toLocaleString("en-IN")}` : "Included in fare"}
-              </span>
-            </div>
-            <div className="flex justify-between font-bold border-t border-amber-200 dark:border-amber-700/30 pt-2">
-              <span>Wallet Deduction</span>
-              <span className="text-xl text-amber-600 dark:text-amber-400">₹{total.toLocaleString("en-IN")}</span>
-            </div>
+            <AgentCommissionBreakdown
+              totalAmount={total}
+              baseFare={taxes > 0 ? total - taxes : undefined}
+              taxes={taxes > 0 ? taxes : undefined}
+              commissionPercent={Number(flight?.fare?.commissionPercent ?? flight?.commissionPercent ?? 5)}
+              commissionAmount={flight?.fare?.commissionAmount ?? flight?.commissionAmount}
+              quantity={adults}
+              productType="flight"
+            />
             <p className="text-xs text-muted-foreground pt-1">
               ✈ {flight.checkinBaggage||"15 KG"} check-in &nbsp;·&nbsp; 🎒 {flight.cabinBaggage||"7 KG"} cabin
             </p>

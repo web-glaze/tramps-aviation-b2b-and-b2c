@@ -11,6 +11,7 @@ import { useAuthStore } from "@/lib/store";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { FlightFilters } from "@/components/search/FlightFilters";
+import { AgentCommissionBreakdown, AgentEarnBadge } from "@/components/shared/AgentCommissionBreakdown";
 import apiClient from "@/lib/api/client";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
@@ -29,6 +30,8 @@ function SeriesFareCard({
   flight: any; adults: number; onBook: (f: any) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const { role } = useAuthStore();
+
   const price = typeof flight.price === "number"
     ? flight.price
     : flight.fare?.totalFare || flight.fare?.total || 0;
@@ -40,6 +43,10 @@ function SeriesFareCard({
     typeof flight.seatsAvailable === "number" && flight.seatsAvailable > 0
       ? flight.seatsAvailable
       : 9;
+
+  // Commission data from backend (if available) — component falls back to 5% default
+  const commissionPercent = Number(flight?.fare?.commissionPercent ?? flight?.commissionPercent ?? 5);
+  const commissionAmount = flight?.fare?.commissionAmount ?? flight?.commissionAmount;
 
   return (
     <div className={cn(
@@ -129,6 +136,14 @@ function SeriesFareCard({
             )}>
               {seatsAvailable} seat{seatsAvailable === 1 ? "" : "s"} available
             </p>
+
+            {/* Agent-only earn badge (renders nothing for customers/guests) */}
+            <AgentEarnBadge
+              totalAmount={totalPrice}
+              commissionPercent={commissionPercent}
+              commissionAmount={commissionAmount}
+              className="mt-1.5"
+            />
             <button
               onClick={() => onBook(flight)}
               className="mt-2 px-5 py-2 rounded-xl text-sm font-bold text-white transition-all active:scale-95 shadow-sm"
@@ -174,25 +189,40 @@ function SeriesFareCard({
           <div className="mt-3 pt-3 border-t border-border/60">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="bg-muted/40 rounded-xl p-4 border border-border/40">
-                <p className="text-xs font-bold text-foreground uppercase tracking-wider mb-3">Fare Breakdown</p>
-                <div className="space-y-1.5 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Base Fare × {adults}</span>
-                    <span className="font-medium">₹{Number(price * adults).toLocaleString("en-IN")}</span>
+                <p className="text-xs font-bold text-foreground uppercase tracking-wider mb-3">
+                  Fare Breakdown
+                </p>
+                {/* Agents see full commission breakdown; customers see only the first 3 lines */}
+                <AgentCommissionBreakdown
+                  totalAmount={totalPrice}
+                  baseFare={taxes > 0 ? totalPrice - taxes : undefined}
+                  taxes={taxes > 0 ? taxes : undefined}
+                  commissionPercent={commissionPercent}
+                  commissionAmount={commissionAmount}
+                  quantity={adults}
+                  productType="series-fare"
+                />
+                {/* Customer/guest fallback — shared component renders null for them */}
+                {role !== "agent" && (
+                  <div className="space-y-1.5 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Base Fare × {adults}</span>
+                      <span className="font-medium">₹{Number(price * adults).toLocaleString("en-IN")}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Taxes & Fees</span>
+                      <span className="font-medium">
+                        {taxes > 0 ? `₹${taxes.toLocaleString("en-IN")}` : "Included in fare"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between font-bold border-t border-border pt-1.5 mt-1.5">
+                      <span>Total ({adults} pax)</span>
+                      <span style={{ color: "hsl(var(--brand-orange))" }}>
+                        ₹{Number(totalPrice).toLocaleString("en-IN")}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Taxes & Fees</span>
-                    <span className="font-medium">
-                      {taxes > 0 ? `₹${taxes.toLocaleString("en-IN")}` : "Included in fare"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between font-bold border-t border-border pt-1.5 mt-1.5">
-                    <span>Total ({adults} pax)</span>
-                    <span style={{ color: "hsl(var(--brand-orange))" }}>
-                      ₹{Number(totalPrice).toLocaleString("en-IN")}
-                    </span>
-                  </div>
-                </div>
+                )}
               </div>
               <div className="bg-muted/40 rounded-xl p-4 border border-border/40">
                 <p className="text-xs font-bold text-foreground uppercase tracking-wider mb-3">Policies</p>

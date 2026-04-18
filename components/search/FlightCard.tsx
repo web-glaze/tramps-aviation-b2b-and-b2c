@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { Plane, Luggage, Clock, ChevronDown, ChevronUp, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AgentEarnBadge } from "@/components/shared/AgentCommissionBreakdown";
 
 const AIRLINE_COLOR: Record<string,string> = {
   "IndiGo":"bg-indigo-600","Air India":"bg-red-600","SpiceJet":"bg-orange-500",
@@ -103,6 +104,15 @@ export function FlightCard({ flight, adults, onBook, bookLabel = "Book Now" }: P
                 ₹{(price * adults).toLocaleString("en-IN")} total
               </p>
             )}
+
+            {/* Agent-only "You earn" badge (renders nothing for customers) */}
+            <AgentEarnBadge
+              totalAmount={price * adults}
+              commissionPercent={Number(flight?.fare?.commissionPercent ?? flight?.commissionPercent ?? 5)}
+              commissionAmount={flight?.fare?.commissionAmount ?? flight?.commissionAmount}
+              className="self-end lg:self-end"
+            />
+
             {seatsAvailable !== null && (
               <p className={cn(
                 "text-[10px] font-semibold",

@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { BookingRoleModal } from "@/components/search/BookingRoleModal";
+import { AgentEarnBadge } from "@/components/shared/AgentCommissionBreakdown";
 
 const PLANS = [
   {
@@ -126,6 +127,13 @@ export default function InsurancePage() {
                     ₹{plan.price}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">per person per trip</p>
+                  {/* Agent-only earn badge */}
+                  <AgentEarnBadge
+                    totalAmount={Number(plan.price) || 0}
+                    commissionPercent={Number((plan as any)?.commissionPercent ?? 5)}
+                    commissionAmount={(plan as any)?.commissionAmount}
+                    className="mt-2"
+                  />
                 </div>
 
                 {/* Coverage */}
