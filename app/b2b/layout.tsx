@@ -1,13 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { useAuthStore, useSettingsStore } from "@/lib/store";
+import { useAuthStore } from "@/lib/store";
 import { agentApi, unwrap } from "@/lib/api/services";
-import { B2BSidebar } from "@/components/layout/B2BSidebar";
-import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { CommonFooter } from "@/components/layout/CommonFooter";
-import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
+import { B2BTopNavbar } from "@/components/layout/B2btopnavbar";
 
 // Pages inside /b2b that are fully public (no auth needed)
 const B2B_PUBLIC = [
@@ -20,7 +18,6 @@ const B2B_PUBLIC = [
 
 export default function B2BLayout({ children }: { children: React.ReactNode }) {
   const { user, token, role, isAuthenticated, _hasHydrated } = useAuthStore();
-  const { sidebarOpen } = useSettingsStore();
   const router = useRouter();
   const pathname = usePathname();
   const [checked, setChecked] = useState(false);
@@ -104,17 +101,12 @@ export default function B2BLayout({ children }: { children: React.ReactNode }) {
   // KYC page — full-screen (no sidebar)
   if (pathname.startsWith("/b2b/kyc")) return <>{children}</>;
 
-  // Full agent dashboard layout
+  // Full agent dashboard layout — top navbar only, no left sidebar
+  // pt-16 on mobile (single row), md:pt-[104px] accounts for secondary nav (md to <xl), xl:pt-16 (no secondary)
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      <B2BSidebar />
-      <DashboardHeader />
-      <main
-        className={cn(
-          "transition-all duration-300 pt-16 min-h-screen flex flex-col ml-0",
-          sidebarOpen ? "md:ml-64" : "md:ml-[70px]",
-        )}
-      >
+      <B2BTopNavbar />
+      <main className="pt-[88px] md:pt-[104px] xl:pt-16 min-h-screen flex flex-col">
         <div className="flex-1 p-4 sm:p-6">{children}</div>
         <CommonFooter />
       </main>

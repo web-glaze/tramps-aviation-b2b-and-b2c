@@ -254,88 +254,36 @@ select option:hover {
 }
 
 /* ════════════════════════════════════════════════════════
-   SEARCH BAR
+   SEARCH BAR — Clean white card style, not edge-to-edge
 ════════════════════════════════════════════════════════ */
 .search-hero {
-  @apply border-b;
-  border-color: hsl(var(--border) / 0.35);
-  background:
-    radial-gradient(circle at top left, hsl(0 0% 100% / 0.28), transparent 34%),
-    radial-gradient(circle at top right, hsl(var(--primary) / 0.22), transparent 38%),
-    linear-gradient(135deg, hsl(var(--primary) / 0.92) 0%, hsl(205 62% 37% / 0.96) 54%, hsl(207 58% 30% / 0.98) 100%);
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+  @apply border border-border bg-card rounded-2xl shadow-sm;
+  /* max-width + centering handled by parent wrapper */
 }
 .search-hero .search-label {
-  @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-white/[72%] block mb-1.5;
+  @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground block mb-1.5;
 }
 .search-hero .search-input {
-  @apply w-full border rounded-xl px-4 py-3 text-white font-bold
-         placeholder:text-white/40 outline-none transition-all;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.12));
-  border-color: rgba(255, 255, 255, 0.24);
-  backdrop-filter: blur(18px) saturate(180%);
-  -webkit-backdrop-filter: blur(18px) saturate(180%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    0 12px 28px rgba(10, 37, 64, 0.12);
+  @apply w-full border border-border bg-background rounded-xl px-4 py-3 text-foreground font-bold
+         placeholder:text-muted-foreground/60 outline-none transition-all
+         hover:border-primary/40 focus:border-primary;
 }
 .search-hero .search-input:focus {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.16));
-  border-color: rgba(255, 255, 255, 0.55);
-  box-shadow:
-    0 0 0 3px rgba(255, 255, 255, 0.14),
-    0 14px 32px rgba(8, 31, 56, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  @apply ring-2 ring-primary/20;
 }
 .search-hero .search-input-date {
-  @apply w-full border rounded-xl px-4 py-3 text-white text-sm outline-none transition-all;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.12));
-  border-color: rgba(255, 255, 255, 0.24);
-  backdrop-filter: blur(18px) saturate(180%);
-  -webkit-backdrop-filter: blur(18px) saturate(180%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    0 12px 28px rgba(10, 37, 64, 0.12);
-  color-scheme: dark;
-}
-.search-hero .search-input-date:focus {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.16));
-  border-color: rgba(255, 255, 255, 0.55);
-  box-shadow:
-    0 0 0 3px rgba(255, 255, 255, 0.14),
-    0 14px 32px rgba(8, 31, 56, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  @apply w-full border border-border bg-background rounded-xl px-4 py-3 text-foreground text-sm outline-none transition-all
+         hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20;
 }
 .search-hero .search-panel {
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.07));
-  border-radius: 1.5rem;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 22px 60px rgba(7, 32, 59, 0.16);
-  backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  @apply bg-muted/30 border border-border rounded-2xl;
 }
 .search-hero .search-button {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 250, 255, 0.95));
-  color: hsl(var(--primary));
-  border: 1px solid rgba(255, 255, 255, 0.52);
-  box-shadow:
-    0 14px 32px rgba(10, 37, 64, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.55);
-}
-.search-hero .search-button:hover {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 1), rgba(248, 251, 255, 0.98));
+  @apply bg-primary text-primary-foreground border border-primary font-semibold
+         hover:opacity-90 shadow-sm transition-opacity;
 }
 .search-hero .search-note {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.09));
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  @apply bg-muted/50 border border-border rounded-xl text-muted-foreground;
 }
 
 @media (max-width: 640px) {
@@ -833,4 +781,24 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .cms-content pre code {
   background: none;
   padding: 0;
+}
+/* ════════════════════════════════════════════════════════
+   CUSTOM SCROLLBAR — subtle, for sticky filter sidebars
+════════════════════════════════════════════════════════ */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.25);
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.4);
 }

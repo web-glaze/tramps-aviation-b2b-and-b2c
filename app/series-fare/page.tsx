@@ -745,72 +745,74 @@ function SeriesFarePage() {
         />
       )}
 
-      {/* Search Bar */}
-      <div className="search-hero">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6">
-          <div className="search-panel p-3 sm:p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
-            <div>
-              <label className="search-label">From</label>
-              <div className="relative">
+      {/* Search Bar — wrapped in padding container so it's not edge-to-edge */}
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-6">
+        <div className="search-hero">
+          <div className="px-4 sm:px-6 py-6">
+            <div className="search-panel p-3 sm:p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+              <div>
+                <label className="search-label">From</label>
+                <div className="relative">
+                  <input
+                    value={from}
+                    onChange={e => setFrom(e.target.value.toUpperCase())}
+                    maxLength={3} placeholder="DEL"
+                    className="search-input w-full font-black text-xl tracking-widest text-center uppercase"
+                  />
+                  <button
+                    onClick={swap}
+                    className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-7 h-7 bg-card border border-border rounded-full flex items-center justify-center shadow-sm hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-95 hidden sm:flex"
+                  >
+                    <ArrowLeftRight className="h-3 w-3 text-primary" />
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="search-label">To</label>
                 <input
-                  value={from}
-                  onChange={e => setFrom(e.target.value.toUpperCase())}
-                  maxLength={3} placeholder="DEL"
+                  value={to}
+                  onChange={e => setTo(e.target.value.toUpperCase())}
+                  maxLength={3} placeholder="BOM"
                   className="search-input w-full font-black text-xl tracking-widest text-center uppercase"
                 />
+              </div>
+              <div>
+                <label className="search-label">Travel Date</label>
+                <input
+                  type="date" value={date}
+                  onChange={e => setDate(e.target.value)}
+                  min={new Date().toISOString().split("T")[0]}
+                  className="search-input-date w-full text-sm"
+                />
+              </div>
+              <div>
+                <label className="search-label">Adults</label>
+                <input
+                  type="number" value={adults} min={1} max={9}
+                  onChange={e => setAdults(Math.min(9, Math.max(1, parseInt(e.target.value) || 1)))}
+                  className="search-input w-full font-bold text-xl text-center"
+                />
+              </div>
+              <div className="flex items-end">
                 <button
-                  onClick={swap}
-                  className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-md transition-all active:scale-95 hidden sm:flex"
+                  onClick={() => doSearch()} disabled={loading}
+                  className="search-button w-full h-[50px] disabled:opacity-60 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-sm"
                 >
-                  <ArrowLeftRight className="h-3 w-3 text-primary" />
+                  {loading ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  {loading ? "Searching…" : "Search"}
                 </button>
               </div>
             </div>
-            <div>
-              <label className="search-label">To</label>
-              <input
-                value={to}
-                onChange={e => setTo(e.target.value.toUpperCase())}
-                maxLength={3} placeholder="BOM"
-                className="search-input w-full font-black text-xl tracking-widest text-center uppercase"
-              />
             </div>
-            <div>
-              <label className="search-label">Travel Date</label>
-              <input
-                type="date" value={date}
-                onChange={e => setDate(e.target.value)}
-                min={new Date().toISOString().split("T")[0]}
-                className="search-input-date w-full text-sm"
-              />
-            </div>
-            <div>
-              <label className="search-label">Adults</label>
-              <input
-                type="number" value={adults} min={1} max={9}
-                onChange={e => setAdults(Math.min(9, Math.max(1, parseInt(e.target.value) || 1)))}
-                className="search-input w-full font-bold text-xl text-center"
-              />
-            </div>
-            <div className="flex items-end">
-              <button
-                onClick={() => doSearch()} disabled={loading}
-                className="search-button w-full h-[50px] disabled:opacity-60 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-sm"
-              >
-                {loading ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                {loading ? "Searching…" : "Search"}
-              </button>
-            </div>
-          </div>
-          </div>
 
-          <div className="search-note mt-3 flex items-start gap-2 text-xs text-white/70 rounded-xl px-4 py-2.5">
-            <Info className="h-3.5 w-3.5 text-white/60 flex-shrink-0 mt-0.5" />
-            <p>
-              <span className="font-semibold text-white">Series Fares</span> are Tramps Aviation's exclusive bulk inventory —
-              separate from regular TBO fares. PNR is generated internally upon booking.
-            </p>
+            <div className="search-note mt-3 flex items-start gap-2 text-xs rounded-xl px-4 py-2.5">
+              <Info className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+              <p>
+                <span className="font-semibold text-foreground">Series Fares</span> are Tramps Aviation's exclusive bulk inventory —
+                separate from regular TBO fares. PNR is generated internally upon booking.
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -819,7 +821,7 @@ function SeriesFarePage() {
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6">
         {searched && !loading && flights.length > 0 ? (
           <div className="flex gap-5">
-            <div className="w-56 flex-shrink-0 hidden lg:block">
+            <div className="w-56 flex-shrink-0 hidden lg:block self-start sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto custom-scrollbar">
               <FlightFilters
                 flights={flightsForFilter}
                 sortBy={sortBy}               setSortBy={setSortBy}

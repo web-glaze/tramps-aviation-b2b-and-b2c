@@ -470,17 +470,18 @@ function FlightsContent() {
       )}
 
       {/* ── Search Bar ── */}
-      <FlightSearchBar
-        from={from} setFrom={setFrom}
-        to={to}     setTo={setTo}
-        date={date} setDate={setDate}
-        retDate={retDate} setRetDate={setRetDate}
-        adults={adults}   setAdults={setAdults}
-        tripType={tripType} setTripType={setTripType}
-        onSearch={doSearch} loading={loading}
-        showTripType
-      />
-
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-6">
+        <FlightSearchBar
+          from={from} setFrom={setFrom}
+          to={to}     setTo={setTo}
+          date={date} setDate={setDate}
+          retDate={retDate} setRetDate={setRetDate}
+          adults={adults}   setAdults={setAdults}
+          tripType={tripType} setTripType={setTripType}
+          onSearch={doSearch} loading={loading}
+          showTripType
+        />
+      </div>
       {/* ── Status banner ── */}
       {!isAuthenticated && (
         <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-500/20">
@@ -503,8 +504,8 @@ function FlightsContent() {
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6">
         {searched && !loading && flights.length > 0 ? (
           <div className="flex gap-5">
-            {/* Filter sidebar */}
-            <div className="w-56 flex-shrink-0 hidden lg:block">
+            {/* Filter sidebar — sticky so it stays visible while results scroll */}
+            <div className="w-56 flex-shrink-0 hidden lg:block self-start sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto custom-scrollbar">
               <FlightFilters
                 flights={flights}
                 sortBy={sortBy}         setSortBy={setSortBy}
