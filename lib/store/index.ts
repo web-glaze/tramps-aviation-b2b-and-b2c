@@ -334,3 +334,8 @@ export const usePlatformStore = create<PlatformState>()((set, get) => ({
     }
   },
 }))
+
+// Re-export flight filters store so consumers can do:
+//   import { useFlightFiltersStore } from '@/lib/store'
+export { useFlightFiltersStore } from './flightFilters'
+export type { FlightFiltersState } from './flightFilters'

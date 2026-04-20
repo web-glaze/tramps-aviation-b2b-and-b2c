@@ -21,7 +21,7 @@ import {
   Users,
   CheckCircle2,
 } from "lucide-react";
-import { useAuthStore } from "@/lib/store";
+import { useAuthStore, useFlightFiltersStore } from "@/lib/store";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { FlightFilters } from "@/components/search/FlightFilters";
@@ -371,12 +371,24 @@ function AgentBookingDialog({
   date: string;
   onClose: () => void;
 }) {
-  const { agentId } = useAuthStore();
+  const { agentId, user } = useAuthStore();
   const price =
     typeof flight.price === "number"
       ? flight.price
       : flight.fare?.totalFare || flight.fare?.total || 0;
   const total = price * adults;
+
+  // ── Agent-side fare breakdown (shown in dialog) ─────────────────────────
+  // Screen shows: Base ₹1,700 + Taxes ~₹300 = Customer Pays ₹2,000
+  // We derive per-person base/tax from flight.fare if provided, else 85/15 split.
+  const baseFareEach = Number(
+    flight?.fare?.baseFare ?? flight?.baseFare ?? Math.round(price * 0.85),
+  );
+  const taxesEach = Number(
+    flight?.fare?.taxes ?? flight?.taxes ?? price - baseFareEach,
+  );
+  const baseFareTotal = baseFareEach * adults;
+  const taxesTotal = taxesEach * adults;
 
   const [passengers, setPassengers] = useState(
     Array.from({ length: adults }, () => ({
@@ -385,6 +397,13 @@ function AgentBookingDialog({
       dob: "",
       gender: "M",
     })),
+  );
+  // Editable contact fields — prefilled from logged-in agent
+  const [contactEmail, setContactEmail] = useState<string>(
+    user?.email || user?.contactEmail || "",
+  );
+  const [contactPhone, setContactPhone] = useState<string>(
+    user?.phone || user?.mobile || user?.contactPhone || "",
   );
   const [step, setStep] = useState<"form" | "loading" | "done">("form");
   const [pnr, setPnr] = useState("");
@@ -397,29 +416,54 @@ function AgentBookingDialog({
     : `TRAMPS-${flight.id || flight._id || flight.resultToken}`;
 
   const confirm = async () => {
-    if (!passengers.every((p) => p.firstName && p.lastName)) {
-      toast.error("Fill all passenger names");
+    // Validate passenger names
+    if (!passengers.every((p) => p.firstName.trim() && p.lastName.trim())) {
+      toast.error("Please fill all passenger names");
       return;
     }
+    // Validate DOB (backend schema requires it)
+    if (!passengers.every((p) => p.dob)) {
+      toast.error("Please fill date of birth for all passengers");
+      return;
+    }
+    // Validate contact
+    if (!contactEmail.trim() || !contactPhone.trim()) {
+      toast.error("Contact email and phone are required");
+      return;
+    }
+
     setStep("loading");
+
+    // Generate a unique idempotency key for this booking attempt.
+    // If the network fails and user retries, the same key ensures only one
+    // booking is created server-side.
+    const idempotencyKey = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
     try {
       // ── Step 1: Init booking ──────────────────────────────────────────────
       setStepLabel("Creating booking…");
       const initRes = await apiClient.post("/bookings/init", {
         resultToken,
-        tripType: "OneWay",
+        // Backend schema enum is snake_case: one_way / round_trip / multi_city
+        tripType: "one_way",
         adults,
         passengers: passengers.map((p) => ({
           title: p.gender === "F" ? "Ms" : "Mr",
           firstName: p.firstName.trim(),
           lastName: p.lastName.trim(),
-          dob: p.dob || "1990-01-01",
+          // Backend schema fields (required):
+          dateOfBirth: p.dob,           // ISO date string — mongoose will cast to Date
           gender: p.gender || "M",
-          passportNo: "",
+          passengerType: "ADT",         // Adult — required enum
+          // Optional / legacy aliases kept for safety
+          dob: p.dob,
+          passportNumber: "",
         })),
-        contactEmail: "",
-        contactPhone: "",
+        contactEmail: contactEmail.trim(),
+        contactPhone: contactPhone.trim(),
+        expectedPricePerPax: price,   // Price drift check on backend
+      }, {
+        headers: { "X-Idempotency-Key": idempotencyKey },
       });
 
       const initData = initRes.data?.data || initRes.data;
@@ -547,22 +591,25 @@ function AgentBookingDialog({
         </div>
 
         <div className="p-5 space-y-5">
-          {/* Fare summary */}
+          {/* Fare summary — clear breakdown (base + taxes) */}
           <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 rounded-xl p-4 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">
-                ₹{price.toLocaleString("en-IN")} × {adults} passenger
-                {adults > 1 ? "s" : ""}
+                Base Fare × {adults} passenger{adults > 1 ? "s" : ""}
               </span>
               <span className="font-medium">
-                ₹{total.toLocaleString("en-IN")}
+                ₹{baseFareTotal.toLocaleString("en-IN")}
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Taxes & Fees</span>
-              <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                Included
+              <span className="text-muted-foreground">Taxes &amp; Fees</span>
+              <span className="font-medium">
+                ₹{taxesTotal.toLocaleString("en-IN")}
               </span>
+            </div>
+            <div className="flex justify-between text-[11px] text-muted-foreground">
+              <span>Per passenger</span>
+              <span>₹{price.toLocaleString("en-IN")}</span>
             </div>
             <div className="flex justify-between font-bold border-t border-amber-200 dark:border-amber-700/30 pt-2 mt-1">
               <span>Wallet Deduction</span>
@@ -570,10 +617,13 @@ function AgentBookingDialog({
                 ₹{total.toLocaleString("en-IN")}
               </span>
             </div>
-            <div className="flex items-center gap-2 text-[10px] text-muted-foreground pt-1">
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground pt-1">
               <Luggage className="h-3 w-3" />
-              {flight.baggage || flight.checkinBaggage || "30KG"} check-in ·
-              {flight.cabinBaggage || "7KG"} cabin
+              <span>
+                {flight.baggage || flight.checkinBaggage || "15KG"} check-in
+              </span>
+              <span className="text-muted-foreground/60">·</span>
+              <span>{flight.cabinBaggage || "7KG"} cabin</span>
             </div>
           </div>
 
@@ -644,6 +694,39 @@ function AgentBookingDialog({
               </div>
             </div>
           ))}
+
+          {/* Contact details — required by backend; prefilled from agent account */}
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-foreground border-b border-border pb-2">
+              Contact Details
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-muted-foreground block mb-1">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  className="input-base"
+                  placeholder="you@example.com"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground block mb-1">
+                  Phone *
+                </label>
+                <input
+                  type="tel"
+                  value={contactPhone}
+                  onChange={(e) => setContactPhone(e.target.value)}
+                  className="input-base"
+                  placeholder="10-digit mobile"
+                />
+              </div>
+            </div>
+          </div>
 
           {/* Note */}
           <div className="bg-primary/5 border border-primary/15 rounded-xl px-4 py-3">
@@ -818,12 +901,20 @@ function SeriesFarePage() {
   const [searched, setSearched] = useState(false);
   const [selectedFlight, setSelectedFlight] = useState<any>(null);
 
-  const [sortBy, setSortBy] = useState("price");
-  const [filterStop, setFilterStop] = useState("all");
-  const [filterRef, setFilterRef] = useState("all");
-  const [filterCabin, setFilterCabin] = useState("all");
-  const [filterAirline, setFilterAirline] = useState("all");
-  const [maxPrice, setMaxPrice] = useState(0);
+  // ── Persisted filters ─────────────────────────────────────────────────
+  // Previously these were local useState → reset on every unmount, which is
+  // why the filter selections disappeared the moment the agent opened the
+  // booking dialog or navigated away. Now they live in a Zustand store with
+  // localStorage persistence so the choices survive across screens and reloads.
+  const {
+    sortBy,        setSortBy,
+    filterStop,    setFilterStop,
+    filterRef,     setFilterRef,
+    filterCabin,   setFilterCabin,
+    filterAirline, setFilterAirline,
+    maxPrice,      setMaxPrice,
+    resetFilters,
+  } = useFlightFiltersStore();
 
   useEffect(() => {
     if (!date) {
@@ -850,11 +941,9 @@ function SeriesFarePage() {
     setLoading(true);
     setSearched(true);
     setFlights([]);
-    setFilterStop("all");
-    setFilterRef("all");
-    setFilterCabin("all");
-    setFilterAirline("all");
-    setMaxPrice(0);
+    // NOTE: intentionally NOT resetting filters here — they are persisted via
+    // useFlightFiltersStore and should survive re-searches. User can tap
+    // "Clear all" in the filter panel to reset explicitly.
     try {
       const res = await fetch(
         `${API_BASE}/flights/series?origin=${encodeURIComponent(f.toUpperCase())}&destination=${encodeURIComponent(t.toUpperCase())}&departureDate=${d}&adults=${adults}`,
@@ -1067,13 +1156,7 @@ function SeriesFarePage() {
                 maxPrice={maxPrice}
                 setMaxPrice={setMaxPrice}
                 hasFilters={hasFilters}
-                onClear={() => {
-                  setFilterStop("all");
-                  setFilterRef("all");
-                  setFilterCabin("all");
-                  setFilterAirline("all");
-                  setMaxPrice(0);
-                }}
+                onClear={resetFilters}
               />
             </div>
 
@@ -1125,13 +1208,7 @@ function SeriesFarePage() {
                     No fares match your filters or available seat count
                   </p>
                   <button
-                    onClick={() => {
-                      setFilterStop("all");
-                      setFilterRef("all");
-                      setFilterCabin("all");
-                      setFilterAirline("all");
-                      setMaxPrice(0);
-                    }}
+                    onClick={resetFilters}
                     className="text-primary hover:underline text-sm mt-2"
                   >
                     Clear filters

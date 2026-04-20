@@ -14,11 +14,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   Menu, X, Bell, Sun, Moon, Home, ChevronDown, LogOut,
-  User as UserIcon, Wallet, BookOpen, HelpCircle,
+  User as UserIcon, Wallet, BookOpen, HelpCircle, MoreHorizontal,
 } from "lucide-react";
 import { useAuthStore, useSettingsStore, usePlatformStore } from "@/lib/store";
 import { agentApi, unwrap } from "@/lib/api/services";
-import { B2B_SIDEBAR_NAV, B2B_SIDEBAR_BOTTOM, APP_NAME } from "@/config/app";
+import { B2B_SIDEBAR_NAV, B2B_SIDEBAR_MORE, B2B_SIDEBAR_BOTTOM, APP_NAME } from "@/config/app";
 import { cn } from "@/lib/utils";
 
 const PAGE_TITLES: Record<string, string> = {
@@ -46,10 +46,12 @@ export function B2BTopNavbar() {
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [liveBalance, setLiveBalance] = useState<number | null>(null);
   const [balLoading, setBalLoading] = useState(false);
 
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
 
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
@@ -76,13 +78,16 @@ export function B2BTopNavbar() {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false);
       }
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setMoreMenuOpen(false);
+      }
     };
-    if (userMenuOpen) document.addEventListener("mousedown", handleClick);
+    if (userMenuOpen || moreMenuOpen) document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
-  }, [userMenuOpen]);
+  }, [userMenuOpen, moreMenuOpen]);
 
   // Close drawer on route change
-  useEffect(() => { setDrawerOpen(false); }, [pathname]);
+  useEffect(() => { setDrawerOpen(false); setMoreMenuOpen(false); }, [pathname]);
 
   // Prevent body scroll when drawer open
   useEffect(() => {
@@ -161,6 +166,61 @@ export function B2BTopNavbar() {
                 </Link>
               );
             })}
+
+            {/* More dropdown — groups My Bookings / Commission / Reports */}
+            <div className="relative" ref={moreMenuRef}>
+              <button
+                onClick={() => setMoreMenuOpen((v) => !v)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap",
+                  B2B_SIDEBAR_MORE.some((i) => isActive(i.href))
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+                aria-haspopup="menu"
+                aria-expanded={moreMenuOpen}
+              >
+                <MoreHorizontal className="h-3.5 w-3.5" />
+                More
+                <ChevronDown
+                  className={cn(
+                    "h-3 w-3 transition-transform",
+                    moreMenuOpen && "rotate-180"
+                  )}
+                />
+              </button>
+
+              {moreMenuOpen && (
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-52 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50 animate-in fade-in slide-in-from-top-1"
+                  role="menu"
+                >
+                  <div className="py-1">
+                    {B2B_SIDEBAR_MORE.map((item) => {
+                      const Icon = item.icon!;
+                      const active = isActive(item.href);
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setMoreMenuOpen(false)}
+                          className={cn(
+                            "flex items-center gap-2.5 px-3 py-2 text-sm transition-colors",
+                            active
+                              ? "bg-primary/10 text-primary font-semibold"
+                              : "text-foreground hover:bg-muted"
+                          )}
+                          role="menuitem"
+                        >
+                          <Icon className="h-4 w-4 text-muted-foreground" />
+                          {item.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
           </nav>
 
           {/* Spacer when nav hidden */}
@@ -282,7 +342,7 @@ export function B2BTopNavbar() {
         {/* Row 2: Scrollable secondary nav (md+ but <xl) — shows all nav items */}
         <div className="hidden md:block xl:hidden border-t border-border bg-muted/20">
           <div className="flex items-center gap-1 px-4 py-2 overflow-x-auto scrollbar-thin">
-            {B2B_SIDEBAR_NAV.map((item) => {
+            {[...B2B_SIDEBAR_NAV, ...B2B_SIDEBAR_MORE].map((item) => {
               const Icon = item.icon!;
               const active = isActive(item.href);
               return (
@@ -374,6 +434,30 @@ export function B2BTopNavbar() {
             {/* Menu items */}
             <nav className="flex-1 overflow-y-auto p-3 space-y-0.5">
               {B2B_SIDEBAR_NAV.map((item) => {
+                const Icon = item.icon!;
+                const active = isActive(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
+                      active
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-foreground hover:bg-muted"
+                    )}
+                  >
+                    <Icon className="h-4 w-4 flex-shrink-0" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+
+              {/* More group */}
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-3 pt-4 pb-1">
+                More
+              </p>
+              {B2B_SIDEBAR_MORE.map((item) => {
                 const Icon = item.icon!;
                 const active = isActive(item.href);
                 return (

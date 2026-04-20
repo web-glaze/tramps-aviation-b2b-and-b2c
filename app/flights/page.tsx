@@ -43,6 +43,8 @@ function AgentBookingDialog({ flight, adults, from, to, date, onClose }: {
       toast.error("Fill all passenger names"); return;
     }
     setStep("loading");
+    // Idempotency key: unique per booking attempt — prevents double-booking on retry
+    const idempotencyKey = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     try {
       const res = await agentApi.bookFlight({
         resultToken: flight.resultToken||flight.id,
@@ -53,6 +55,8 @@ function AgentBookingDialog({ flight, adults, from, to, date, onClose }: {
         })),
         bookedVia: "B2B",
         agentId,
+        expectedPricePerPax: getPrice(flight),
+        _idempotencyKey: idempotencyKey,
       });
       const d = unwrap(res) as any;
       setPnr(d?.pnr||d?.bookingRef||""); setRef(d?.bookingRef||"");

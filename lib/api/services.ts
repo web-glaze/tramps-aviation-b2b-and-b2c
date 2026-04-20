@@ -82,7 +82,14 @@ export const agentApi = {
     apiClient.post(`/bookings/${bookingRef}/confirm-b2b`, {}),
   // Legacy — kept for backwards compatibility, points to OLD single-step endpoint
   // Use initBooking + confirmB2bBooking instead for all new code
-  bookFlight: (data: any) => apiClient.post("/bookings/agent/flight", data),
+  bookFlight: (data: any) => {
+    // Generate idempotency key if not already provided by caller
+    const idempotencyKey = data._idempotencyKey || `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const { _idempotencyKey: _removed, ...payload } = data;
+    return apiClient.post("/bookings/agent/flight", payload, {
+      headers: { "X-Idempotency-Key": idempotencyKey },
+    });
+  },
   // Topup request
   requestTopup: (data: { amount: number; utrNumber?: string }) =>
     apiClient.post("/agents/wallet/topup-request", data),

@@ -43,15 +43,20 @@ export const ROUTES = {
   B2C_MY_TRIPS: "/b2c/my-trips",
 } as const;
 
-// B2B Sidebar Navigation
+// B2B Sidebar Navigation — primary items (shown directly in top bar)
 export const B2B_SIDEBAR_NAV: NavItem[] = [
   { label: "Dashboard", href: ROUTES.B2B_DASHBOARD, icon: LayoutDashboard },
   { label: "Flights", href: ROUTES.B2B_FLIGHTS, icon: Plane },
   { label: "Hotels", href: ROUTES.B2B_HOTELS, icon: Hotel },
   { label: "Insurance", href: ROUTES.B2B_INSURANCE, icon: Shield },
-  { label: "My Bookings", href: ROUTES.B2B_BOOKINGS, icon: BookOpen },
   { label: "Wallet", href: ROUTES.B2B_WALLET, icon: Wallet },
   { label: "Series Fare", href: "/b2b/series-fare", icon: Tag },
+];
+
+// Items that live inside the "More" dropdown in the B2B top nav
+// (requested: Reports, Commission, My Bookings grouped under a dropdown)
+export const B2B_SIDEBAR_MORE: NavItem[] = [
+  { label: "My Bookings", href: ROUTES.B2B_BOOKINGS, icon: BookOpen },
   { label: "Commission", href: ROUTES.B2B_COMMISSION, icon: TrendingUp },
   { label: "Reports", href: ROUTES.B2B_REPORTS, icon: BarChart3 },
 ];
