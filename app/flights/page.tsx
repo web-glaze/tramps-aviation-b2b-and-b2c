@@ -10,50 +10,87 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import {
-  Plane, RefreshCcw, AlertCircle, Shield, Zap, CheckCircle,
-  Filter, ArrowRight, X, Info, Star
+  Plane,
+  RefreshCcw,
+  AlertCircle,
+  Shield,
+  Zap,
+  CheckCircle,
+  Filter,
+  ArrowRight,
+  X,
+  Info,
+  Star,
 } from "lucide-react";
 import { flightsApi, customerApi, agentApi, unwrap } from "@/lib/api/services";
 import { useAuthStore, useSearchStateStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { FlightSearchBar  } from "@/components/search/FlightSearchBar";
+import { FlightSearchBar } from "@/components/search/FlightSearchBar";
 import { FlightCard, getPrice } from "@/components/search/FlightCard";
-import { FlightFilters    } from "@/components/search/FlightFilters";
+import { FlightFilters } from "@/components/search/FlightFilters";
 import { BookingRoleModal } from "@/components/search/BookingRoleModal";
 import { AgentCommissionBreakdown } from "@/components/shared/AgentCommissionBreakdown";
 
-
 // ─── Agent (B2B) Booking Dialog — wallet deduction ───────────────────────────
-function AgentBookingDialog({ flight, adults, from, to, date, onClose }: {
-  flight:any; adults:number; from:string; to:string; date:string; onClose:()=>void;
+function AgentBookingDialog({
+  flight,
+  adults,
+  from,
+  to,
+  date,
+  onClose,
+}: {
+  flight: any;
+  adults: number;
+  from: string;
+  to: string;
+  date: string;
+  onClose: () => void;
 }) {
   const { user } = useAuthStore();
   const taxes = Number(flight?.fare?.taxes || flight?.taxes || 0);
   const total = getPrice(flight) * adults;
-  const baseFareEach = Number(flight?.fare?.baseFare ?? Math.round(getPrice(flight) * 0.85));
-  const taxesEach    = Number(flight?.fare?.taxes    ?? (getPrice(flight) - baseFareEach));
+  const baseFareEach = Number(
+    flight?.fare?.baseFare ?? Math.round(getPrice(flight) * 0.85),
+  );
+  const taxesEach = Number(
+    flight?.fare?.taxes ?? getPrice(flight) - baseFareEach,
+  );
 
   const [passengers, setPassengers] = useState(
-    Array.from({length:adults}, ()=>({firstName:"",lastName:"",dob:"",gender:"M",passport:""}))
+    Array.from({ length: adults }, () => ({
+      firstName: "",
+      lastName: "",
+      dob: "",
+      gender: "M",
+      passport: "",
+    })),
   );
   // Prefill contact from logged-in agent profile
-  const [contactEmail, setContactEmail] = useState<string>(user?.email || user?.contactEmail || "");
-  const [contactPhone, setContactPhone] = useState<string>(user?.phone || user?.mobile || user?.contactPhone || "");
-  const [step, setStep] = useState<"form"|"loading"|"done">("form");
+  const [contactEmail, setContactEmail] = useState<string>(
+    user?.email || user?.contactEmail || "",
+  );
+  const [contactPhone, setContactPhone] = useState<string>(
+    user?.phone || user?.mobile || user?.contactPhone || "",
+  );
+  const [step, setStep] = useState<"form" | "loading" | "done">("form");
   const [stepLabel, setStepLabel] = useState("");
-  const [pnr,  setPnr]  = useState("");
-  const [ref,  setRef]  = useState("");
+  const [pnr, setPnr] = useState("");
+  const [ref, setRef] = useState("");
 
   const confirm = async () => {
-    if (!passengers.every(p=>p.firstName&&p.lastName)) {
-      toast.error("Fill all passenger names"); return;
+    if (!passengers.every((p) => p.firstName && p.lastName)) {
+      toast.error("Fill all passenger names");
+      return;
     }
-    if (!passengers.every(p=>p.dob)) {
-      toast.error("Date of birth is required for all passengers"); return;
+    if (!passengers.every((p) => p.dob)) {
+      toast.error("Date of birth is required for all passengers");
+      return;
     }
     if (!contactEmail.trim() || !contactPhone.trim()) {
-      toast.error("Contact email and phone are required"); return;
+      toast.error("Contact email and phone are required");
+      return;
     }
     setStep("loading");
     const idempotencyKey = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -62,16 +99,16 @@ function AgentBookingDialog({ flight, adults, from, to, date, onClose }: {
       setStepLabel("Creating booking…");
       const initRes = await agentApi.initBooking({
         resultToken: flight.resultToken || flight.id,
-        tripType:    "one_way",
+        tripType: "one_way",
         adults,
-        passengers: passengers.map(p=>({
-          title: p.gender==="F" ? "Ms" : "Mr",
-          firstName:   p.firstName.trim(),
-          lastName:    p.lastName.trim(),
+        passengers: passengers.map((p) => ({
+          title: p.gender === "F" ? "Ms" : "Mr",
+          firstName: p.firstName.trim(),
+          lastName: p.lastName.trim(),
           dateOfBirth: p.dob,
-          gender:      p.gender || "M",
+          gender: p.gender || "M",
           passengerType: "ADT",
-          dob:         p.dob,
+          dob: p.dob,
           passportNumber: p.passport || "",
         })),
         contactEmail: contactEmail.trim(),
@@ -86,60 +123,97 @@ function AgentBookingDialog({ flight, adults, from, to, date, onClose }: {
       // Step 2: Confirm via wallet
       setStepLabel("Deducting from wallet…");
       const confirmRes = await agentApi.confirmB2bBooking(bookingRef);
-      const confirmData = (confirmRes as any)?.data?.data || (confirmRes as any)?.data;
+      const confirmData =
+        (confirmRes as any)?.data?.data || (confirmRes as any)?.data;
 
       setPnr(confirmData?.pnr || "");
       setRef(confirmData?.bookingRef || bookingRef);
       setStep("done");
       toast.success("Booking confirmed! Wallet debited.");
-    } catch(err:any) {
+    } catch (err: any) {
       toast.error(err?.response?.data?.message || "Booking failed");
-      setStep("form"); setStepLabel("");
+      setStep("form");
+      setStepLabel("");
     }
   };
 
-  if (step==="done") return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-foreground/60 backdrop-blur-sm"/>
-      <div className="relative bg-card border border-border rounded-2xl p-7 w-full max-w-sm text-center shadow-2xl">
-        <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle className="h-9 w-9 text-emerald-600 dark:text-emerald-400"/>
-        </div>
-        <h3 className="font-bold text-2xl text-foreground mb-1">Booking Confirmed!</h3>
-        <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-1.5 mb-3 inline-block">
-          B2B — Wallet debited ₹{total.toLocaleString("en-IN")}
-        </p>
-        {pnr && (
-          <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-4 py-3 mt-1 mb-2">
-            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wider mb-0.5">PNR (Auto-generated via TBO)</p>
-            <p className="font-mono font-black text-xl text-emerald-700 dark:text-emerald-300">{pnr}</p>
+  if (step === "done")
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-foreground/60 backdrop-blur-sm" />
+        <div className="relative bg-card border border-border rounded-2xl p-7 w-full max-w-sm text-center shadow-2xl">
+          <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="h-9 w-9 text-emerald-600 dark:text-emerald-400" />
           </div>
-        )}
-        {ref && <p className="text-xs text-muted-foreground mb-2">Ref: <span className="font-mono font-semibold">{ref}</span></p>}
-        <p className="text-xs text-muted-foreground mb-5">E-ticket sent to registered email</p>
-        <div className="flex gap-2 mt-5">
-          <button onClick={onClose} className="flex-1 bg-muted hover:bg-muted/80 text-foreground rounded-xl py-2.5 text-sm font-medium transition-colors">Close</button>
-          <button onClick={()=>{window.location.href="/b2b/bookings"}} className="flex-1 btn-primary py-2.5 text-sm">My Bookings</button>
+          <h3 className="font-bold text-2xl text-foreground mb-1">
+            Booking Confirmed!
+          </h3>
+          <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-1.5 mb-3 inline-block">
+            B2B — Wallet debited ₹{total.toLocaleString("en-IN")}
+          </p>
+          {pnr && (
+            <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-4 py-3 mt-1 mb-2">
+              <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wider mb-0.5">
+                PNR (Auto-generated via TBO)
+              </p>
+              <p className="font-mono font-black text-xl text-emerald-700 dark:text-emerald-300">
+                {pnr}
+              </p>
+            </div>
+          )}
+          {ref && (
+            <p className="text-xs text-muted-foreground mb-2">
+              Ref: <span className="font-mono font-semibold">{ref}</span>
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground mb-5">
+            E-ticket sent to registered email
+          </p>
+          <div className="flex gap-2 mt-5">
+            <button
+              onClick={onClose}
+              className="flex-1 bg-muted hover:bg-muted/80 text-foreground rounded-xl py-2.5 text-sm font-medium transition-colors"
+            >
+              Close
+            </button>
+            <button
+              onClick={() => {
+                window.location.href = "/b2b/bookings";
+              }}
+              className="flex-1 btn-primary py-2.5 text-sm"
+            >
+              My Bookings
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-foreground/60 backdrop-blur-sm" onClick={step==="form"?onClose:undefined}/>
+      <div
+        className="absolute inset-0 bg-foreground/60 backdrop-blur-sm"
+        onClick={step === "form" ? onClose : undefined}
+      />
       <div className="relative bg-card border border-border rounded-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl">
         <div className="sticky top-0 bg-card border-b border-border px-5 py-4 flex items-center justify-between z-10">
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-foreground">Agent Booking</h3>
-              <span className="text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-700/30 px-2 py-0.5 rounded-full font-bold">B2B · Wallet</span>
+              <span className="text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-700/30 px-2 py-0.5 rounded-full font-bold">
+                B2B · Wallet
+              </span>
             </div>
-            <p className="text-xs text-muted-foreground">{flight.airline} · {from} → {to} · {date}</p>
+            <p className="text-xs text-muted-foreground">
+              {flight.airline} · {from} → {to} · {date}
+            </p>
           </div>
-          {step==="form" && (
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all">
-              <X className="h-4 w-4"/>
+          {step === "form" && (
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
+            >
+              <X className="h-4 w-4" />
             </button>
           )}
         </div>
@@ -148,61 +222,120 @@ function AgentBookingDialog({ flight, adults, from, to, date, onClose }: {
           {/* Fare breakdown */}
           <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 rounded-xl p-4 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Base Fare × {adults} passenger{adults>1?"s":""}</span>
-              <span className="font-medium">₹{(baseFareEach*adults).toLocaleString("en-IN")}</span>
+              <span className="text-muted-foreground">
+                Base Fare × {adults} passenger{adults > 1 ? "s" : ""}
+              </span>
+              <span className="font-medium">
+                ₹{(baseFareEach * adults).toLocaleString("en-IN")}
+              </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Taxes & Fees</span>
-              <span className="font-medium">₹{(taxesEach*adults).toLocaleString("en-IN")}</span>
+              <span className="font-medium">
+                ₹{(taxesEach * adults).toLocaleString("en-IN")}
+              </span>
             </div>
             <div className="flex justify-between font-bold border-t border-amber-200 dark:border-amber-700/30 pt-2 mt-1">
               <span>Wallet Deduction</span>
-              <span className="text-xl text-amber-600 dark:text-amber-400">₹{total.toLocaleString("en-IN")}</span>
+              <span className="text-xl text-amber-600 dark:text-amber-400">
+                ₹{total.toLocaleString("en-IN")}
+              </span>
             </div>
             <AgentCommissionBreakdown
               totalAmount={total}
-              baseFare={taxes>0 ? total-taxes : undefined}
-              taxes={taxes>0 ? taxes : undefined}
-              commissionPercent={Number(flight?.fare?.commissionPercent ?? flight?.commissionPercent ?? 5)}
+              baseFare={taxes > 0 ? total - taxes : undefined}
+              taxes={taxes > 0 ? taxes : undefined}
+              commissionPercent={Number(
+                flight?.fare?.commissionPercent ??
+                  flight?.commissionPercent ??
+                  5,
+              )}
               commissionAmount={
-                typeof flight?.fare?.commissionAmount==="number" ? flight.fare.commissionAmount*adults
-                : typeof flight?.commissionAmount==="number" ? flight.commissionAmount*adults : undefined
+                typeof flight?.fare?.commissionAmount === "number"
+                  ? flight.fare.commissionAmount * adults
+                  : typeof flight?.commissionAmount === "number"
+                    ? flight.commissionAmount * adults
+                    : undefined
               }
-              gstOnCommission={typeof flight?.fare?.gstOnCommission==="number" ? flight.fare.gstOnCommission*adults : undefined}
-              netPayable={typeof flight?.fare?.netPayable==="number" ? flight.fare.netPayable*adults : undefined}
-              quantity={adults} productType="flight"
+              gstOnCommission={
+                typeof flight?.fare?.gstOnCommission === "number"
+                  ? flight.fare.gstOnCommission * adults
+                  : undefined
+              }
+              netPayable={
+                typeof flight?.fare?.netPayable === "number"
+                  ? flight.fare.netPayable * adults
+                  : undefined
+              }
+              quantity={adults}
+              productType="flight"
             />
             <p className="text-xs text-muted-foreground pt-1">
-              ✈ {flight.checkinBaggage||"15 KG"} check-in &nbsp;·&nbsp; 🎒 {flight.cabinBaggage||"7 KG"} cabin
+              ✈ {flight.checkinBaggage || "15 KG"} check-in &nbsp;·&nbsp; 🎒{" "}
+              {flight.cabinBaggage || "7 KG"} cabin
             </p>
           </div>
 
           {/* Passengers */}
-          {passengers.map((p,i)=>(
+          {passengers.map((p, i) => (
             <div key={i} className="space-y-3">
               <p className="text-sm font-semibold text-foreground border-b border-border pb-2">
-                Passenger {i+1} {i===0&&<span className="text-xs text-muted-foreground font-normal">(Primary)</span>}
+                Passenger {i + 1}{" "}
+                {i === 0 && (
+                  <span className="text-xs text-muted-foreground font-normal">
+                    (Primary)
+                  </span>
+                )}
               </p>
               <div className="grid grid-cols-2 gap-3">
-                {[["First Name *","firstName"],["Last Name *","lastName"]].map(([lbl,k])=>(
+                {[
+                  ["First Name *", "firstName"],
+                  ["Last Name *", "lastName"],
+                ].map(([lbl, k]) => (
                   <div key={k}>
-                    <label className="text-xs text-muted-foreground block mb-1">{lbl}</label>
-                    <input value={(p as any)[k]}
-                      onChange={e=>{const n=[...passengers];(n[i] as any)[k]=e.target.value;setPassengers(n)}}
-                      className="input-base" placeholder={lbl.replace(" *","")}/>
+                    <label className="text-xs text-muted-foreground block mb-1">
+                      {lbl}
+                    </label>
+                    <input
+                      value={(p as any)[k]}
+                      onChange={(e) => {
+                        const n = [...passengers];
+                        (n[i] as any)[k] = e.target.value;
+                        setPassengers(n);
+                      }}
+                      className="input-base"
+                      placeholder={lbl.replace(" *", "")}
+                    />
                   </div>
                 ))}
                 <div>
-                  <label className="text-xs text-muted-foreground block mb-1">Date of Birth *</label>
-                  <input type="date" value={p.dob}
-                    onChange={e=>{const n=[...passengers];n[i].dob=e.target.value;setPassengers(n)}}
-                    className="input-base"/>
+                  <label className="text-xs text-muted-foreground block mb-1">
+                    Date of Birth *
+                  </label>
+                  <input
+                    type="date"
+                    value={p.dob}
+                    onChange={(e) => {
+                      const n = [...passengers];
+                      n[i].dob = e.target.value;
+                      setPassengers(n);
+                    }}
+                    className="input-base"
+                  />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground block mb-1">Gender</label>
-                  <select value={p.gender}
-                    onChange={e=>{const n=[...passengers];n[i].gender=e.target.value;setPassengers(n)}}
-                    className="input-base">
+                  <label className="text-xs text-muted-foreground block mb-1">
+                    Gender
+                  </label>
+                  <select
+                    value={p.gender}
+                    onChange={(e) => {
+                      const n = [...passengers];
+                      n[i].gender = e.target.value;
+                      setPassengers(n);
+                    }}
+                    className="input-base"
+                  >
                     <option value="M">Male</option>
                     <option value="F">Female</option>
                   </select>
@@ -213,17 +346,33 @@ function AgentBookingDialog({ flight, adults, from, to, date, onClose }: {
 
           {/* Contact details — consistent with Series Fare dialog */}
           <div className="space-y-3">
-            <p className="text-sm font-semibold text-foreground border-b border-border pb-2">Contact Details</p>
+            <p className="text-sm font-semibold text-foreground border-b border-border pb-2">
+              Contact Details
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-muted-foreground block mb-1">Email *</label>
-                <input type="email" value={contactEmail} onChange={e=>setContactEmail(e.target.value)}
-                  className="input-base" placeholder="you@example.com"/>
+                <label className="text-xs text-muted-foreground block mb-1">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  className="input-base"
+                  placeholder="you@example.com"
+                />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground block mb-1">Phone *</label>
-                <input type="tel" value={contactPhone} onChange={e=>setContactPhone(e.target.value)}
-                  className="input-base" placeholder="10-digit mobile"/>
+                <label className="text-xs text-muted-foreground block mb-1">
+                  Phone *
+                </label>
+                <input
+                  type="tel"
+                  value={contactPhone}
+                  onChange={(e) => setContactPhone(e.target.value)}
+                  className="input-base"
+                  placeholder="10-digit mobile"
+                />
               </div>
             </div>
           </div>
@@ -231,25 +380,35 @@ function AgentBookingDialog({ flight, adults, from, to, date, onClose }: {
           {/* PNR note — flights get auto PNR from TBO (no manual entry needed) */}
           <div className="bg-primary/5 border border-primary/15 rounded-xl px-4 py-3">
             <p className="text-xs text-muted-foreground flex items-start gap-2">
-              <Info className="h-3.5 w-3.5 text-primary flex-shrink-0 mt-0.5"/>
-              PNR will be auto-generated by TBO upon booking confirmation.
-              No manual PNR entry needed for regular flights.
+              <Info className="h-3.5 w-3.5 text-primary flex-shrink-0 mt-0.5" />
+              PNR will be auto-generated by TBO upon booking confirmation. No
+              manual PNR entry needed for regular flights.
             </p>
           </div>
 
-          {step==="loading" && stepLabel && (
+          {step === "loading" && stepLabel && (
             <div className="flex items-center gap-2 text-sm text-primary bg-primary/5 border border-primary/15 rounded-xl px-4 py-3">
-              <RefreshCcw className="h-4 w-4 animate-spin flex-shrink-0"/>
+              <RefreshCcw className="h-4 w-4 animate-spin flex-shrink-0" />
               {stepLabel}
             </div>
           )}
 
-          <button onClick={confirm} disabled={step==="loading"}
-            className="w-full h-12 bg-primary hover:opacity-90 text-primary-foreground disabled:opacity-60 text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm">
-            {step==="loading"
-              ? <><RefreshCcw className="h-4 w-4 animate-spin"/>Processing…</>
-              : <>Confirm & Deduct ₹{total.toLocaleString("en-IN")} <ArrowRight className="h-4 w-4"/></>
-            }
+          <button
+            onClick={confirm}
+            disabled={step === "loading"}
+            className="w-full h-12 bg-primary hover:opacity-90 text-primary-foreground disabled:opacity-60 text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm"
+          >
+            {step === "loading" ? (
+              <>
+                <RefreshCcw className="h-4 w-4 animate-spin" />
+                Processing…
+              </>
+            ) : (
+              <>
+                Confirm & Deduct ₹{total.toLocaleString("en-IN")}{" "}
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -258,84 +417,142 @@ function AgentBookingDialog({ flight, adults, from, to, date, onClose }: {
 }
 
 // ─── B2C Booking Dialog ───────────────────────────────────────────────────────
-function BookingDialog({ flight, adults, from, to, date, onClose }: {
-  flight:any; adults:number; from:string; to:string; date:string; onClose:()=>void;
+function BookingDialog({
+  flight,
+  adults,
+  from,
+  to,
+  date,
+  onClose,
+}: {
+  flight: any;
+  adults: number;
+  from: string;
+  to: string;
+  date: string;
+  onClose: () => void;
 }) {
   const router = useRouter();
   const taxes = Number(flight?.fare?.taxes || flight?.taxes || 0);
   const [passengers, setPassengers] = useState(
-    Array.from({length:adults}, ()=>({firstName:"",lastName:"",dob:"",gender:"M",passport:""}))
+    Array.from({ length: adults }, () => ({
+      firstName: "",
+      lastName: "",
+      dob: "",
+      gender: "M",
+      passport: "",
+    })),
   );
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [step,  setStep]  = useState<"form"|"loading"|"done">("form");
-  const [pnr,   setPnr]   = useState("");
-  const [ref,   setRef]   = useState("");
+  const [step, setStep] = useState<"form" | "loading" | "done">("form");
+  const [pnr, setPnr] = useState("");
+  const [ref, setRef] = useState("");
   const total = getPrice(flight) * adults;
 
   const confirm = async () => {
-    if (!email || !passengers.every(p=>p.firstName&&p.lastName)) {
-      toast.error("Fill all passenger names and email"); return;
+    if (!email || !passengers.every((p) => p.firstName && p.lastName)) {
+      toast.error("Fill all passenger names and email");
+      return;
     }
     setStep("loading");
     try {
       const res = await customerApi.initiateBooking({
-        resultToken: flight.resultToken||flight.id,
-        tripType: "OneWay", adults,
-        passengers: passengers.map(p=>({
-          title:"Mr", firstName:p.firstName, lastName:p.lastName,
-          dob:p.dob||"1990-01-01", gender:p.gender||"M", passportNo:p.passport||""
+        resultToken: flight.resultToken || flight.id,
+        tripType: "OneWay",
+        adults,
+        passengers: passengers.map((p) => ({
+          title: "Mr",
+          firstName: p.firstName,
+          lastName: p.lastName,
+          dob: p.dob || "1990-01-01",
+          gender: p.gender || "M",
+          passportNo: p.passport || "",
         })),
-        contactEmail: email, contactPhone: phone,
-        bookedVia: "B2C",  // marks as customer booking
+        contactEmail: email,
+        contactPhone: phone,
+        bookedVia: "B2C", // marks as customer booking
       });
       const d = unwrap(res) as any;
-      setPnr(d?.pnr||d?.bookingRef||""); setRef(d?.bookingRef||"");
-      setStep("done"); toast.success("Booking confirmed!");
-    } catch(err:any) {
-      toast.error(err?.response?.data?.message||"Booking failed"); setStep("form");
+      setPnr(d?.pnr || d?.bookingRef || "");
+      setRef(d?.bookingRef || "");
+      setStep("done");
+      toast.success("Booking confirmed!");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Booking failed");
+      setStep("form");
     }
   };
 
-  if (step==="done") return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-foreground/60 backdrop-blur-sm"/>
-      <div className="relative bg-card border border-border rounded-2xl p-7 w-full max-w-sm text-center shadow-2xl animate-in">
-        <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle className="h-9 w-9 text-emerald-600 dark:text-emerald-400"/>
-        </div>
-        <h3 className="font-bold text-2xl text-foreground mb-1">Booking Confirmed!</h3>
-        {pnr && (
-          <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-4 py-3 mt-3 inline-block">
-            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wider mb-0.5">PNR</p>
-            <p className="font-mono font-black text-xl text-emerald-700 dark:text-emerald-700 dark:text-emerald-300">{pnr}</p>
+  if (step === "done")
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-foreground/60 backdrop-blur-sm" />
+        <div className="relative bg-card border border-border rounded-2xl p-7 w-full max-w-sm text-center shadow-2xl animate-in">
+          <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="h-9 w-9 text-emerald-600 dark:text-emerald-400" />
           </div>
-        )}
-        {ref && <p className="text-xs text-muted-foreground mt-1 mb-2">Ref: {ref}</p>}
-        <p className="text-sm text-muted-foreground mt-3 mb-5">
-          E-ticket sent to <span className="text-foreground font-semibold">{email}</span>
-        </p>
-        <div className="flex gap-2">
-          <button onClick={onClose} className="flex-1 bg-muted hover:bg-muted/80 text-foreground rounded-xl py-2.5 text-sm font-medium transition-colors">Close</button>
-          <button onClick={()=>router.push("/b2c/my-trips")} className="flex-1 btn-primary py-2.5 text-sm">My Trips</button>
+          <h3 className="font-bold text-2xl text-foreground mb-1">
+            Booking Confirmed!
+          </h3>
+          {pnr && (
+            <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-4 py-3 mt-3 inline-block">
+              <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wider mb-0.5">
+                PNR
+              </p>
+              <p className="font-mono font-black text-xl text-emerald-700 dark:text-emerald-700 dark:text-emerald-300">
+                {pnr}
+              </p>
+            </div>
+          )}
+          {ref && (
+            <p className="text-xs text-muted-foreground mt-1 mb-2">
+              Ref: {ref}
+            </p>
+          )}
+          <p className="text-sm text-muted-foreground mt-3 mb-5">
+            E-ticket sent to{" "}
+            <span className="text-foreground font-semibold">{email}</span>
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="flex-1 bg-muted hover:bg-muted/80 text-foreground rounded-xl py-2.5 text-sm font-medium transition-colors"
+            >
+              Close
+            </button>
+            <button
+              onClick={() => router.push("/b2c/my-trips")}
+              className="flex-1 btn-primary py-2.5 text-sm"
+            >
+              My Trips
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-foreground/60 backdrop-blur-sm" onClick={step==="form"?onClose:undefined}/>
+      <div
+        className="absolute inset-0 bg-foreground/60 backdrop-blur-sm"
+        onClick={step === "form" ? onClose : undefined}
+      />
       <div className="relative bg-card border border-border rounded-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl">
         {/* Header */}
         <div className="sticky top-0 bg-card border-b border-border px-5 py-4 flex items-center justify-between z-10">
           <div>
             <h3 className="font-bold text-foreground">Confirm Booking</h3>
-            <p className="text-xs text-muted-foreground">{flight.airline} · {flight.flightNo} · {from} → {to} · {date}</p>
+            <p className="text-xs text-muted-foreground">
+              {flight.airline} · {flight.flightNo} · {from} → {to} · {date}
+            </p>
           </div>
-          {step==="form" && (
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all">
-              <X className="h-4 w-4"/>
+          {step === "form" && (
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
+            >
+              <X className="h-4 w-4" />
             </button>
           )}
         </div>
@@ -345,49 +562,93 @@ function BookingDialog({ flight, adults, from, to, date, onClose }: {
           <div className="bg-primary/5 border border-primary/15 rounded-xl p-4 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Fare × {adults} pax</span>
-              <span className="text-foreground font-medium">₹{(getPrice(flight)*adults).toLocaleString("en-IN")}</span>
+              <span className="text-foreground font-medium">
+                ₹{(getPrice(flight) * adults).toLocaleString("en-IN")}
+              </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Taxes & fees</span>
               <span className="text-foreground font-medium">
-                {taxes > 0 ? `₹${taxes.toLocaleString("en-IN")}` : "Included in fare"}
+                {taxes > 0
+                  ? `₹${taxes.toLocaleString("en-IN")}`
+                  : "Included in fare"}
               </span>
             </div>
             <div className="flex justify-between font-bold border-t border-border pt-2">
               <span className="text-foreground">Total</span>
-              <span className="text-xl" style={{color:"hsl(var(--brand-orange))"}}>₹{total.toLocaleString("en-IN")}</span>
+              <span
+                className="text-xl"
+                style={{ color: "hsl(var(--brand-orange))" }}
+              >
+                ₹{total.toLocaleString("en-IN")}
+              </span>
             </div>
             <p className="text-xs text-muted-foreground pt-1">
-              ✈ {flight.checkinBaggage||"15 KG"} check-in &nbsp;·&nbsp; 🎒 {flight.cabinBaggage||"7 KG"} cabin
+              ✈ {flight.checkinBaggage || "15 KG"} check-in &nbsp;·&nbsp; 🎒{" "}
+              {flight.cabinBaggage || "7 KG"} cabin
             </p>
           </div>
 
           {/* Passengers */}
-          {passengers.map((p,i)=>(
+          {passengers.map((p, i) => (
             <div key={i} className="space-y-3">
               <p className="text-sm font-semibold text-foreground border-b border-border pb-2">
-                Passenger {i+1} {i===0&&<span className="text-xs text-muted-foreground font-normal">(Primary)</span>}
+                Passenger {i + 1}{" "}
+                {i === 0 && (
+                  <span className="text-xs text-muted-foreground font-normal">
+                    (Primary)
+                  </span>
+                )}
               </p>
               <div className="grid grid-cols-2 gap-3">
-                {[["First Name *","firstName"],["Last Name *","lastName"]].map(([lbl,k])=>(
+                {[
+                  ["First Name *", "firstName"],
+                  ["Last Name *", "lastName"],
+                ].map(([lbl, k]) => (
                   <div key={k}>
-                    <label className="text-xs text-muted-foreground block mb-1">{lbl}</label>
-                    <input value={(p as any)[k]}
-                      onChange={e=>{const n=[...passengers];(n[i] as any)[k]=e.target.value;setPassengers(n)}}
-                      className="input-base" placeholder={lbl.replace(" *","")}/>
+                    <label className="text-xs text-muted-foreground block mb-1">
+                      {lbl}
+                    </label>
+                    <input
+                      value={(p as any)[k]}
+                      onChange={(e) => {
+                        const n = [...passengers];
+                        (n[i] as any)[k] = e.target.value;
+                        setPassengers(n);
+                      }}
+                      className="input-base"
+                      placeholder={lbl.replace(" *", "")}
+                    />
                   </div>
                 ))}
                 <div>
-                  <label className="text-xs text-muted-foreground block mb-1">Date of Birth</label>
-                  <input type="date" value={p.dob}
-                    onChange={e=>{const n=[...passengers];n[i].dob=e.target.value;setPassengers(n)}}
-                    className="input-base"/>
+                  <label className="text-xs text-muted-foreground block mb-1">
+                    Date of Birth
+                  </label>
+                  <input
+                    type="date"
+                    value={p.dob}
+                    onChange={(e) => {
+                      const n = [...passengers];
+                      n[i].dob = e.target.value;
+                      setPassengers(n);
+                    }}
+                    className="input-base"
+                  />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground block mb-1">Gender</label>
-                  <select value={p.gender}
-                    onChange={e=>{const n=[...passengers];n[i].gender=e.target.value;setPassengers(n)}}
-                    className="input-base">
+                  <label className="text-xs text-muted-foreground block mb-1">
+                    Gender
+                  </label>
+                  <select
+                    value={p.gender}
+                    onChange={(e) => {
+                      const n = [...passengers];
+                      n[i].gender = e.target.value;
+                      setPassengers(n);
+                    }}
+                    className="input-base"
+                  >
                     <option value="M">Male</option>
                     <option value="F">Female</option>
                   </select>
@@ -398,31 +659,56 @@ function BookingDialog({ flight, adults, from, to, date, onClose }: {
 
           {/* Contact */}
           <div className="space-y-3">
-            <p className="text-sm font-semibold text-foreground border-b border-border pb-2">Contact Details</p>
+            <p className="text-sm font-semibold text-foreground border-b border-border pb-2">
+              Contact Details
+            </p>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-muted-foreground block mb-1">Email *</label>
-                <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
-                  className="input-base" placeholder="you@email.com"/>
+                <label className="text-xs text-muted-foreground block mb-1">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="input-base"
+                  placeholder="you@email.com"
+                />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground block mb-1">Phone</label>
-                <input value={phone} onChange={e=>setPhone(e.target.value)}
-                  className="input-base" placeholder="+91 98765 43210"/>
+                <label className="text-xs text-muted-foreground block mb-1">
+                  Phone
+                </label>
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="input-base"
+                  placeholder="+91 98765 43210"
+                />
               </div>
             </div>
             <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <Info className="h-3 w-3 text-primary flex-shrink-0"/>
+              <Info className="h-3 w-3 text-primary flex-shrink-0" />
               E-ticket will be sent to your email after confirmation
             </p>
           </div>
 
-          <button onClick={confirm} disabled={step==="loading"}
-            className="w-full h-12 btn-orange disabled:opacity-60 text-sm font-bold shadow-sm">
-            {step==="loading"
-              ? <><RefreshCcw className="h-4 w-4 animate-spin"/>Confirming…</>
-              : <>Confirm & Pay ₹{total.toLocaleString("en-IN")} <ArrowRight className="h-4 w-4"/></>
-            }
+          <button
+            onClick={confirm}
+            disabled={step === "loading"}
+            className="w-full h-12 btn-orange disabled:opacity-60 text-sm font-bold shadow-sm"
+          >
+            {step === "loading" ? (
+              <>
+                <RefreshCcw className="h-4 w-4 animate-spin" />
+                Confirming…
+              </>
+            ) : (
+              <>
+                Confirm & Pay ₹{total.toLocaleString("en-IN")}{" "}
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -437,48 +723,55 @@ function FlightsContent() {
   const { isAuthenticated, role } = useAuthStore();
 
   // ── Persisted search state ─────────────────────────────────────────────────
-  const { flight: fs, setFlightSearch, setFlightResults } = useSearchStateStore();
+  const {
+    flight: fs,
+    setFlightSearch,
+    setFlightResults,
+  } = useSearchStateStore();
 
   // URL params take precedence over stored state on first load (deep-link support)
-  const urlFrom    = searchParams.get("from")?.toUpperCase();
-  const urlTo      = searchParams.get("to")?.toUpperCase();
-  const urlDate    = searchParams.get("date");
+  const urlFrom = searchParams.get("from")?.toUpperCase();
+  const urlTo = searchParams.get("to")?.toUpperCase();
+  const urlDate = searchParams.get("date");
   const urlRetDate = searchParams.get("retDate");
-  const urlAdults  = searchParams.get("adults");
-  const urlTrip    = searchParams.get("tripType") as "oneway" | "roundtrip" | null;
+  const urlAdults = searchParams.get("adults");
+  const urlTrip = searchParams.get("tripType") as "oneway" | "roundtrip" | null;
 
   // Safe extraction: if the stored value is not a plain string, fall back to default.
   // This handles the case where old localStorage had a different shape (object instead of string).
-  const safeStr = (v: any, def: string) => (typeof v === "string" && v.length <= 10 ? v : def);
-  const safeNum = (v: any, def: number) => (typeof v === "number" && !isNaN(v) ? v : def);
+  const safeStr = (v: any, def: string) =>
+    typeof v === "string" && v.length <= 10 ? v : def;
+  const safeNum = (v: any, def: number) =>
+    typeof v === "number" && !isNaN(v) ? v : def;
   const safeTripType = (v: any): "oneway" | "roundtrip" =>
     v === "roundtrip" ? "roundtrip" : "oneway";
 
-  const from     = urlFrom    || safeStr(fs.from,    "DEL");
-  const to       = urlTo      || safeStr(fs.to,      "BOM");
-  const date     = urlDate    || safeStr(fs.date,    "");
-  const retDate  = urlRetDate || safeStr(fs.retDate, "");
-  const adults   = urlAdults ? parseInt(urlAdults) : safeNum(fs.adults, 1);
-  const tripType = urlTrip   || safeTripType(fs.tripType);
+  const from = urlFrom || safeStr(fs.from, "DEL");
+  const to = urlTo || safeStr(fs.to, "BOM");
+  const date = urlDate || safeStr(fs.date, "");
+  const retDate = urlRetDate || safeStr(fs.retDate, "");
+  const adults = urlAdults ? parseInt(urlAdults) : safeNum(fs.adults, 1);
+  const tripType = urlTrip || safeTripType(fs.tripType);
 
   // Local-only setters that also sync to store
-  const setFrom     = (v: string) => setFlightSearch({ from: v });
-  const setTo       = (v: string) => setFlightSearch({ to: v });
-  const setDate     = (v: string) => setFlightSearch({ date: v });
-  const setRetDate  = (v: string) => setFlightSearch({ retDate: v });
-  const setAdults   = (v: number) => setFlightSearch({ adults: v });
-  const setTripType = (v: "oneway" | "roundtrip") => setFlightSearch({ tripType: v });
+  const setFrom = (v: string) => setFlightSearch({ from: v });
+  const setTo = (v: string) => setFlightSearch({ to: v });
+  const setDate = (v: string) => setFlightSearch({ date: v });
+  const setRetDate = (v: string) => setFlightSearch({ retDate: v });
+  const setAdults = (v: number) => setFlightSearch({ adults: v });
+  const setTripType = (v: "oneway" | "roundtrip") =>
+    setFlightSearch({ tripType: v });
 
   // Results from store (restored across navigation)
-  const flights  = Array.isArray(fs.results) ? fs.results : [];
+  const flights = Array.isArray(fs.results) ? fs.results : [];
   const searched = !!fs.searched;
 
-  const [loading,         setLoading]         = useState(false);
-  const [sortBy,          setSortBy]          = useState("price");
-  const [filterStop,      setFilterStop]      = useState("all");
-  const [filterRef,       setFilterRef]       = useState("all");
-  const [roleModal,       setRoleModal]       = useState(false);
-  const [bookFlight,      setBookFlight]      = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [sortBy, setSortBy] = useState("price");
+  const [filterStop, setFilterStop] = useState("all");
+  const [filterRef, setFilterRef] = useState("all");
+  const [roleModal, setRoleModal] = useState(false);
+  const [bookFlight, setBookFlight] = useState<any>(null);
   const [agentBookFlight, setAgentBookFlight] = useState<any>(null);
 
   useEffect(() => {
@@ -486,13 +779,21 @@ function FlightsContent() {
     // (e.g. it's an object from a previous incompatible store shape),
     // reset the store slice to clean defaults so inputs never show [object Object].
     if (typeof fs.from !== "string") {
-      setFlightSearch({ from: "DEL", to: "BOM", date: "", retDate: "", adults: 1, tripType: "oneway" });
+      setFlightSearch({
+        from: "DEL",
+        to: "BOM",
+        date: "",
+        retDate: "",
+        adults: 1,
+        tripType: "oneway",
+      });
       setFlightResults([], false);
     }
 
     // Set a default date if none stored/provided
     if (!date) {
-      const d = new Date(); d.setDate(d.getDate() + 1);
+      const d = new Date();
+      d.setDate(d.getDate() + 1);
       setDate(d.toISOString().split("T")[0]);
     }
     // If URL params are present, trigger a fresh search (deep-link / redirect from login)
@@ -504,35 +805,50 @@ function FlightsContent() {
     }
   }, []);
 
-  const doSearch = async (f=from, t=to, d=date) => {
-    if (!f||!t) { toast.error("Enter origin and destination"); return; }
+  const doSearch = async (f = from, t = to, d = date) => {
+    if (!f || !t) {
+      toast.error("Enter origin and destination");
+      return;
+    }
     // Auto-set tomorrow if no date
     if (!d) {
-      const tmr = new Date(); tmr.setDate(tmr.getDate()+1);
+      const tmr = new Date();
+      tmr.setDate(tmr.getDate() + 1);
       d = tmr.toISOString().split("T")[0];
       setDate(d);
     }
     // Persist the search params immediately so they survive if the user navigates mid-search
     setFlightSearch({ from: f, to: t, date: d, adults, tripType, retDate });
-    const params = new URLSearchParams({from:f,to:t,date:d,adults:String(adults),tripType});
-    window.history.replaceState(null,"",`/flights?${params}`);
+    const params = new URLSearchParams({
+      from: f,
+      to: t,
+      date: d,
+      adults: String(adults),
+      tripType,
+    });
+    window.history.replaceState(null, "", `/flights?${params}`);
     setLoading(true);
     // Clear results while loading so stale data isn't shown alongside spinner
     setFlightResults([], false);
     try {
-      const res  = await flightsApi.search({
-        origin:        String(f).trim().toUpperCase(),
-        destination:   String(t).trim().toUpperCase(),
+      const res = await flightsApi.search({
+        origin: String(f).trim().toUpperCase(),
+        destination: String(t).trim().toUpperCase(),
         departureDate: String(d).trim(),
-        adults:        Number(adults) || 1,
-        tripType:      tripType==="roundtrip" ? "RoundTrip" : "OneWay",
-        returnDate:    tripType==="roundtrip" && retDate ? String(retDate) : undefined,
+        adults: Number(adults) || 1,
+        tripType: tripType === "roundtrip" ? "RoundTrip" : "OneWay",
+        returnDate:
+          tripType === "roundtrip" && retDate ? String(retDate) : undefined,
       });
       const result = (res as any)?.data?.flights || [];
       // Persist results to store — they survive tab switches and navigation
       setFlightResults(result, true);
-    } catch { toast.error("Search failed — please try again"); setFlightResults([], true); }
-    finally { setLoading(false); }
+    } catch {
+      toast.error("Search failed — please try again");
+      setFlightResults([], true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // ── B2C / B2B booking detection — happens HERE at booking time ──────────
@@ -552,62 +868,81 @@ function FlightsContent() {
   };
 
   const filtered = flights
-    .filter(f => {
+    .filter((f) => {
       const seatsAvailable =
         typeof f.seatsAvailable === "number" && f.seatsAvailable > 0
           ? f.seatsAvailable
           : null;
       if (seatsAvailable !== null && seatsAvailable < adults) return false;
-      if (filterStop==="0" && f.stops!==0) return false;
-      if (filterStop==="1" && f.stops===0) return false;
-      if (filterRef==="yes" && !f.refundable) return false;
-      if (filterRef==="no"  &&  f.refundable) return false;
+      if (filterStop === "0" && f.stops !== 0) return false;
+      if (filterStop === "1" && f.stops === 0) return false;
+      if (filterRef === "yes" && !f.refundable) return false;
+      if (filterRef === "no" && f.refundable) return false;
       return true;
     })
-    .sort((a,b) => {
-      if (sortBy==="price")     return getPrice(a)-getPrice(b);
-      if (sortBy==="departure") return (a.departure||"").localeCompare(b.departure||"");
-      if (sortBy==="duration")  return (a.duration ||"").localeCompare(b.duration ||"");
+    .sort((a, b) => {
+      if (sortBy === "price") return getPrice(a) - getPrice(b);
+      if (sortBy === "departure")
+        return (a.departure || "").localeCompare(b.departure || "");
+      if (sortBy === "duration")
+        return (a.duration || "").localeCompare(b.duration || "");
       return 0;
     });
 
-  const hasFilters   = filterStop!=="all"||filterRef!=="all";
-  const customCount  = flights.filter(f=>f.source==="CUSTOM"||f.resultToken?.startsWith("TRAMPS-")).length;
-  const currentUrl   = `/flights?from=${from}&to=${to}&date=${date}&adults=${adults}`;
+  const hasFilters = filterStop !== "all" || filterRef !== "all";
+  const customCount = flights.filter(
+    (f) => f.source === "CUSTOM" || f.resultToken?.startsWith("TRAMPS-"),
+  ).length;
+  const currentUrl = `/flights?from=${from}&to=${to}&date=${date}&adults=${adults}`;
 
   return (
     <>
-      {roleModal  && (
+      {roleModal && (
         <BookingRoleModal
           b2cRedirectUrl={currentUrl}
           b2bRedirectUrl={`/b2b/login?redirect=${encodeURIComponent(`/flights?from=${from}&to=${to}&date=${date}`)}`}
           context={`${from} → ${to} · ${date}`}
-          onClose={()=>setRoleModal(false)}
+          onClose={() => setRoleModal(false)}
         />
       )}
       {agentBookFlight && (
         <AgentBookingDialog
-          flight={agentBookFlight} adults={adults} from={from} to={to} date={date}
-          onClose={()=>setAgentBookFlight(null)}
+          flight={agentBookFlight}
+          adults={adults}
+          from={from}
+          to={to}
+          date={date}
+          onClose={() => setAgentBookFlight(null)}
         />
       )}
       {bookFlight && (
         <BookingDialog
-          flight={bookFlight} adults={adults} from={from} to={to} date={date}
-          onClose={()=>setBookFlight(null)}
+          flight={bookFlight}
+          adults={adults}
+          from={from}
+          to={to}
+          date={date}
+          onClose={() => setBookFlight(null)}
         />
       )}
 
       {/* ── Search Bar ── */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-6">
         <FlightSearchBar
-          from={from} setFrom={setFrom}
-          to={to}     setTo={setTo}
-          date={date} setDate={setDate}
-          retDate={retDate} setRetDate={setRetDate}
-          adults={adults}   setAdults={setAdults}
-          tripType={tripType} setTripType={setTripType}
-          onSearch={doSearch} loading={loading}
+          from={from}
+          setFrom={setFrom}
+          to={to}
+          setTo={setTo}
+          date={date}
+          setDate={setDate}
+          retDate={retDate}
+          setRetDate={setRetDate}
+          adults={adults}
+          setAdults={setAdults}
+          tripType={tripType}
+          setTripType={setTripType}
+          onSearch={doSearch}
+          loading={loading}
           showTripType
         />
       </div>
@@ -615,19 +950,21 @@ function FlightsContent() {
       {!isAuthenticated && (
         <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-500/20">
           <div className="max-w-6xl mx-auto px-4 py-2 flex items-center gap-2 text-xs text-amber-700 dark:text-amber-400">
-            <Info className="h-3.5 w-3.5 flex-shrink-0"/>
-            Search is free. Login required to book — choose Customer or Agent at booking time.
+            <Info className="h-3.5 w-3.5 flex-shrink-0" />
+            Search is free. Login required to book — choose Customer or Agent at
+            booking time.
           </div>
         </div>
       )}
-      {isAuthenticated && role==="agent" && (
+
+      {/* {isAuthenticated && role === "agent" && (
         <div className="bg-emerald-50 dark:bg-emerald-900/20 border-b border-emerald-200 dark:border-emerald-500/20">
           <div className="max-w-6xl mx-auto px-4 py-2 flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400">
-            <CheckCircle className="h-3.5 w-3.5 flex-shrink-0"/>
+            <CheckCircle className="h-3.5 w-3.5 flex-shrink-0" />
             Agent Mode — Booking will go through B2B portal (wallet deduction)
           </div>
         </div>
-      )}
+      )} */}
 
       {/* ── Results ── */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6">
@@ -636,14 +973,27 @@ function FlightsContent() {
             {/* Filter sidebar — sticky so it stays visible while results scroll */}
             <div
               className="w-56 flex-shrink-0 hidden lg:block custom-scrollbar"
-              style={{ position: "sticky", top: "72px", alignSelf: "flex-start", maxHeight: "calc(100vh - 80px)", overflowY: "auto" }}
+              style={{
+                position: "sticky",
+                top: "72px",
+                alignSelf: "flex-start",
+                maxHeight: "calc(100vh - 80px)",
+                overflowY: "auto",
+              }}
             >
               <FlightFilters
                 flights={flights}
-                sortBy={sortBy}         setSortBy={setSortBy}
-                filterStop={filterStop} setFilterStop={setFilterStop}
-                filterRef={filterRef}   setFilterRef={setFilterRef}
-                hasFilters={hasFilters} onClear={()=>{setFilterStop("all");setFilterRef("all");}}
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                filterStop={filterStop}
+                setFilterStop={setFilterStop}
+                filterRef={filterRef}
+                setFilterRef={setFilterRef}
+                hasFilters={hasFilters}
+                onClear={() => {
+                  setFilterStop("all");
+                  setFilterRef("all");
+                }}
               />
             </div>
 
@@ -653,44 +1003,82 @@ function FlightsContent() {
               <div className="flex flex-wrap items-center gap-3 mb-4">
                 <div className="flex-1">
                   <p className="text-sm text-muted-foreground">
-                    <span className="font-bold text-foreground">{filtered.length}</span> flight{filtered.length!==1?"s":""} ·{" "}
-                    <span className="font-semibold text-foreground">{from} → {to}</span>
-                    {filtered.length!==flights.length&&<span className="text-muted-foreground"> ({flights.length} total)</span>}
+                    <span className="font-bold text-foreground">
+                      {filtered.length}
+                    </span>{" "}
+                    flight{filtered.length !== 1 ? "s" : ""} ·{" "}
+                    <span className="font-semibold text-foreground">
+                      {from} → {to}
+                    </span>
+                    {filtered.length !== flights.length && (
+                      <span className="text-muted-foreground">
+                        {" "}
+                        ({flights.length} total)
+                      </span>
+                    )}
                   </p>
-                  {customCount>0&&(
+                  {customCount > 0 && (
                     <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1 mt-0.5">
-                      <Star className="h-3 w-3 fill-amber-500"/>
-                      {customCount} Tramps Aviation special fare{customCount!==1?"s":""}
+                      <Star className="h-3 w-3 fill-amber-500" />
+                      {customCount} Tramps Aviation special fare
+                      {customCount !== 1 ? "s" : ""}
                     </p>
                   )}
                 </div>
                 {/* Mobile sort */}
                 <div className="flex gap-1 bg-card border border-border p-1 rounded-xl shadow-sm lg:hidden">
-                  {[["price","Cheapest"],["departure","Earliest"],["duration","Fastest"]].map(([v,l])=>(
-                    <button key={v} onClick={()=>setSortBy(v)}
-                      className={cn("text-xs px-2.5 py-1.5 rounded-lg font-medium transition-all",
-                        sortBy===v?"bg-primary text-primary-foreground":"text-muted-foreground hover:text-foreground hover:bg-muted"
-                      )}>{l}</button>
+                  {[
+                    ["price", "Cheapest"],
+                    ["departure", "Earliest"],
+                    ["duration", "Fastest"],
+                  ].map(([v, l]) => (
+                    <button
+                      key={v}
+                      onClick={() => setSortBy(v)}
+                      className={cn(
+                        "text-xs px-2.5 py-1.5 rounded-lg font-medium transition-all",
+                        sortBy === v
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                      )}
+                    >
+                      {l}
+                    </button>
                   ))}
                 </div>
               </div>
 
-              {filtered.length===0 && (
+              {filtered.length === 0 && (
                 <div className="text-center py-12 bg-card border border-border rounded-2xl shadow-sm">
-                  <Filter className="h-8 w-8 text-muted-foreground mx-auto mb-3"/>
-                  <p className="font-semibold text-foreground mb-1">No flights match your filters or seat requirement</p>
-                  <button onClick={()=>{setFilterStop("all");setFilterRef("all");}} className="text-primary hover:underline text-sm mt-2">Clear filters</button>
+                  <Filter className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                  <p className="font-semibold text-foreground mb-1">
+                    No flights match your filters or seat requirement
+                  </p>
+                  <button
+                    onClick={() => {
+                      setFilterStop("all");
+                      setFilterRef("all");
+                    }}
+                    className="text-primary hover:underline text-sm mt-2"
+                  >
+                    Clear filters
+                  </button>
                 </div>
               )}
 
               <div className="space-y-3">
-                {filtered.map((f,i)=>(
-                  <FlightCard key={f.id||f.resultToken||i} flight={f} adults={adults} onBook={()=>handleBook(f)}/>
+                {filtered.map((f, i) => (
+                  <FlightCard
+                    key={f.id || f.resultToken || i}
+                    flight={f}
+                    adults={adults}
+                    onBook={() => handleBook(f)}
+                  />
                 ))}
               </div>
 
               {/* Trust badges */}
-              {filtered.length>0&&(
+              {/* {filtered.length>0&&(
                 <div className="mt-8 grid grid-cols-3 gap-3">
                   {[[Shield,"Secure Booking","SSL encrypted"],[Zap,"Instant Confirmation","E-ticket in seconds"],[CheckCircle,"24/7 Support","Always here"]].map(([Icon,t,s]:any)=>(
                     <div key={t} className="bg-card border border-border rounded-xl p-3 text-center shadow-sm">
@@ -700,42 +1088,60 @@ function FlightsContent() {
                     </div>
                   ))}
                 </div>
-              )}
+              )} */}
             </div>
           </div>
-        ):(
+        ) : (
           <div className="max-w-4xl mx-auto">
             {/* Loading */}
-            {loading&&(
+            {loading && (
               <div className="space-y-3">
-                {[1,2,3,4].map(n=>(
-                  <div key={n} className="bg-card border border-border rounded-2xl p-5 animate-pulse shadow-sm">
+                {[1, 2, 3, 4].map((n) => (
+                  <div
+                    key={n}
+                    className="bg-card border border-border rounded-2xl p-5 animate-pulse shadow-sm"
+                  >
                     <div className="flex gap-4 items-center">
-                      <div className="w-10 h-10 bg-muted rounded-xl"/>
-                      <div className="flex-1 space-y-2"><div className="h-6 w-48 bg-muted rounded"/><div className="h-3 w-32 bg-muted rounded"/></div>
-                      <div className="space-y-2 text-right"><div className="h-7 w-24 bg-muted rounded"/><div className="h-9 w-24 bg-muted rounded-xl"/></div>
+                      <div className="w-10 h-10 bg-muted rounded-xl" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-6 w-48 bg-muted rounded" />
+                        <div className="h-3 w-32 bg-muted rounded" />
+                      </div>
+                      <div className="space-y-2 text-right">
+                        <div className="h-7 w-24 bg-muted rounded" />
+                        <div className="h-9 w-24 bg-muted rounded-xl" />
+                      </div>
                     </div>
                   </div>
                 ))}
                 <p className="text-center text-sm text-muted-foreground flex items-center justify-center gap-2 mt-3">
-                  <RefreshCcw className="h-3.5 w-3.5 animate-spin"/>Searching best fares…
+                  <RefreshCcw className="h-3.5 w-3.5 animate-spin" />
+                  Searching best fares…
                 </p>
               </div>
             )}
-            {!loading&&!searched&&(
+            {!loading && !searched && (
               <div className="text-center py-28">
                 <div className="w-20 h-20 bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-sm">
-                  <Plane className="h-10 w-10 text-primary"/>
+                  <Plane className="h-10 w-10 text-primary" />
                 </div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">Find Your Flight</h2>
-                <p className="text-muted-foreground text-sm max-w-xs mx-auto">Enter origin, destination and date above to search flights</p>
+                <h2 className="text-2xl font-bold text-foreground mb-2">
+                  Find Your Flight
+                </h2>
+                <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+                  Enter origin, destination and date above to search flights
+                </p>
               </div>
             )}
-            {searched&&!loading&&flights.length===0&&(
+            {searched && !loading && flights.length === 0 && (
               <div className="text-center py-12 bg-card border border-border rounded-2xl shadow-sm">
-                <AlertCircle className="h-8 w-8 text-muted-foreground mx-auto mb-3"/>
-                <p className="font-semibold text-foreground mb-1">No flights found</p>
-                <p className="text-muted-foreground text-sm">Try different dates or routes</p>
+                <AlertCircle className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                <p className="font-semibold text-foreground mb-1">
+                  No flights found
+                </p>
+                <p className="text-muted-foreground text-sm">
+                  Try different dates or routes
+                </p>
               </div>
             )}
           </div>
@@ -747,12 +1153,14 @@ function FlightsContent() {
 
 export default function FlightsPage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <RefreshCcw className="h-5 w-5 animate-spin text-muted-foreground"/>
-      </div>
-    }>
-      <FlightsContent/>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen bg-background">
+          <RefreshCcw className="h-5 w-5 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <FlightsContent />
     </Suspense>
   );
 }

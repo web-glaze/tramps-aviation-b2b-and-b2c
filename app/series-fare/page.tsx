@@ -50,7 +50,6 @@ const AIRLINE_COLOR: Record<string, string> = {
   GoAir: "bg-sky-600",
 };
 const airlineColor = (n: string) => AIRLINE_COLOR[n] || "bg-primary";
-
 // ─── Series Fare Card ─────────────────────────────────────────────────────────
 function SeriesFareCard({
   flight,
@@ -70,6 +69,8 @@ function SeriesFareCard({
       : flight.fare?.totalFare || flight.fare?.total || 0;
   const totalPrice = price * adults;
   const taxes = Number(flight?.fare?.taxes || flight?.taxes || 0);
+  const taxEstimated = flight?.fare?.taxEstimated === true;
+  const baseFare = Number(flight?.fare?.baseFare || 0);
   const refundable = flight.isRefundable !== false;
   const code = (
     flight.airlineCode || (flight.airline || "?").slice(0, 2)
@@ -397,13 +398,19 @@ function AgentBookingDialog({
   const total = price * adults;
 
   // ── Agent-side fare breakdown (shown in dialog) ─────────────────────────
-  // Screen shows: Base ₹1,700 + Taxes ~₹300 = Customer Pays ₹2,000
-  // We derive per-person base/tax from flight.fare if provided, else 85/15 split.
+  // Use admin-entered baseFare + airlineTax if available (admin set them explicitly).
+  // If only totalFare was set (old data), backend marks taxEstimated=true and
+  // we show an approximate split with a "~" prefix to make it clear.
+  const taxEstimated = flight?.fare?.taxEstimated === true;
   const baseFareEach = Number(
-    flight?.fare?.baseFare ?? flight?.baseFare ?? Math.round(price * 0.85),
+    flight?.fare?.baseFare && flight.fare.baseFare > 0 && flight.fare.baseFare < price
+      ? flight.fare.baseFare
+      : Math.round(price * 0.85),
   );
   const taxesEach = Number(
-    flight?.fare?.taxes ?? flight?.taxes ?? price - baseFareEach,
+    flight?.fare?.taxes !== undefined && flight.fare.taxes > 0
+      ? flight.fare.taxes
+      : price - baseFareEach,
   );
   const baseFareTotal = baseFareEach * adults;
   const taxesTotal = taxesEach * adults;
@@ -414,6 +421,11 @@ function AgentBookingDialog({
       lastName: "",
       dob: "",
       gender: "M",
+      passportNumber: "",
+      passportIssueDate: "",
+      passportExpiry: "",
+      issuingCountry: "",
+      nationality: "",
     })),
   );
   // Editable contact fields — prefilled from logged-in agent
@@ -425,7 +437,6 @@ function AgentBookingDialog({
   );
   const [step, setStep] = useState<"form" | "loading" | "done">("form");
   const [pnr, setPnr] = useState("");
-  const [agentPnr, setAgentPnr] = useState(""); // Airline PNR entered by agent
   const [bookingRef, setBookingRef] = useState("");
   const [stepLabel, setStepLabel] = useState("");
 
@@ -433,6 +444,18 @@ function AgentBookingDialog({
   const resultToken = flight.resultToken?.startsWith("TRAMPS-")
     ? flight.resultToken
     : `TRAMPS-${flight.id || flight._id || flight.resultToken}`;
+
+  // Indian airport codes — if origin OR destination is NOT in this list → international
+  const INDIAN_AIRPORTS = new Set([
+    "DEL","BOM","BLR","MAA","HYD","CCU","COK","GOI","PNQ","AMD","JAI","LKO",
+    "IXC","GAU","SXR","IXR","PAT","BHO","NAG","VNS","ATQ","IXA","IXB","IXD",
+    "IXE","IXG","IXH","IXI","IXJ","IXK","IXL","IXM","IXN","IXP","IXQ","IXS",
+    "IXU","IXW","IXY","IXZ","IMF","DED","DBR","JDH","JGA","JSA","KLH","KTU",
+    "PBD","PGH","RAJ","RJA","RPR","STV","TEZ","TRV","TRZ","UDR","VTZ","VGA",
+  ]);
+  const isInternational =
+    !INDIAN_AIRPORTS.has(from.toUpperCase()) ||
+    !INDIAN_AIRPORTS.has(to.toUpperCase());
 
   const confirm = async () => {
     // Validate passenger names
@@ -450,14 +473,27 @@ function AgentBookingDialog({
       toast.error("Contact email and phone are required");
       return;
     }
-    // Validate airline PNR (required for series fare)
-    const pnrClean = agentPnr.trim().toUpperCase();
-    if (!pnrClean || !/^[A-Z0-9]{4,12}$/.test(pnrClean)) {
-      toast.error(
-        "Please enter a valid airline PNR (4–12 letters/numbers, no spaces)",
-      );
-      return;
+    // Validate passport for international flights
+    if (isInternational) {
+      for (let i = 0; i < passengers.length; i++) {
+        const p = passengers[i];
+        if (!p.passportNumber.trim()) {
+          toast.error(`Passenger ${i + 1}: Passport number is required for international travel`);
+          return;
+        }
+        if (!p.passportExpiry) {
+          toast.error(`Passenger ${i + 1}: Passport expiry date is required`);
+          return;
+        }
+        if (!p.nationality.trim()) {
+          toast.error(`Passenger ${i + 1}: Nationality is required`);
+          return;
+        }
+      }
     }
+    // Validate airline PNR (required for series fare)
+    // NOTE: PNR is now assigned automatically from the admin PNR pool.
+    // No manual entry needed — removed from UI.
 
     setStep("loading");
 
@@ -480,18 +516,19 @@ function AgentBookingDialog({
             title: p.gender === "F" ? "Ms" : "Mr",
             firstName: p.firstName.trim(),
             lastName: p.lastName.trim(),
-            // Backend schema fields (required):
-            dateOfBirth: p.dob, // ISO date string — mongoose will cast to Date
+            dateOfBirth: p.dob,
             gender: p.gender || "M",
-            passengerType: "ADT", // Adult — required enum
-            // Optional / legacy aliases kept for safety
+            passengerType: "ADT",
             dob: p.dob,
-            passportNumber: "",
+            passportNumber: p.passportNumber.trim() || undefined,
+            passportIssueDate: p.passportIssueDate || undefined,
+            passportExpiry: p.passportExpiry || undefined,
+            issuingCountry: p.issuingCountry.trim() || undefined,
+            nationality: p.nationality.trim() || undefined,
           })),
           contactEmail: contactEmail.trim(),
           contactPhone: contactPhone.trim(),
           expectedPricePerPax: price, // Price drift check on backend
-          agentSuppliedPnr: agentPnr.trim().toUpperCase(), // Required for series fare
         },
         {
           headers: { "X-Idempotency-Key": idempotencyKey },
@@ -634,9 +671,11 @@ function AgentBookingDialog({
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Taxes &amp; Fees</span>
+              <span className="text-muted-foreground">
+                Taxes &amp; Fees{taxEstimated ? " (estimated)" : ""}
+              </span>
               <span className="font-medium">
-                ₹{taxesTotal.toLocaleString("en-IN")}
+                {taxEstimated ? "~" : ""}₹{taxesTotal.toLocaleString("en-IN")}
               </span>
             </div>
             <div className="flex justify-between text-[11px] text-muted-foreground">
@@ -724,6 +763,106 @@ function AgentBookingDialog({
                   </select>
                 </div>
               </div>
+
+              {/* Passport Details — shown for international routes, optional for domestic */}
+              <div className="mt-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">
+                    Passport Details
+                    {isInternational ? (
+                      <span className="ml-1.5 text-[9px] bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wide">
+                        Required — International
+                      </span>
+                    ) : (
+                      <span className="ml-1.5 text-[9px] bg-muted text-muted-foreground border border-border px-1.5 py-0.5 rounded-full">
+                        Optional — Domestic
+                      </span>
+                    )}
+                  </span>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2">
+                    <label className="text-xs text-muted-foreground block mb-1">
+                      Passport No.{isInternational ? " *" : ""}
+                    </label>
+                    <input
+                      value={p.passportNumber}
+                      onChange={(e) => {
+                        const n = [...passengers];
+                        n[i].passportNumber = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+                        setPassengers(n);
+                      }}
+                      maxLength={15}
+                      placeholder="e.g. J1234567"
+                      className="input-base font-mono uppercase tracking-widest"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground block mb-1">
+                      Date of Issue
+                    </label>
+                    <input
+                      type="date"
+                      value={p.passportIssueDate}
+                      onChange={(e) => {
+                        const n = [...passengers];
+                        n[i].passportIssueDate = e.target.value;
+                        setPassengers(n);
+                      }}
+                      className="input-base"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground block mb-1">
+                      Expiry Date{isInternational ? " *" : ""}
+                    </label>
+                    <input
+                      type="date"
+                      value={p.passportExpiry}
+                      onChange={(e) => {
+                        const n = [...passengers];
+                        n[i].passportExpiry = e.target.value;
+                        setPassengers(n);
+                      }}
+                      min={new Date().toISOString().split("T")[0]}
+                      className="input-base"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground block mb-1">
+                      Issuing Country
+                    </label>
+                    <input
+                      value={p.issuingCountry}
+                      onChange={(e) => {
+                        const n = [...passengers];
+                        n[i].issuingCountry = e.target.value;
+                        setPassengers(n);
+                      }}
+                      placeholder="e.g. India"
+                      className="input-base"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground block mb-1">
+                      Nationality{isInternational ? " *" : ""}
+                    </label>
+                    <input
+                      value={p.nationality}
+                      onChange={(e) => {
+                        const n = [...passengers];
+                        n[i].nationality = e.target.value;
+                        setPassengers(n);
+                      }}
+                      placeholder="e.g. Indian"
+                      className="input-base"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           ))}
 
@@ -760,30 +899,13 @@ function AgentBookingDialog({
             </div>
           </div>
 
-          {/* Airline PNR — required for series fare bookings */}
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-foreground border-b border-border pb-2 flex items-center gap-2">
-              Airline PNR
-              <span className="text-[10px] bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40 px-2 py-0.5 rounded-full font-bold uppercase tracking-wide">
-                Required
+          {/* PNR — auto-assigned from admin pool, no manual entry needed */}
+          <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700/30 rounded-xl px-4 py-3">
+            <p className="text-xs text-emerald-700 dark:text-emerald-400 flex items-start gap-2">
+              <CheckCircle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+              <span>
+                <span className="font-semibold">PNR auto-assigned</span> — The airline PNR for this series fare is pre-loaded by Tramps Aviation admin and will be assigned automatically on booking confirmation.
               </span>
-            </p>
-            <input
-              type="text"
-              value={agentPnr}
-              onChange={(e) =>
-                setAgentPnr(
-                  e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""),
-                )
-              }
-              maxLength={12}
-              placeholder="e.g. ABCD12"
-              className="input-base font-mono uppercase tracking-widest text-base"
-            />
-            <p className="text-[10px] text-muted-foreground flex items-start gap-1.5">
-              <Info className="h-3 w-3 flex-shrink-0 mt-0.5 text-primary" />
-              Enter the airline PNR you received for this series fare seat. 4–12
-              alphanumeric characters.
             </p>
           </div>
 
@@ -791,9 +913,7 @@ function AgentBookingDialog({
           <div className="bg-primary/5 border border-primary/15 rounded-xl px-4 py-3">
             <p className="text-xs text-muted-foreground flex items-start gap-2">
               <Info className="h-3.5 w-3.5 text-primary flex-shrink-0 mt-0.5" />
-              This is a Tramps Aviation exclusive series fare. The airline PNR
-              you enter above will be recorded and used to generate the
-              e-ticket.
+              This is a Tramps Aviation exclusive series fare. Your PNR will be issued and emailed to you after wallet deduction.
             </p>
           </div>
 
@@ -1335,9 +1455,9 @@ function SeriesFarePage() {
               <p>
                 <span className="font-semibold text-foreground">
                   Series Fares
-                </span>{" "}
-                are Tramps Aviation's exclusive bulk inventory — separate from
-                regular TBO fares. PNR is generated internally upon booking.
+                </span>
+                {"  "}: Separate from regular TBO fares. PNR is generated
+                internally upon booking.
               </p>
             </div>
           </div>
@@ -1444,7 +1564,7 @@ function SeriesFarePage() {
                 </div>
               )}
 
-              {filtered.length > 0 && (
+              {/* {filtered.length > 0 && (
                 <div className="mt-8 grid grid-cols-3 gap-3">
                   {[
                     [Shield, "Secure Booking", "SSL encrypted"],
@@ -1463,7 +1583,7 @@ function SeriesFarePage() {
                     </div>
                   ))}
                 </div>
-              )}
+              )} */}
             </div>
           </div>
         ) : (

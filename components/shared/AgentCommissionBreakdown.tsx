@@ -68,10 +68,11 @@ export function AgentCommissionBreakdown({
   // time this component renders the correct value is already in the store.
   // No more stale 18% hardcode — admin changes take effect immediately.
   const { ps, fetchIfStale } = usePlatformStore();
-  useEffect(() => { fetchIfStale(); }, []);
-  const gstRate = typeof ps.gstPercent === "number" && ps.gstPercent > 0
-    ? ps.gstPercent
-    : 18; // safe fallback if settings not loaded yet
+  useEffect(() => {
+    fetchIfStale();
+  }, []);
+  const gstRate =
+    typeof ps.gstPercent === "number" && ps.gstPercent > 0 ? ps.gstPercent : 18; // safe fallback if settings not loaded yet
 
   if (!isAgent) return null;
 
@@ -143,7 +144,9 @@ export function AgentCommissionBreakdown({
         <span className="text-muted-foreground">
           Base Fare{quantity > 1 ? ` × ${quantity}` : ""}
         </span>
-        <span className="font-medium">₹{actualBase.toLocaleString("en-IN")}</span>
+        <span className="font-medium">
+          ₹{actualBase.toLocaleString("en-IN")}
+        </span>
       </div>
       <div className="flex justify-between">
         <span className="text-muted-foreground">Taxes & Fees</span>
