@@ -14,7 +14,7 @@ import {
   Filter, ArrowRight, X, Info, Star
 } from "lucide-react";
 import { flightsApi, customerApi, agentApi, unwrap } from "@/lib/api/services";
-import { useAuthStore } from "@/lib/store";
+import { useAuthStore, useSearchStateStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { FlightSearchBar  } from "@/components/search/FlightSearchBar";
@@ -28,41 +28,73 @@ import { AgentCommissionBreakdown } from "@/components/shared/AgentCommissionBre
 function AgentBookingDialog({ flight, adults, from, to, date, onClose }: {
   flight:any; adults:number; from:string; to:string; date:string; onClose:()=>void;
 }) {
-  const { agentId } = useAuthStore();
+  const { user } = useAuthStore();
   const taxes = Number(flight?.fare?.taxes || flight?.taxes || 0);
+  const total = getPrice(flight) * adults;
+  const baseFareEach = Number(flight?.fare?.baseFare ?? Math.round(getPrice(flight) * 0.85));
+  const taxesEach    = Number(flight?.fare?.taxes    ?? (getPrice(flight) - baseFareEach));
+
   const [passengers, setPassengers] = useState(
     Array.from({length:adults}, ()=>({firstName:"",lastName:"",dob:"",gender:"M",passport:""}))
   );
+  // Prefill contact from logged-in agent profile
+  const [contactEmail, setContactEmail] = useState<string>(user?.email || user?.contactEmail || "");
+  const [contactPhone, setContactPhone] = useState<string>(user?.phone || user?.mobile || user?.contactPhone || "");
   const [step, setStep] = useState<"form"|"loading"|"done">("form");
+  const [stepLabel, setStepLabel] = useState("");
   const [pnr,  setPnr]  = useState("");
   const [ref,  setRef]  = useState("");
-  const total = getPrice(flight) * adults;
 
   const confirm = async () => {
     if (!passengers.every(p=>p.firstName&&p.lastName)) {
       toast.error("Fill all passenger names"); return;
     }
+    if (!passengers.every(p=>p.dob)) {
+      toast.error("Date of birth is required for all passengers"); return;
+    }
+    if (!contactEmail.trim() || !contactPhone.trim()) {
+      toast.error("Contact email and phone are required"); return;
+    }
     setStep("loading");
-    // Idempotency key: unique per booking attempt — prevents double-booking on retry
     const idempotencyKey = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     try {
-      const res = await agentApi.bookFlight({
-        resultToken: flight.resultToken||flight.id,
-        tripType: "OneWay", adults,
+      // Step 1: Init booking
+      setStepLabel("Creating booking…");
+      const initRes = await agentApi.initBooking({
+        resultToken: flight.resultToken || flight.id,
+        tripType:    "one_way",
+        adults,
         passengers: passengers.map(p=>({
-          title:"Mr", firstName:p.firstName, lastName:p.lastName,
-          dob:p.dob||"1990-01-01", gender:p.gender||"M", passportNo:p.passport||""
+          title: p.gender==="F" ? "Ms" : "Mr",
+          firstName:   p.firstName.trim(),
+          lastName:    p.lastName.trim(),
+          dateOfBirth: p.dob,
+          gender:      p.gender || "M",
+          passengerType: "ADT",
+          dob:         p.dob,
+          passportNumber: p.passport || "",
         })),
-        bookedVia: "B2B",
-        agentId,
+        contactEmail: contactEmail.trim(),
+        contactPhone: contactPhone.trim(),
         expectedPricePerPax: getPrice(flight),
         _idempotencyKey: idempotencyKey,
       });
-      const d = unwrap(res) as any;
-      setPnr(d?.pnr||d?.bookingRef||""); setRef(d?.bookingRef||"");
-      setStep("done"); toast.success("Booking confirmed! Wallet debited.");
+      const initData = (initRes as any)?.data?.data || (initRes as any)?.data;
+      const bookingRef = initData?.bookingRef;
+      if (!bookingRef) throw new Error("Booking reference not received");
+
+      // Step 2: Confirm via wallet
+      setStepLabel("Deducting from wallet…");
+      const confirmRes = await agentApi.confirmB2bBooking(bookingRef);
+      const confirmData = (confirmRes as any)?.data?.data || (confirmRes as any)?.data;
+
+      setPnr(confirmData?.pnr || "");
+      setRef(confirmData?.bookingRef || bookingRef);
+      setStep("done");
+      toast.success("Booking confirmed! Wallet debited.");
     } catch(err:any) {
-      toast.error(err?.response?.data?.message||"Booking failed"); setStep("form");
+      toast.error(err?.response?.data?.message || "Booking failed");
+      setStep("form"); setStepLabel("");
     }
   };
 
@@ -78,12 +110,13 @@ function AgentBookingDialog({ flight, adults, from, to, date, onClose }: {
           B2B — Wallet debited ₹{total.toLocaleString("en-IN")}
         </p>
         {pnr && (
-          <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-4 py-3 mt-1 inline-block">
-            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wider mb-0.5">PNR</p>
+          <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-4 py-3 mt-1 mb-2">
+            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wider mb-0.5">PNR (Auto-generated via TBO)</p>
             <p className="font-mono font-black text-xl text-emerald-700 dark:text-emerald-300">{pnr}</p>
           </div>
         )}
-        {ref && <p className="text-xs text-muted-foreground mt-1 mb-2">Ref: {ref}</p>}
+        {ref && <p className="text-xs text-muted-foreground mb-2">Ref: <span className="font-mono font-semibold">{ref}</span></p>}
+        <p className="text-xs text-muted-foreground mb-5">E-ticket sent to registered email</p>
         <div className="flex gap-2 mt-5">
           <button onClick={onClose} className="flex-1 bg-muted hover:bg-muted/80 text-foreground rounded-xl py-2.5 text-sm font-medium transition-colors">Close</button>
           <button onClick={()=>{window.location.href="/b2b/bookings"}} className="flex-1 btn-primary py-2.5 text-sm">My Bookings</button>
@@ -112,16 +145,32 @@ function AgentBookingDialog({ flight, adults, from, to, date, onClose }: {
         </div>
 
         <div className="p-5 space-y-5">
-          {/* Fare — with agent commission breakdown */}
+          {/* Fare breakdown */}
           <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 rounded-xl p-4 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Base Fare × {adults} passenger{adults>1?"s":""}</span>
+              <span className="font-medium">₹{(baseFareEach*adults).toLocaleString("en-IN")}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Taxes & Fees</span>
+              <span className="font-medium">₹{(taxesEach*adults).toLocaleString("en-IN")}</span>
+            </div>
+            <div className="flex justify-between font-bold border-t border-amber-200 dark:border-amber-700/30 pt-2 mt-1">
+              <span>Wallet Deduction</span>
+              <span className="text-xl text-amber-600 dark:text-amber-400">₹{total.toLocaleString("en-IN")}</span>
+            </div>
             <AgentCommissionBreakdown
               totalAmount={total}
-              baseFare={taxes > 0 ? total - taxes : undefined}
-              taxes={taxes > 0 ? taxes : undefined}
+              baseFare={taxes>0 ? total-taxes : undefined}
+              taxes={taxes>0 ? taxes : undefined}
               commissionPercent={Number(flight?.fare?.commissionPercent ?? flight?.commissionPercent ?? 5)}
-              commissionAmount={flight?.fare?.commissionAmount ?? flight?.commissionAmount}
-              quantity={adults}
-              productType="flight"
+              commissionAmount={
+                typeof flight?.fare?.commissionAmount==="number" ? flight.fare.commissionAmount*adults
+                : typeof flight?.commissionAmount==="number" ? flight.commissionAmount*adults : undefined
+              }
+              gstOnCommission={typeof flight?.fare?.gstOnCommission==="number" ? flight.fare.gstOnCommission*adults : undefined}
+              netPayable={typeof flight?.fare?.netPayable==="number" ? flight.fare.netPayable*adults : undefined}
+              quantity={adults} productType="flight"
             />
             <p className="text-xs text-muted-foreground pt-1">
               ✈ {flight.checkinBaggage||"15 KG"} check-in &nbsp;·&nbsp; 🎒 {flight.cabinBaggage||"7 KG"} cabin
@@ -144,7 +193,7 @@ function AgentBookingDialog({ flight, adults, from, to, date, onClose }: {
                   </div>
                 ))}
                 <div>
-                  <label className="text-xs text-muted-foreground block mb-1">Date of Birth</label>
+                  <label className="text-xs text-muted-foreground block mb-1">Date of Birth *</label>
                   <input type="date" value={p.dob}
                     onChange={e=>{const n=[...passengers];n[i].dob=e.target.value;setPassengers(n)}}
                     className="input-base"/>
@@ -162,11 +211,44 @@ function AgentBookingDialog({ flight, adults, from, to, date, onClose }: {
             </div>
           ))}
 
+          {/* Contact details — consistent with Series Fare dialog */}
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-foreground border-b border-border pb-2">Contact Details</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-muted-foreground block mb-1">Email *</label>
+                <input type="email" value={contactEmail} onChange={e=>setContactEmail(e.target.value)}
+                  className="input-base" placeholder="you@example.com"/>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground block mb-1">Phone *</label>
+                <input type="tel" value={contactPhone} onChange={e=>setContactPhone(e.target.value)}
+                  className="input-base" placeholder="10-digit mobile"/>
+              </div>
+            </div>
+          </div>
+
+          {/* PNR note — flights get auto PNR from TBO (no manual entry needed) */}
+          <div className="bg-primary/5 border border-primary/15 rounded-xl px-4 py-3">
+            <p className="text-xs text-muted-foreground flex items-start gap-2">
+              <Info className="h-3.5 w-3.5 text-primary flex-shrink-0 mt-0.5"/>
+              PNR will be auto-generated by TBO upon booking confirmation.
+              No manual PNR entry needed for regular flights.
+            </p>
+          </div>
+
+          {step==="loading" && stepLabel && (
+            <div className="flex items-center gap-2 text-sm text-primary bg-primary/5 border border-primary/15 rounded-xl px-4 py-3">
+              <RefreshCcw className="h-4 w-4 animate-spin flex-shrink-0"/>
+              {stepLabel}
+            </div>
+          )}
+
           <button onClick={confirm} disabled={step==="loading"}
             className="w-full h-12 bg-primary hover:opacity-90 text-primary-foreground disabled:opacity-60 text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm">
             {step==="loading"
-              ? <><RefreshCcw className="h-4 w-4 animate-spin"/>Confirming…</>
-              : <>Confirm & Deduct from Wallet ₹{total.toLocaleString("en-IN")} <ArrowRight className="h-4 w-4"/></>
+              ? <><RefreshCcw className="h-4 w-4 animate-spin"/>Processing…</>
+              : <>Confirm & Deduct ₹{total.toLocaleString("en-IN")} <ArrowRight className="h-4 w-4"/></>
             }
           </button>
         </div>
@@ -354,35 +436,72 @@ function FlightsContent() {
   const router = useRouter();
   const { isAuthenticated, role } = useAuthStore();
 
-  const [tripType, setTripType] = useState<"oneway"|"roundtrip">(
-    (searchParams.get("tripType") as any) || "oneway"
-  );
-  const [from,    setFrom]    = useState((searchParams.get("from")   || "DEL").toUpperCase());
-  const [to,      setTo]      = useState((searchParams.get("to")     || "BOM").toUpperCase());
-  const [date,    setDate]    = useState(searchParams.get("date")    || "");
-  const [retDate, setRetDate] = useState(searchParams.get("retDate") || "");
-  const [adults,  setAdults]  = useState(parseInt(searchParams.get("adults") || "1"));
+  // ── Persisted search state ─────────────────────────────────────────────────
+  const { flight: fs, setFlightSearch, setFlightResults } = useSearchStateStore();
 
-  const [flights,  setFlights]  = useState<any[]>([]);
-  const [loading,  setLoading]  = useState(false);
-  const [searched, setSearched] = useState(false);
+  // URL params take precedence over stored state on first load (deep-link support)
+  const urlFrom    = searchParams.get("from")?.toUpperCase();
+  const urlTo      = searchParams.get("to")?.toUpperCase();
+  const urlDate    = searchParams.get("date");
+  const urlRetDate = searchParams.get("retDate");
+  const urlAdults  = searchParams.get("adults");
+  const urlTrip    = searchParams.get("tripType") as "oneway" | "roundtrip" | null;
 
-  const [sortBy,      setSortBy]      = useState("price");
-  const [filterStop,  setFilterStop]  = useState("all");
-  const [filterRef,   setFilterRef]   = useState("all");
-  const [roleModal,   setRoleModal]   = useState(false);
+  // Safe extraction: if the stored value is not a plain string, fall back to default.
+  // This handles the case where old localStorage had a different shape (object instead of string).
+  const safeStr = (v: any, def: string) => (typeof v === "string" && v.length <= 10 ? v : def);
+  const safeNum = (v: any, def: number) => (typeof v === "number" && !isNaN(v) ? v : def);
+  const safeTripType = (v: any): "oneway" | "roundtrip" =>
+    v === "roundtrip" ? "roundtrip" : "oneway";
+
+  const from     = urlFrom    || safeStr(fs.from,    "DEL");
+  const to       = urlTo      || safeStr(fs.to,      "BOM");
+  const date     = urlDate    || safeStr(fs.date,    "");
+  const retDate  = urlRetDate || safeStr(fs.retDate, "");
+  const adults   = urlAdults ? parseInt(urlAdults) : safeNum(fs.adults, 1);
+  const tripType = urlTrip   || safeTripType(fs.tripType);
+
+  // Local-only setters that also sync to store
+  const setFrom     = (v: string) => setFlightSearch({ from: v });
+  const setTo       = (v: string) => setFlightSearch({ to: v });
+  const setDate     = (v: string) => setFlightSearch({ date: v });
+  const setRetDate  = (v: string) => setFlightSearch({ retDate: v });
+  const setAdults   = (v: number) => setFlightSearch({ adults: v });
+  const setTripType = (v: "oneway" | "roundtrip") => setFlightSearch({ tripType: v });
+
+  // Results from store (restored across navigation)
+  const flights  = Array.isArray(fs.results) ? fs.results : [];
+  const searched = !!fs.searched;
+
+  const [loading,         setLoading]         = useState(false);
+  const [sortBy,          setSortBy]          = useState("price");
+  const [filterStop,      setFilterStop]      = useState("all");
+  const [filterRef,       setFilterRef]       = useState("all");
+  const [roleModal,       setRoleModal]       = useState(false);
   const [bookFlight,      setBookFlight]      = useState<any>(null);
   const [agentBookFlight, setAgentBookFlight] = useState<any>(null);
 
   useEffect(() => {
+    // One-time migration: if the stored 'from' is not a plain string
+    // (e.g. it's an object from a previous incompatible store shape),
+    // reset the store slice to clean defaults so inputs never show [object Object].
+    if (typeof fs.from !== "string") {
+      setFlightSearch({ from: "DEL", to: "BOM", date: "", retDate: "", adults: 1, tripType: "oneway" });
+      setFlightResults([], false);
+    }
+
+    // Set a default date if none stored/provided
     if (!date) {
-      const d = new Date(); d.setDate(d.getDate()+1);
+      const d = new Date(); d.setDate(d.getDate() + 1);
       setDate(d.toISOString().split("T")[0]);
     }
+    // If URL params are present, trigger a fresh search (deep-link / redirect from login)
     const f = searchParams.get("from");
     const t = searchParams.get("to");
     const d = searchParams.get("date");
-    if (f && t && d) doSearch(f, t, d);
+    if (f && t && d) {
+      doSearch(f, t, d);
+    }
   }, []);
 
   const doSearch = async (f=from, t=to, d=date) => {
@@ -393,9 +512,13 @@ function FlightsContent() {
       d = tmr.toISOString().split("T")[0];
       setDate(d);
     }
+    // Persist the search params immediately so they survive if the user navigates mid-search
+    setFlightSearch({ from: f, to: t, date: d, adults, tripType, retDate });
     const params = new URLSearchParams({from:f,to:t,date:d,adults:String(adults),tripType});
     window.history.replaceState(null,"",`/flights?${params}`);
-    setLoading(true); setSearched(true); setFlights([]);
+    setLoading(true);
+    // Clear results while loading so stale data isn't shown alongside spinner
+    setFlightResults([], false);
     try {
       const res  = await flightsApi.search({
         origin:        String(f).trim().toUpperCase(),
@@ -405,8 +528,10 @@ function FlightsContent() {
         tripType:      tripType==="roundtrip" ? "RoundTrip" : "OneWay",
         returnDate:    tripType==="roundtrip" && retDate ? String(retDate) : undefined,
       });
-      setFlights((res as any)?.data?.flights || []);
-    } catch { toast.error("Search failed — please try again"); }
+      const result = (res as any)?.data?.flights || [];
+      // Persist results to store — they survive tab switches and navigation
+      setFlightResults(result, true);
+    } catch { toast.error("Search failed — please try again"); setFlightResults([], true); }
     finally { setLoading(false); }
   };
 

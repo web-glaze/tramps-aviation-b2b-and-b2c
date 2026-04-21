@@ -5,62 +5,43 @@
  * ────────────────────────
  * Single source of truth for showing agent commission, GST & net payable.
  *
- * USAGE: Drop it inside any fare/price card. Internally checks if the logged-in
- * user is an agent — renders nothing for customers/guests.
- *
- *   <AgentCommissionBreakdown
- *     totalAmount={2000}
- *     commissionPercent={5}              // optional, default 5
- *     commissionAmount={100}             // optional, if backend sends it directly
- *     productType="flight"               // flight | hotel | insurance | series-fare
- *   />
- *
- * BACKEND INTEGRATION (future-proof):
- * - If backend sends `commissionAmount` (exact value from commission rules engine),
- *   we use that directly.
- * - Else if backend sends `commissionPercent`, we calculate from it.
- * - Else we fall back to a safe 5% default estimate.
- *
- * Works for TBO live data, Amadeus, series fares, hotels — anywhere.
+ * - Renders ONLY for agents (role === "agent"). Customers/guests see nothing.
+ * - GST rate comes from usePlatformStore (fetched from /admin/public-settings).
+ *   This means admin changes to GST % take effect as soon as the platform
+ *   settings are refreshed — no stale module-level cache.
+ * - Commission comes from backend commission-rules engine when available.
+ *   Falls back to commissionPercent prop, then 5% default.
  */
 
-import { useAuthStore } from "@/lib/store";
+import { useAuthStore, usePlatformStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { Info } from "lucide-react";
-
-// Fixed: GST on travel agent commission is 18% per Indian tax law
-const GST_ON_COMMISSION_PERCENT = 18;
+import { useEffect } from "react";
 
 export interface AgentCommissionBreakdownProps {
   /** Final price customer pays (including all taxes) */
   totalAmount: number;
-
-  /** Base fare if known; else auto-estimated as 85% of total */
+  /** Base fare if known */
   baseFare?: number;
-
-  /** Taxes amount if known; else auto-estimated as 15% of total */
+  /** Tax amount if known */
   taxes?: number;
-
-  /** Commission % from backend (commission rules engine). Defaults to 5. */
+  /** Commission % fallback (used only when commissionAmount is not provided) */
   commissionPercent?: number;
-
-  /** Exact commission amount from backend. Overrides percent calculation. */
+  /** ✅ PREFERRED: Exact commission amount from backend commission-rules engine */
   commissionAmount?: number;
-
+  /** ✅ PREFERRED: Exact GST on commission from backend */
+  gstOnCommission?: number;
+  /** ✅ PREFERRED: Exact net payable from backend */
+  netPayable?: number;
   /** Product for labeling */
   productType?: "flight" | "hotel" | "insurance" | "series-fare";
-
   /** Number of pax/units for labeling */
   quantity?: number;
   quantityLabel?: string;
-
   /** Layout density */
   variant?: "full" | "compact";
-
-  /** Hide the estimate disclaimer (if you're showing exact backend values) */
+  /** Hide the estimate disclaimer */
   hideDisclaimer?: boolean;
-
-  /** Extra class */
   className?: string;
 }
 
@@ -70,6 +51,8 @@ export function AgentCommissionBreakdown({
   taxes,
   commissionPercent = 5,
   commissionAmount,
+  gstOnCommission: gstOnCommissionProp,
+  netPayable: netPayableProp,
   productType = "flight",
   quantity = 1,
   quantityLabel = "pax",
@@ -80,36 +63,63 @@ export function AgentCommissionBreakdown({
   const { role } = useAuthStore();
   const isAgent = role === "agent";
 
-  // Only render for agents — customers & guests see nothing
+  // ── GST rate from platform store (admin-configurable, always fresh) ────────
+  // usePlatformStore.fetchIfStale() is called once on layout mount, so by the
+  // time this component renders the correct value is already in the store.
+  // No more stale 18% hardcode — admin changes take effect immediately.
+  const { ps, fetchIfStale } = usePlatformStore();
+  useEffect(() => { fetchIfStale(); }, []);
+  const gstRate = typeof ps.gstPercent === "number" && ps.gstPercent > 0
+    ? ps.gstPercent
+    : 18; // safe fallback if settings not loaded yet
+
   if (!isAgent) return null;
 
-  // Safe numeric parsing
   const total = Number(totalAmount) || 0;
   if (total <= 0) return null;
 
-  // Work out the breakdown
-  const actualTaxes = typeof taxes === "number" && taxes > 0 ? taxes : Math.round(total * 0.15);
-  const actualBase = typeof baseFare === "number" && baseFare > 0 ? baseFare : total - actualTaxes;
-
-  const commission = typeof commissionAmount === "number" && commissionAmount >= 0
-    ? commissionAmount
+  // ── Commission: use exact backend value first, then percent, then 5% default
+  const hasExactCommission =
+    typeof commissionAmount === "number" && commissionAmount >= 0;
+  const commission = hasExactCommission
+    ? commissionAmount!
     : Math.round((total * commissionPercent) / 100);
 
-  const gst = Math.round((commission * GST_ON_COMMISSION_PERCENT) / 100);
-  const netPayable = total - commission + gst;
-  const netProfit = commission - gst;
+  // ── GST: use exact backend value first, then calculate from platform rate ──
+  const hasExactGst =
+    typeof gstOnCommissionProp === "number" && gstOnCommissionProp >= 0;
+  const gst = hasExactGst
+    ? gstOnCommissionProp!
+    : Math.round((commission * gstRate) / 100);
 
-  const rateLabel = typeof commissionAmount === "number"
-    ? "Your Commission"
-    : `Your Commission (${commissionPercent}%)`;
+  // ── Net payable: use exact backend value first ─────────────────────────────
+  const hasExactNetPayable =
+    typeof netPayableProp === "number" && netPayableProp > 0;
+  const netPayable = hasExactNetPayable
+    ? netPayableProp!
+    : total - commission + gst;
 
+  // ── Fare display ───────────────────────────────────────────────────────────
+  const actualTaxes =
+    typeof taxes === "number" && taxes > 0 ? taxes : Math.round(total * 0.15);
+  const actualBase =
+    typeof baseFare === "number" && baseFare > 0
+      ? baseFare
+      : total - actualTaxes;
+
+  const isEstimate = !hasExactCommission;
+  const rateLabel = isEstimate
+    ? `Your Commission (~${commissionPercent}%)`
+    : "Your Commission";
+
+  // ── Compact badge variant ──────────────────────────────────────────────────
   if (variant === "compact") {
-    // Compact single-line badge for small card corners
+    const netProfit = commission - gst;
     return (
       <div
         className={cn(
           "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700/40",
-          className
+          className,
         )}
         title={`Customer pays ₹${total.toLocaleString("en-IN")}, you earn ₹${commission.toLocaleString("en-IN")} (₹${netProfit.toLocaleString("en-IN")} after GST)`}
       >
@@ -125,10 +135,10 @@ export function AgentCommissionBreakdown({
     );
   }
 
-  // Full breakdown (inside expandable details)
+  // ── Full breakdown ─────────────────────────────────────────────────────────
   return (
     <div className={cn("space-y-1.5 text-sm", className)}>
-      {/* Fare lines (only in full mode, since caller may show these separately) */}
+      {/* Fare lines */}
       <div className="flex justify-between">
         <span className="text-muted-foreground">
           Base Fare{quantity > 1 ? ` × ${quantity}` : ""}
@@ -150,7 +160,7 @@ export function AgentCommissionBreakdown({
         </span>
       </div>
 
-      {/* Divider + agent commission block */}
+      {/* Agent commission block */}
       <div className="mt-3 pt-3 border-t-2 border-dashed border-emerald-300 dark:border-emerald-700/50">
         <div className="flex justify-between">
           <span className="text-emerald-700 dark:text-emerald-400 font-medium">
@@ -162,7 +172,7 @@ export function AgentCommissionBreakdown({
         </div>
         <div className="flex justify-between mt-1">
           <span className="text-muted-foreground text-xs">
-            GST on commission ({GST_ON_COMMISSION_PERCENT}%)
+            GST on commission ({gstRate}%)
           </span>
           <span className="text-xs font-medium text-muted-foreground">
             − ₹{gst.toLocaleString("en-IN")}
@@ -182,9 +192,9 @@ export function AgentCommissionBreakdown({
         <p className="text-[10px] text-muted-foreground mt-2 italic flex items-start gap-1">
           <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
           <span>
-            {typeof commissionAmount === "number"
-              ? "Commission calculated per your agent agreement."
-              : "Indicative commission. Final value as per your agent agreement."}
+            {isEstimate
+              ? "Indicative commission. Final value as per your agent agreement."
+              : "Commission calculated per your agent agreement."}
           </span>
         </p>
       )}
@@ -194,7 +204,7 @@ export function AgentCommissionBreakdown({
 
 /**
  * AgentEarnBadge — ultra-compact badge for price corners
- * Shows just "You earn ₹X" and nothing else. Renders null for customers.
+ * Shows just "You earn ₹X". Renders null for customers.
  */
 export function AgentEarnBadge({
   totalAmount,
@@ -224,7 +234,7 @@ export function AgentEarnBadge({
     <div
       className={cn(
         "inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700/40",
-        className
+        className,
       )}
     >
       <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">

@@ -49,10 +49,10 @@ export function FlightSearchBar({
   return (
     <div className="search-hero">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6">
-        {/* Trip type */}
+        {/* Trip type — visible against white card */}
         {showTripType && setTripType && (
           <div className="flex items-center gap-2 mb-4">
-            <div className="flex gap-1 bg-white/10 rounded-xl p-1">
+            <div className="flex gap-1 bg-muted/50 border border-border rounded-xl p-1">
               {(
                 [
                   ["oneway", "One Way"],
@@ -61,12 +61,13 @@ export function FlightSearchBar({
               ).map(([v, l]) => (
                 <button
                   key={v}
+                  type="button"
                   onClick={() => setTripType(v)}
                   className={cn(
                     "flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition-all",
                     tripType === v
-                      ? "bg-white text-primary shadow-sm"
-                      : "text-white/80 hover:text-white hover:bg-white/10",
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted",
                   )}
                 >
                   {v === "roundtrip" && <Repeat2 className="h-3.5 w-3.5" />}
@@ -110,7 +111,8 @@ export function FlightSearchBar({
                   className="search-input w-full font-black text-xl tracking-widest text-center uppercase"
                 />
                 <button
-                  onClick={swap}
+                  type="button"
+                  onClick={() => swap()}
                   className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-md transition-all active:scale-95 hidden sm:flex"
                 >
                   <ArrowLeftRight className="h-3 w-3 text-primary" />
@@ -157,7 +159,10 @@ export function FlightSearchBar({
                 className="search-input w-full font-bold text-xl text-center"
               />
             </div>
-            {/* Button */}
+            {/* Button — wrap onSearch in arrow so the MouseEvent isn't passed as first arg.
+                Passing the event made `doSearch(f=from,...)` receive the button DOM node
+                as `f`, which then got stored in Zustand and crashed the persist middleware
+                with "Converting circular structure to JSON". */}
             <div
               className={cn(
                 "flex items-end",
@@ -167,7 +172,8 @@ export function FlightSearchBar({
               )}
             >
               <button
-                onClick={onSearch}
+                type="button"
+                onClick={() => onSearch()}
                 disabled={loading}
                 className="search-button w-full h-[54px] disabled:opacity-60 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[.98]"
               >

@@ -27,7 +27,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { hotelsApi, customerApi, agentApi, unwrap } from "@/lib/api/services";
-import { useAuthStore } from "@/lib/store";
+import { useAuthStore, useSearchStateStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { BookingRoleModal } from "@/components/search/BookingRoleModal";
@@ -387,16 +387,35 @@ function HotelsContent() {
   const router = useRouter();
   const { isAuthenticated, role } = useAuthStore();
 
-  const [city, setCity] = useState(searchParams.get("city") || "");
-  const [checkIn, setCheckIn] = useState(searchParams.get("checkIn") || "");
-  const [checkOut, setCheckOut] = useState(searchParams.get("checkOut") || "");
-  const [rooms, setRooms] = useState(
-    parseInt(searchParams.get("rooms") || "1"),
-  );
+  // ── Persisted search state ─────────────────────────────────────────────────
+  const { hotel: hs, setHotelSearch, setHotelResults } = useSearchStateStore();
 
-  const [hotels, setHotels] = useState<any[]>([]);
+  // URL params take precedence (deep-link / redirect from login)
+  const urlCity = searchParams.get("city");
+  const urlCheckIn = searchParams.get("checkIn");
+  const urlCheckOut = searchParams.get("checkOut");
+  const urlRooms = searchParams.get("rooms");
+
+  // Safe extraction — if stored value is not a plain string, fall back to default
+  const safeStr = (v: any, def: string) => (typeof v === "string" ? v : def);
+  const safeNum = (v: any, def: number) =>
+    typeof v === "number" && !isNaN(v) ? v : def;
+
+  const city = urlCity || safeStr(hs.city, "");
+  const checkIn = urlCheckIn || safeStr(hs.checkIn, "");
+  const checkOut = urlCheckOut || safeStr(hs.checkOut, "");
+  const rooms = urlRooms ? parseInt(urlRooms) : safeNum(hs.rooms, 1);
+
+  const setCity = (v: string) => setHotelSearch({ city: v });
+  const setCheckIn = (v: string) => setHotelSearch({ checkIn: v });
+  const setCheckOut = (v: string) => setHotelSearch({ checkOut: v });
+  const setRooms = (v: number) => setHotelSearch({ rooms: v });
+
+  // Results restored from store
+  const hotels = Array.isArray(hs.results) ? hs.results : [];
+  const searched = !!hs.searched;
+
   const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
   const [filterStar, setFilterStar] = useState("all");
   const [roleModal, setRoleModal] = useState(false);
   const [bookHotel, setBookHotel] = useState<any>(null);
@@ -413,11 +432,18 @@ function HotelsContent() {
       : 1;
 
   useEffect(() => {
+    // One-time migration: if stored 'city' is not a plain string, reset to defaults
+    if (typeof hs.city !== "string") {
+      setHotelSearch({ city: "", checkIn: "", checkOut: "", rooms: 1 });
+      setHotelResults([], false);
+    }
+
     const today = new Date().toISOString().split("T")[0];
     const tmr = new Date();
     tmr.setDate(tmr.getDate() + 1);
     if (!checkIn) setCheckIn(today);
     if (!checkOut) setCheckOut(tmr.toISOString().split("T")[0]);
+    // URL param present → trigger a fresh search (deep-link / post-login redirect)
     if (searchParams.get("city")) doSearch(searchParams.get("city")!);
   }, []);
 
@@ -426,6 +452,8 @@ function HotelsContent() {
       toast.error("Enter a city or destination");
       return;
     }
+    // Persist params immediately — survive any navigation during the search
+    setHotelSearch({ city: c, checkIn, checkOut, rooms });
     const params = new URLSearchParams({
       city: c,
       checkIn,
@@ -434,8 +462,8 @@ function HotelsContent() {
     });
     window.history.replaceState(null, "", `/hotels?${params}`);
     setLoading(true);
-    setSearched(true);
-    setHotels([]);
+    // Clear results while loading so stale data isn't shown with spinner
+    setHotelResults([], false);
     try {
       const res = await hotelsApi.search({
         cityName: c,
@@ -447,17 +475,19 @@ function HotelsContent() {
       const data = (res as any)?.data;
       const list =
         data?.hotels || data?.Hotels || (Array.isArray(data) ? data : []);
-      setHotels(
+      const finalList =
         list.length > 0
           ? list
           : FALLBACK_HOTELS.filter(
               (h) => h.city.toLowerCase() === c.toLowerCase(),
-            ),
-      );
+            );
+      // Persist results to store — they survive tab switches and navigation
+      setHotelResults(finalList, true);
     } catch {
-      setHotels(
-        FALLBACK_HOTELS.filter((h) => h.city.toLowerCase() === c.toLowerCase()),
+      const fallback = FALLBACK_HOTELS.filter(
+        (h) => h.city.toLowerCase() === c.toLowerCase(),
       );
+      setHotelResults(fallback, true);
     }
     setLoading(false);
   };

@@ -304,6 +304,12 @@ export interface PlatformSettings {
   gstNumber?:           string
   panNumber?:           string
   cinNumber?:           string
+  // GST on commission & markup config (from Platform Settings → Pricing section)
+  gstPercent?:              number
+  flightMarkupPercent?:     number
+  hotelMarkupPercent?:      number
+  insuranceMarkupPercent?:  number
+  b2bAgentDiscount?:        number
 }
 
 interface PlatformState {
@@ -339,3 +345,9 @@ export const usePlatformStore = create<PlatformState>()((set, get) => ({
 //   import { useFlightFiltersStore } from '@/lib/store'
 export { useFlightFiltersStore } from './flightFilters'
 export type { FlightFiltersState } from './flightFilters'
+
+// Re-export search state store — persists last search inputs + results across
+// tab changes, navigation, booking dialog opens, and page unmounts.
+//   import { useSearchStateStore } from '@/lib/store'
+export { useSearchStateStore } from './searchState'
+export type { FlightSearchParams, SeriesFareSearchParams, HotelSearchParams } from './searchState'

@@ -20,8 +20,13 @@ import {
   ArrowLeftRight,
   Users,
   CheckCircle2,
+  Repeat2,
 } from "lucide-react";
-import { useAuthStore, useFlightFiltersStore } from "@/lib/store";
+import {
+  useAuthStore,
+  useFlightFiltersStore,
+  useSearchStateStore,
+} from "@/lib/store";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { FlightFilters } from "@/components/search/FlightFilters";
@@ -74,12 +79,25 @@ function SeriesFareCard({
       ? flight.seatsAvailable
       : 9;
 
-  // Commission data from backend (if available) — component falls back to 5% default
+  // Commission data from backend commission-rules engine (preferred)
+  // Falls back to commissionPercent, then 5% default in the component
   const commissionPercent = Number(
     flight?.fare?.commissionPercent ?? flight?.commissionPercent ?? 5,
   );
-  const commissionAmount =
-    flight?.fare?.commissionAmount ?? flight?.commissionAmount;
+  const commissionAmount: number | undefined =
+    typeof flight?.fare?.commissionAmount === "number"
+      ? flight.fare.commissionAmount
+      : typeof flight?.commissionAmount === "number"
+        ? flight.commissionAmount
+        : undefined;
+  const gstOnCommission: number | undefined =
+    typeof flight?.fare?.gstOnCommission === "number"
+      ? flight.fare.gstOnCommission
+      : undefined;
+  const netPayable: number | undefined =
+    typeof flight?.fare?.netPayable === "number"
+      ? flight.fare.netPayable
+      : undefined;
 
   return (
     <div
@@ -407,6 +425,7 @@ function AgentBookingDialog({
   );
   const [step, setStep] = useState<"form" | "loading" | "done">("form");
   const [pnr, setPnr] = useState("");
+  const [agentPnr, setAgentPnr] = useState(""); // Airline PNR entered by agent
   const [bookingRef, setBookingRef] = useState("");
   const [stepLabel, setStepLabel] = useState("");
 
@@ -431,6 +450,14 @@ function AgentBookingDialog({
       toast.error("Contact email and phone are required");
       return;
     }
+    // Validate airline PNR (required for series fare)
+    const pnrClean = agentPnr.trim().toUpperCase();
+    if (!pnrClean || !/^[A-Z0-9]{4,12}$/.test(pnrClean)) {
+      toast.error(
+        "Please enter a valid airline PNR (4–12 letters/numbers, no spaces)",
+      );
+      return;
+    }
 
     setStep("loading");
 
@@ -442,29 +469,34 @@ function AgentBookingDialog({
     try {
       // ── Step 1: Init booking ──────────────────────────────────────────────
       setStepLabel("Creating booking…");
-      const initRes = await apiClient.post("/bookings/init", {
-        resultToken,
-        // Backend schema enum is snake_case: one_way / round_trip / multi_city
-        tripType: "one_way",
-        adults,
-        passengers: passengers.map((p) => ({
-          title: p.gender === "F" ? "Ms" : "Mr",
-          firstName: p.firstName.trim(),
-          lastName: p.lastName.trim(),
-          // Backend schema fields (required):
-          dateOfBirth: p.dob,           // ISO date string — mongoose will cast to Date
-          gender: p.gender || "M",
-          passengerType: "ADT",         // Adult — required enum
-          // Optional / legacy aliases kept for safety
-          dob: p.dob,
-          passportNumber: "",
-        })),
-        contactEmail: contactEmail.trim(),
-        contactPhone: contactPhone.trim(),
-        expectedPricePerPax: price,   // Price drift check on backend
-      }, {
-        headers: { "X-Idempotency-Key": idempotencyKey },
-      });
+      const initRes = await apiClient.post(
+        "/bookings/init",
+        {
+          resultToken,
+          // Backend schema enum is snake_case: one_way / round_trip / multi_city
+          tripType: "one_way",
+          adults,
+          passengers: passengers.map((p) => ({
+            title: p.gender === "F" ? "Ms" : "Mr",
+            firstName: p.firstName.trim(),
+            lastName: p.lastName.trim(),
+            // Backend schema fields (required):
+            dateOfBirth: p.dob, // ISO date string — mongoose will cast to Date
+            gender: p.gender || "M",
+            passengerType: "ADT", // Adult — required enum
+            // Optional / legacy aliases kept for safety
+            dob: p.dob,
+            passportNumber: "",
+          })),
+          contactEmail: contactEmail.trim(),
+          contactPhone: contactPhone.trim(),
+          expectedPricePerPax: price, // Price drift check on backend
+          agentSuppliedPnr: agentPnr.trim().toUpperCase(), // Required for series fare
+        },
+        {
+          headers: { "X-Idempotency-Key": idempotencyKey },
+        },
+      );
 
       const initData = initRes.data?.data || initRes.data;
       const ref = initData?.bookingRef;
@@ -728,12 +760,40 @@ function AgentBookingDialog({
             </div>
           </div>
 
+          {/* Airline PNR — required for series fare bookings */}
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-foreground border-b border-border pb-2 flex items-center gap-2">
+              Airline PNR
+              <span className="text-[10px] bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40 px-2 py-0.5 rounded-full font-bold uppercase tracking-wide">
+                Required
+              </span>
+            </p>
+            <input
+              type="text"
+              value={agentPnr}
+              onChange={(e) =>
+                setAgentPnr(
+                  e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""),
+                )
+              }
+              maxLength={12}
+              placeholder="e.g. ABCD12"
+              className="input-base font-mono uppercase tracking-widest text-base"
+            />
+            <p className="text-[10px] text-muted-foreground flex items-start gap-1.5">
+              <Info className="h-3 w-3 flex-shrink-0 mt-0.5 text-primary" />
+              Enter the airline PNR you received for this series fare seat. 4–12
+              alphanumeric characters.
+            </p>
+          </div>
+
           {/* Note */}
           <div className="bg-primary/5 border border-primary/15 rounded-xl px-4 py-3">
             <p className="text-xs text-muted-foreground flex items-start gap-2">
               <Info className="h-3.5 w-3.5 text-primary flex-shrink-0 mt-0.5" />
-              This is a Tramps Aviation exclusive series fare. A unique PNR will
-              be generated internally upon confirmation.
+              This is a Tramps Aviation exclusive series fare. The airline PNR
+              you enter above will be recorded and used to generate the
+              e-ticket.
             </p>
           </div>
 
@@ -891,37 +951,88 @@ function BookModal({
 function SeriesFarePage() {
   const params = useSearchParams();
 
-  const [from, setFrom] = useState(params.get("from") || "DEL");
-  const [to, setTo] = useState(params.get("to") || "BOM");
-  const [date, setDate] = useState(params.get("date") || "");
-  const [adults, setAdults] = useState(Number(params.get("adults") || "1"));
+  // ── Persisted search state ─────────────────────────────────────────────────
+  const {
+    seriesFare: sf,
+    setSeriesFareSearch,
+    setSeriesFareResults,
+  } = useSearchStateStore();
 
-  const [flights, setFlights] = useState<any[]>([]);
+  // URL params take precedence on first load (deep-link / post-login redirect)
+  const urlFrom = params.get("from")?.toUpperCase();
+  const urlTo = params.get("to")?.toUpperCase();
+  const urlDate = params.get("date");
+  const urlAdults = params.get("adults");
+  const urlTrip = params.get("tripType") as "oneway" | "roundtrip" | null;
+  const urlRetDate = params.get("returnDate");
+
+  // Safe extraction — if stored value is not a plain string (stale object), use default
+  const safeStr = (v: any, def: string) =>
+    typeof v === "string" && v.length <= 12 ? v : def;
+  const safeNum = (v: any, def: number) =>
+    typeof v === "number" && !isNaN(v) ? v : def;
+
+  const from = urlFrom || safeStr(sf.from, "DEL");
+  const to = urlTo || safeStr(sf.to, "BOM");
+  const date = urlDate || safeStr(sf.date, "");
+  const adults = urlAdults ? Number(urlAdults) : safeNum(sf.adults, 1);
+  const tripType = (urlTrip || sf.tripType || "oneway") as
+    | "oneway"
+    | "roundtrip";
+  const returnDate = urlRetDate || safeStr(sf.returnDate, "");
+
+  const setFrom = (v: string) => setSeriesFareSearch({ from: v });
+  const setTo = (v: string) => setSeriesFareSearch({ to: v });
+  const setDate = (v: string) => setSeriesFareSearch({ date: v });
+  const setAdults = (v: number) => setSeriesFareSearch({ adults: v });
+  const setTripType = (v: "oneway" | "roundtrip") =>
+    setSeriesFareSearch({ tripType: v });
+  const setReturnDate = (v: string) => setSeriesFareSearch({ returnDate: v });
+
+  // Results restored from store
+  const flights = Array.isArray(sf.results) ? sf.results : [];
+  const searched = !!sf.searched;
+
   const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
   const [selectedFlight, setSelectedFlight] = useState<any>(null);
 
-  // ── Persisted filters ─────────────────────────────────────────────────
-  // Previously these were local useState → reset on every unmount, which is
-  // why the filter selections disappeared the moment the agent opened the
-  // booking dialog or navigated away. Now they live in a Zustand store with
-  // localStorage persistence so the choices survive across screens and reloads.
+  // ── Persisted filters ──────────────────────────────────────────────────────
   const {
-    sortBy,        setSortBy,
-    filterStop,    setFilterStop,
-    filterRef,     setFilterRef,
-    filterCabin,   setFilterCabin,
-    filterAirline, setFilterAirline,
-    maxPrice,      setMaxPrice,
+    sortBy,
+    setSortBy,
+    filterStop,
+    setFilterStop,
+    filterRef,
+    setFilterRef,
+    filterCabin,
+    setFilterCabin,
+    filterAirline,
+    setFilterAirline,
+    maxPrice,
+    setMaxPrice,
     resetFilters,
   } = useFlightFiltersStore();
 
   useEffect(() => {
+    // One-time migration: if stored 'from' is not a plain string, reset to defaults
+    if (typeof sf.from !== "string") {
+      setSeriesFareSearch({
+        from: "DEL",
+        to: "BOM",
+        date: "",
+        adults: 1,
+        tripType: "oneway",
+        returnDate: "",
+      });
+      setSeriesFareResults([], false);
+    }
+
     if (!date) {
       const tmr = new Date();
       tmr.setDate(tmr.getDate() + 1);
       setDate(tmr.toISOString().split("T")[0]);
     }
+    // If URL params present, trigger fresh search (deep-link / redirect from login)
     if (params.get("from") && params.get("to") && params.get("date")) {
       doSearch(params.get("from")!, params.get("to")!, params.get("date")!);
     }
@@ -938,33 +1049,79 @@ function SeriesFarePage() {
       d = tmr.toISOString().split("T")[0];
       setDate(d);
     }
+    if (tripType === "roundtrip" && !returnDate) {
+      toast.error("Please select a return date for Round Trip");
+      return;
+    }
+    // Persist all params immediately — survive any navigation that happens mid-search
+    setSeriesFareSearch({
+      from: f,
+      to: t,
+      date: d,
+      adults,
+      tripType,
+      returnDate,
+    });
     setLoading(true);
-    setSearched(true);
-    setFlights([]);
+    // Clear results while searching so stale data isn't shown with spinner
+    setSeriesFareResults([], false);
     // NOTE: intentionally NOT resetting filters here — they are persisted via
-    // useFlightFiltersStore and should survive re-searches. User can tap
-    // "Clear all" in the filter panel to reset explicitly.
+    // useFlightFiltersStore and should survive re-searches.
     try {
-      const res = await fetch(
-        `${API_BASE}/flights/series?origin=${encodeURIComponent(f.toUpperCase())}&destination=${encodeURIComponent(t.toUpperCase())}&departureDate=${d}&adults=${adults}`,
+      // Extract agentObjectId from stored JWT so backend can calculate commission
+      let agentObjectId = "";
+      try {
+        const token =
+          localStorage.getItem("auth_token") ||
+          localStorage.getItem("agent_token");
+        if (token) {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          if (payload?.role === "agent" && payload?.sub)
+            agentObjectId = payload.sub;
+        }
+      } catch {
+        /* ignore parse errors */
+      }
+
+      const url = new URL(`${API_BASE}/flights/series`);
+      url.searchParams.set("origin", f.toUpperCase());
+      url.searchParams.set("destination", t.toUpperCase());
+      url.searchParams.set("departureDate", d);
+      url.searchParams.set("adults", String(adults));
+      url.searchParams.set(
+        "tripType",
+        tripType === "roundtrip" ? "RoundTrip" : "OneWay",
       );
+      if (tripType === "roundtrip" && returnDate) {
+        url.searchParams.set("returnDate", returnDate);
+      }
+      if (agentObjectId) url.searchParams.set("agentObjectId", agentObjectId);
+
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      const storedToken =
+        localStorage.getItem("auth_token") ||
+        localStorage.getItem("agent_token");
+      if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
+
+      const res = await fetch(url.toString(), { headers });
       const json = await res.json();
       const list = json?.data?.data || json?.data || json?.results || [];
-      setFlights(Array.isArray(list) ? list : []);
+      setSeriesFareResults(Array.isArray(list) ? list : [], true);
       if (Array.isArray(list) && !list.length) {
         toast.info("No series fares found for this route.");
       }
     } catch {
       toast.error("Failed to load series fares. Please try again.");
-      setFlights([]);
+      setSeriesFareResults([], true);
     } finally {
       setLoading(false);
     }
   };
 
   const swap = () => {
-    setFrom(to);
-    setTo(from);
+    setSeriesFareSearch({ from: to, to: from });
   };
 
   const allPrices = flights
@@ -1037,12 +1194,50 @@ function SeriesFarePage() {
         />
       )}
 
-      {/* Search Bar — wrapped in padding container so it's not edge-to-edge */}
+      {/* Search Bar */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-6">
         <div className="search-hero">
           <div className="px-4 sm:px-6 py-6">
+            {/* Trip type toggle — visible against white card */}
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex gap-1 bg-muted/50 border border-border rounded-xl p-1">
+                {(
+                  [
+                    ["oneway", "One Way"],
+                    ["roundtrip", "Round Trip"],
+                  ] as const
+                ).map(([v, l]) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => {
+                      setTripType(v);
+                      if (v === "oneway") setReturnDate("");
+                    }}
+                    className={cn(
+                      "flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition-all",
+                      tripType === v
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                    )}
+                  >
+                    {v === "roundtrip" && <Repeat2 className="h-3.5 w-3.5" />}
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="search-panel p-3 sm:p-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+              <div
+                className={cn(
+                  "grid gap-3 items-end",
+                  tripType === "roundtrip"
+                    ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-6"
+                    : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-5",
+                )}
+              >
+                {/* From */}
                 <div>
                   <label className="search-label">From</label>
                   <div className="relative">
@@ -1061,6 +1256,8 @@ function SeriesFarePage() {
                     </button>
                   </div>
                 </div>
+
+                {/* To */}
                 <div>
                   <label className="search-label">To</label>
                   <input
@@ -1071,8 +1268,10 @@ function SeriesFarePage() {
                     className="search-input w-full font-black text-xl tracking-widest text-center uppercase"
                   />
                 </div>
+
+                {/* Departure date */}
                 <div>
-                  <label className="search-label">Travel Date</label>
+                  <label className="search-label">Departure Date</label>
                   <input
                     type="date"
                     value={date}
@@ -1081,6 +1280,22 @@ function SeriesFarePage() {
                     className="search-input-date w-full text-sm"
                   />
                 </div>
+
+                {/* Return date — only shown for round trip */}
+                {tripType === "roundtrip" && (
+                  <div>
+                    <label className="search-label">Return Date</label>
+                    <input
+                      type="date"
+                      value={returnDate}
+                      onChange={(e) => setReturnDate(e.target.value)}
+                      min={date || new Date().toISOString().split("T")[0]}
+                      className="search-input-date w-full text-sm"
+                    />
+                  </div>
+                )}
+
+                {/* Adults */}
                 <div>
                   <label className="search-label">Adults</label>
                   <input
@@ -1096,6 +1311,8 @@ function SeriesFarePage() {
                     className="search-input w-full font-bold text-xl text-center"
                   />
                 </div>
+
+                {/* Search button */}
                 <div className="flex items-end">
                   <button
                     onClick={() => doSearch()}

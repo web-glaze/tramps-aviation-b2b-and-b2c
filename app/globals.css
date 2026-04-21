@@ -802,3 +802,36 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.4);
 }
+/* ── Print Styles ─────────────────────────────────────────── */
+@media print {
+  /* Hide nav, sidebar, action buttons */
+  nav, aside, header,
+  [class*="print:hidden"],
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Show print-only elements */
+  .print\:flex {
+    display: flex !important;
+  }
+  .hidden.print\:flex {
+    display: flex !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Ensure ticket card prints with borders */
+  .bg-card {
+    background: white !important;
+    border: 1px solid #ddd !important;
+  }
+
+  /* Remove shadows for clean print */
+  * {
+    box-shadow: none !important;
+  }
+}
