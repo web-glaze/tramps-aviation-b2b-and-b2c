@@ -412,7 +412,7 @@ interface PlatformState {
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
-  "https://duke-personal-large-prospect.trycloudflare.com/api";
+  "http://localhost:8080/api";
 
 export const usePlatformStore = create<PlatformState>()((set, get) => ({
   ps: {},
