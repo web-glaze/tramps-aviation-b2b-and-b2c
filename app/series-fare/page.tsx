@@ -36,7 +36,7 @@ import {
 } from "@/components/shared/AgentCommissionBreakdown";
 import apiClient from "@/lib/api/client";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://tramps-aviation-backend.onrender.com/api";
 
 const AIRLINE_COLOR: Record<string, string> = {
   IndiGo: "bg-indigo-600",

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://tramps-aviation-backend.onrender.com/api";
 
 const apiClient = axios.create({
   baseURL: API_URL,

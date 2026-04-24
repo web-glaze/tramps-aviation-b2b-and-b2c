@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { CommonHeader } from "@/components/layout/CommonHeader";
 import { CommonFooter } from "@/components/layout/CommonFooter";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+const API = process.env.NEXT_PUBLIC_API_URL || "https://tramps-aviation-backend.onrender.com/api";
 
 async function getPage(slug: string) {
   try {

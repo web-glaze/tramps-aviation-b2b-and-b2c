@@ -412,7 +412,7 @@ interface PlatformState {
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
-  "http://localhost:8080/api";
+  "https://tramps-aviation-backend.onrender.com/api";
 
 export const usePlatformStore = create<PlatformState>()((set, get) => ({
   ps: {},
