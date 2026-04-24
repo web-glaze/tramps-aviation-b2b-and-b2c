@@ -2,13 +2,17 @@
 const nextConfig = {
   reactStrictMode: true,
   eslint: {
-    ignoreDuringBuilds: true,  // ESLint errors build rok nahi paayenge
+    ignoreDuringBuilds: true,
   },
   typescript: {
-    ignoreBuildErrors: true,   // TypeScript errors bhi ignore
+    ignoreBuildErrors: true,
   },
   images: {
-    domains: ['localhost', 'api.travelplatform.com', 'tramps-aviation-backend.onrender.com'],
+    domains: [
+      'localhost',
+      'api.travelplatform.com',
+      'tramps-aviation-backend.onrender.com',
+    ],
   },
 }
 
